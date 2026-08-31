@@ -1,0 +1,1863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DBMS Revision Notes – PGCP-BDA</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f2ed;--surface:#fff;--surface2:#f0ede6;--border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.16);--text:#1a1a18;--text2:#5a5850;--text3:#9a9488;--accent:#1d5fa8;--accent-bg:#e8f0fb;--accent-text:#0c3d73;--teal:#0f6e56;--teal-bg:#e1f5ee;--teal-text:#085041;--amber:#854f0b;--amber-bg:#faeeda;--amber-text:#633806;--coral:#993c1d;--coral-bg:#faece7;--coral-text:#4a1b0c;--green:#3b6d11;--green-bg:#eaf3de;--green-text:#173404;--purple:#534ab7;--purple-bg:#eeedfe;--purple-text:#26215c;--rad:10px;--rad-lg:14px;--font:'Sora',system-ui,sans-serif;--mono:'JetBrains Mono',monospace}
+@media(prefers-color-scheme:dark){:root{--bg:#141412;--surface:#1e1e1b;--surface2:#252520;--border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.15);--text:#f0ede6;--text2:#a09888;--text3:#6a6458;--accent:#5a9fd4;--accent-bg:#0c2a47;--accent-text:#b5d4f4;--teal:#5dcaa5;--teal-bg:#04342c;--teal-text:#9fe1cb;--amber:#ef9f27;--amber-bg:#412402;--amber-text:#fac775;--coral:#f0997b;--coral-bg:#4a1b0c;--coral-text:#f5c4b3;--green:#97c459;--green-bg:#173404;--green-text:#c0dd97;--purple:#afa9ec;--purple-bg:#26215c;--purple-text:#cecbf6}}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:15px;line-height:1.75}
+.wrap{max-width:900px;margin:0 auto;padding:32px 20px 80px}
+.hero{background:var(--surface);border:1px solid var(--border);border-radius:var(--rad-lg);padding:28px 32px;margin-bottom:24px}
+.hero h1{font-size:21px;font-weight:600;margin-bottom:5px}
+.hero p{font-size:13.5px;color:var(--text2);line-height:1.6}
+.hero-pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.pill{font-size:11.5px;padding:4px 12px;border-radius:20px;font-weight:500;background:var(--accent-bg);color:var(--accent-text)}
+.pill.t{background:var(--teal-bg);color:var(--teal-text)}.pill.a{background:var(--amber-bg);color:var(--amber-text)}.pill.c{background:var(--coral-bg);color:var(--coral-text)}
+.toc{background:var(--surface);border:1px solid var(--border);border-radius:var(--rad-lg);padding:18px 22px;margin-bottom:24px}
+.toc h3{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:12px}
+.toc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:3px}
+.toc a{font-size:12.5px;color:var(--accent);text-decoration:none;padding:4px 8px;border-radius:6px;display:block;transition:background .12s}
+.toc a:hover{background:var(--accent-bg)}
+.toc-g{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;padding:10px 8px 3px;grid-column:1/-1}
+details{background:var(--surface);border:1px solid var(--border);border-radius:var(--rad-lg);margin-bottom:12px;overflow:hidden}
+details[open]{border-color:var(--border2)}
+summary{list-style:none;display:flex;align-items:center;gap:12px;padding:17px 22px;cursor:pointer;font-size:14.5px;font-weight:500;transition:background .15s;user-select:none}
+summary::-webkit-details-marker{display:none}
+summary:hover{background:var(--surface2)}
+.sb{font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;flex-shrink:0;white-space:nowrap}
+.sql{background:var(--accent-bg);color:var(--accent-text)}.dw{background:var(--amber-bg);color:var(--amber-text)}.nosql{background:var(--teal-bg);color:var(--teal-text)}.cass{background:var(--coral-bg);color:var(--coral-text)}.data{background:var(--green-bg);color:var(--green-text)}.arch{background:var(--purple-bg);color:var(--purple-text)}
+.sm{flex:1}.ss{font-size:11.5px;color:var(--text3);font-weight:400;margin-top:2px}
+.chev{width:18px;height:18px;flex-shrink:0;color:var(--text3);transition:transform .2s}
+details[open] .chev{transform:rotate(180deg)}
+.bd{padding:26px;border-top:1px solid var(--border)}
+.an{background:var(--amber-bg);border-left:3px solid var(--amber);border-radius:0 var(--rad) var(--rad) 0;padding:14px 18px;margin-bottom:20px;font-size:13.5px;line-height:1.65}
+.an b{display:block;color:var(--amber-text);font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+.dl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--text3);margin:22px 0 10px;display:flex;align-items:center;gap:8px}
+.dl::after{content:'';flex:1;height:1px;background:var(--border)}
+.cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:18px}
+.cc{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rad);padding:14px}
+.cc h4{font-size:13px;font-weight:600;margin-bottom:6px}
+.cc p{font-size:13px;color:var(--text2);line-height:1.6}
+pre{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rad);padding:14px 16px;margin-bottom:16px;font-family:var(--mono);font-size:12px;line-height:1.9;overflow-x:auto;color:var(--text);white-space:pre}
+.kw{color:var(--accent);font-weight:500}.str{color:var(--teal)}.cm{color:var(--text3)}.fn{color:var(--coral)}.nm{color:var(--amber)}
+.tw{overflow-x:auto;margin-bottom:18px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--surface2);padding:10px 14px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);border-bottom:1px solid var(--border2)}
+td{padding:9px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+.kp ul{list-style:none;margin-bottom:18px}
+.kp li{font-size:13.5px;padding:8px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start;line-height:1.6}
+.kp li:last-child{border-bottom:none}
+.kp li::before{content:"→";color:var(--accent);font-weight:600;flex-shrink:0;margin-top:2px}
+.tip{background:var(--green-bg);border-left:3px solid var(--green);border-radius:0 var(--rad) var(--rad) 0;padding:12px 16px;margin-bottom:16px;font-size:13.5px;line-height:1.65}
+.tip b{display:block;color:var(--green-text);font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
+.warn{background:var(--coral-bg);border-left:3px solid var(--coral);border-radius:0 var(--rad) var(--rad) 0;padding:12px 16px;margin-bottom:16px;font-size:13.5px;line-height:1.65}
+.warn b{display:block;color:var(--coral-text);font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
+.info{background:var(--accent-bg);border-left:3px solid var(--accent);border-radius:0 var(--rad) var(--rad) 0;padding:12px 16px;margin-bottom:16px;font-size:13.5px;line-height:1.65}
+.info b{display:block;color:var(--accent-text);font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
+.flow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.fn2{padding:5px 14px;border-radius:20px;font-size:12.5px;font-weight:500;background:var(--accent-bg);color:var(--accent-text)}
+.fn2.t{background:var(--teal-bg);color:var(--teal-text)}.fn2.a{background:var(--amber-bg);color:var(--amber-text)}.fn2.c{background:var(--coral-bg);color:var(--coral-text)}.fn2.p{background:var(--purple-bg);color:var(--purple-text)}
+.arr{color:var(--text3);font-size:16px;font-weight:600}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:16px}
+@media(max-width:620px){.two{grid-template-columns:1fr}}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px}
+@media(max-width:700px){.three{grid-template-columns:1fr 1fr}}
+@media(max-width:450px){.three{grid-template-columns:1fr}}
+.gl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);padding:22px 0 7px}
+code{font-family:var(--mono);font-size:12px;background:var(--surface2);padding:1px 6px;border-radius:4px;border:1px solid var(--border)}
+p.explain{font-size:13.5px;color:var(--text2);line-height:1.75;margin-bottom:14px}
+.hl{background:var(--purple-bg);color:var(--purple-text);padding:1px 5px;border-radius:4px;font-size:12.5px;font-weight:500}
+.step-row{display:flex;gap:12px;margin-bottom:10px;align-items:flex-start}
+.step-num{background:var(--accent);color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;margin-top:2px}
+.step-txt{font-size:13.5px;line-height:1.65;color:var(--text)}
+.compare-row{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--border);border-radius:var(--rad);overflow:hidden;margin-bottom:16px}
+.compare-col{padding:14px 16px}
+.compare-col:first-child{border-right:1px solid var(--border);background:var(--coral-bg)}
+.compare-col:last-child{background:var(--green-bg)}
+.compare-col h5{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+.compare-col:first-child h5{color:var(--coral-text)}
+.compare-col:last-child h5{color:var(--green-text)}
+.compare-col p{font-size:13px;line-height:1.6;color:var(--text2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hero">
+  <h1>🗄️ Data Collection &amp; DBMS — Complete Revision Notes</h1>
+  <p>PGCP-BDA · All 22 sessions fully explained · Real-world analogies · Code with comments · Easy language for all levels<br>Click any session heading to expand. Use the quick-jump links below to navigate.</p>
+  <div class="hero-pills">
+    <span class="pill">44h Theory</span>
+    <span class="pill t">46h Lab</span>
+    <span class="pill a">30h Self-learning</span>
+    <span class="pill c">SQL + MongoDB + Cassandra</span>
+  </div>
+</div>
+
+<div class="toc">
+  <h3>Quick Jump — All Sessions</h3>
+  <div class="toc-grid">
+    <div class="toc-g">SQL &amp; Fundamentals</div>
+    <a href="#s1">S1 · File System vs DBMS</a>
+    <a href="#s2">S2 · Storage &amp; Data Collection</a>
+    <a href="#s3">S3 · DDL · DML · DCL</a>
+    <a href="#s4">S4 · GROUP BY · Subqueries · Joins</a>
+    <a href="#s5">S5–6 · Normal Forms · ER · Procedures</a>
+    <a href="#s7">S7 · Views · Triggers · Windows</a>
+    <div class="toc-g">Warehousing &amp; NoSQL</div>
+    <a href="#s8">S8–9 · Data Warehousing</a>
+    <a href="#s10">S10 · NoSQL Introduction</a>
+    <a href="#s11">S11 · NoSQL Practical Design</a>
+    <div class="toc-g">MongoDB</div>
+    <a href="#s12">S12 · MongoDB CRUD</a>
+    <a href="#s13">S13–14 · MongoDB Indexing</a>
+    <a href="#s15">S15 · Aggregation Pipeline</a>
+    <div class="toc-g">XML · OLAP · Cassandra · Data</div>
+    <a href="#s16">S16–17 · XML &amp; OLAP</a>
+    <a href="#s18">S18 · Cassandra Introduction</a>
+    <a href="#s19">S19 · Cassandra Tables</a>
+    <a href="#s20">S20–21 · Cassandra CRUD + CQL</a>
+    <a href="#s22">S22 · Data Cleaning &amp; Management</a>
+  </div>
+</div>
+
+<div class="gl">SQL &amp; Fundamentals</div>
+
+<!-- ══════════════ SESSION 1 ══════════════ -->
+<details id="s1" open>
+<summary>
+  <span class="sb sql">Session 1</span>
+  <div class="sm"><div>Database Concepts — File System vs DBMS + Codd's 12 Rules</div><div class="ss">What is DBMS · Why not files · Codd's Rules explained · 2T</div></div>
+  <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+</summary>
+<div class="bd">
+
+<div class="an"><b>🏪 Real-World Analogy — The Paper Register Problem</b>
+Imagine a hospital in the 1980s. Doctors keep patient records in one room. Billing department has duplicate records in another room. Pharmacy keeps their own records. If a patient changes their address, all three rooms need to be updated separately. If you want a report combining all three — good luck! This is the <strong>file system problem</strong>. A DBMS is like hiring a central records management team — one system, one truth, everyone queries it together.</div>
+
+<div class="dl">What exactly is a File System?</div>
+<p class="explain">Before databases existed, every application stored its data in its own flat files (think .txt or .csv files stored on disk). Each program read and wrote its own files, with no coordination between programs.</p>
+
+<div class="warn"><b>⚠️ Problems with File Systems</b>
+<strong>1. Data Redundancy:</strong> Same customer stored in sales file AND accounts file AND CRM file. 3x storage waste.<br>
+<strong>2. Data Inconsistency:</strong> If customer changes phone number, only one file gets updated — now you have three different phone numbers.<br>
+<strong>3. Difficult Access:</strong> To answer "Which customers in Mumbai bought Electronics in Q3?" — impossible without custom code.<br>
+<strong>4. No Concurrent Access:</strong> Two people editing the same file = corruption.<br>
+<strong>5. No Security:</strong> Anyone who can see the file can read everything. No row-level or column-level control.<br>
+<strong>6. No Recovery:</strong> Power cut during write = corrupted file, data lost forever.</div>
+
+<div class="dl">What is a DBMS?</div>
+<p class="explain">A <strong>Database Management System (DBMS)</strong> is software that manages a structured collection of data. It acts as an interface between the user/application and the physical data stored on disk. The DBMS takes care of storage, security, concurrency, recovery, and integrity — so you don't have to.</p>
+
+<div class="cg">
+  <div class="cc"><h4>🏛️ What DBMS gives you</h4><p>Structured storage, fast querying, multi-user access without conflicts, role-based security, automatic backups and crash recovery.</p></div>
+  <div class="cc"><h4>🔒 ACID Properties</h4><p><strong>A</strong>tomicity — all or nothing. <strong>C</strong>onsistency — rules always satisfied. <strong>I</strong>solation — transactions don't interfere. <strong>D</strong>urability — committed data survives crashes.</p></div>
+  <div class="cc"><h4>🔗 Types of DBMS</h4><p>Relational (MySQL, Oracle), Document (MongoDB), Key-Value (Redis), Columnar (Cassandra, HBase), Graph (Neo4j).</p></div>
+</div>
+
+<div class="dl">RDBMS — The Relational Model</div>
+<p class="explain">In an <strong>RDBMS (Relational Database Management System)</strong>, all data lives in tables — rows (tuples) and columns (attributes). Tables relate to each other through keys. You query data using SQL. E.F. Codd invented this model in 1970 at IBM.</p>
+
+<div class="tw"><table>
+  <thead><tr><th>Term</th><th>Relational name</th><th>Simple meaning</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td>Table</td><td>Relation</td><td>A spreadsheet-like grid</td><td>Employees table</td></tr>
+    <tr><td>Row</td><td>Tuple</td><td>One record / entity</td><td>Priya's employee record</td></tr>
+    <tr><td>Column</td><td>Attribute</td><td>One property of the entity</td><td>employee_name, salary</td></tr>
+    <tr><td>Primary Key</td><td>Candidate Key</td><td>Uniquely identifies each row</td><td>employee_id = 101</td></tr>
+    <tr><td>Foreign Key</td><td>Referential constraint</td><td>Links one table to another</td><td>dept_id in Employees → id in Departments</td></tr>
+  </tbody>
+</table></div>
+
+<div class="dl">Codd's 12 Rules — Deeply Explained</div>
+<p class="explain">E.F. Codd published 12 rules in 1985 to define what a "truly relational" database must do. Think of them as the constitution of RDBMS. Most commercial databases satisfy most but not necessarily all 12 rules.</p>
+
+<div class="kp"><ul>
+  <li><strong>Rule 0 — Foundation Rule:</strong> The system must manage its data using its relational capabilities exclusively. A product marketed as relational must use its relational features to manage the database — it cannot use a non-relational back door.</li>
+  <li><strong>Rule 1 — Information Rule:</strong> ALL information in a relational database (including table names, column names, and constraints) must be represented as values in tables. No hidden files, no special formats — just tables.</li>
+  <li><strong>Rule 2 — Guaranteed Access:</strong> Every atomic piece of data must be logically addressable by specifying: (1) table name, (2) primary key value, (3) column name. Like a GPS coordinate for any data point.</li>
+  <li><strong>Rule 3 — Systematic NULL Treatment:</strong> NULL must be supported for representing missing or inapplicable information. NULL is distinct from zero, empty string, or "unknown" text. It means "no value exists here."</li>
+  <li><strong>Rule 4 — Active Online Catalog:</strong> The database schema (table definitions, column types, constraints) must also be stored in tables — called the system catalog or data dictionary. You can query it with SQL just like regular data: <code>SELECT * FROM information_schema.tables;</code></li>
+  <li><strong>Rule 5 — Comprehensive Data SubLanguage:</strong> At least one language must exist that supports: data definition, view definition, data manipulation, integrity constraints, authorization, and transaction boundaries. SQL satisfies all of these.</li>
+  <li><strong>Rule 6 — View Updating:</strong> All views that are theoretically updatable must be updatable by the system. For example, a view joining two tables might not be updatable, but a simple filtered view of one table should be.</li>
+  <li><strong>Rule 7 — High-Level Insert, Update, Delete:</strong> The system must support set-level (not just row-level) INSERT, UPDATE, and DELETE. Example: <code>UPDATE employees SET dept = 'IT' WHERE dept = 'Computers';</code> — updates many rows at once.</li>
+  <li><strong>Rule 8 — Physical Data Independence:</strong> Changing how data is physically stored (moving to faster disk, changing indexing strategy, changing file format) must NOT affect the applications or queries. The logical view stays the same.</li>
+  <li><strong>Rule 9 — Logical Data Independence:</strong> Adding new tables or columns to the database must not break existing applications. A new column added to a table should not crash apps that don't use it.</li>
+  <li><strong>Rule 10 — Integrity Independence:</strong> Integrity constraints (like "salary must be positive" or "department must exist") must be defined IN the database itself — not hardcoded in application code. This way, all apps share the same rules automatically.</li>
+  <li><strong>Rule 11 — Distribution Independence:</strong> Whether the database is stored on one machine or distributed across 10 servers globally, the user's queries and results should be identical. The distribution is invisible to the end user.</li>
+  <li><strong>Rule 12 — Non-Subversion Rule:</strong> If there is a low-level interface (row-at-a-time processing), it must not be possible to use it to bypass integrity rules. You can't "sneak around" constraints by using a lower-level API.</li>
+</ul></div>
+
+<div class="tip"><b>✅ Exam / Interview Tip</b> No commercial RDBMS fully satisfies all 12 rules — even Oracle. The rules are a theoretical benchmark. Rule 0 is sometimes called "Rule -1" as it's the meta-rule. Focus on Rules 1, 2, 3, 6, 7, 8, 9 — these come up most in exams.</div>
+
+</div>
+</details>
+
+<!-- ══════════════ SESSION 2 ══════════════ -->
+<details id="s2">
+<summary>
+  <span class="sb arch">Session 2</span>
+  <div class="sm"><div>Database Storage Structure + Data Collection</div><div class="ss">Tablespace · Datafile · Control File · Structured vs Unstructured · Collection Methods · 2T</div></div>
+  <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+</summary>
+<div class="bd">
+
+<div class="an"><b>🏢 Office Building Analogy</b>
+Think of an Oracle database as a large office building. The <strong>Database</strong> = the entire building. Each <strong>Tablespace</strong> = one floor (e.g., Ground Floor for HR, 1st Floor for Accounts). Each <strong>Datafile</strong> = a physical room on that floor where actual files are stored. The <strong>Control File</strong> = the building's reception/security desk that knows the layout of everything. The <strong>Redo Log</strong> = security camera footage that records every change made, useful for recovery.</div>
+
+<div class="dl">Oracle Database Storage — Layer by Layer</div>
+<p class="explain">When you install Oracle (or any enterprise RDBMS), data is stored in a hierarchy of logical and physical structures. Understanding this helps you as a DBA (Database Administrator) tune performance and plan storage.</p>
+
+<div class="cg">
+  <div class="cc"><h4>🗂️ Tablespace (Logical)</h4><p>The highest logical unit. A database has multiple tablespaces: <strong>SYSTEM</strong> (internal Oracle tables), <strong>SYSAUX</strong> (auxiliary), <strong>USERS</strong> (user data), <strong>TEMP</strong> (temporary sorting), <strong>UNDO</strong> (rollback data). You can create custom tablespaces per application.</p></div>
+  <div class="cc"><h4>💾 Datafile (Physical)</h4><p>Each tablespace is made up of one or more <strong>.dbf files</strong> on disk. This is where bytes actually get written. If a tablespace runs out of space, you add another datafile to it. Multiple datafiles can be on different disks for performance.</p></div>
+  <div class="cc"><h4>📋 Control File</h4><p>A small but critical binary file that records: database name, creation timestamp, list of all datafiles and redo log files, and current checkpoint information. The DB won't start without it. Oracle recommends keeping 3 copies (multiplexing).</p></div>
+  <div class="cc"><h4>📝 Redo Log Files</h4><p>Record every change made to the database. If the DB crashes, Oracle replays the redo log to recover all committed transactions. Works in groups that cycle through (LGWR writes to them continuously).</p></div>
+  <div class="cc"><h4>🧩 Segments, Extents, Blocks</h4><p>Inside a datafile: <strong>Segment</strong> = space for one object (e.g., one table). <strong>Extent</strong> = a chunk of contiguous blocks. <strong>Block</strong> (8KB by default) = the smallest unit Oracle reads/writes.</p></div>
+  <div class="cc"><h4>💭 SGA — System Global Area</h4><p>Memory cache shared by all database users. Contains: Buffer Cache (caches data blocks), Shared Pool (caches SQL execution plans), Redo Log Buffer (buffers before writing to disk).</p></div>
+</div>
+
+<div class="dl">Structured vs Semi-structured vs Unstructured Data</div>
+<p class="explain">The world generates different types of data. Understanding the difference determines which storage system you should use for each type.</p>
+
+<div class="tw"><table>
+  <thead><tr><th>Type</th><th>Definition</th><th>Real Example</th><th>Stored in</th><th>Query with</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Structured</strong></td><td>Predefined schema, fixed rows &amp; columns, strict types</td><td>Bank transactions, Employee records, Product catalog</td><td>MySQL, Oracle, PostgreSQL</td><td>SQL — straightforward</td></tr>
+    <tr><td><strong>Semi-structured</strong></td><td>No strict schema, but has self-describing tags or markers</td><td>JSON from REST APIs, XML config files, Email with headers, CSV exports</td><td>MongoDB, Elasticsearch, XML databases</td><td>XPath, XQuery, JSONPath</td></tr>
+    <tr><td><strong>Unstructured</strong></td><td>No predefined format, raw bytes, no schema at all</td><td>Doctor's handwritten notes, WhatsApp photos, Videos, PDFs, Social media posts</td><td>HDFS, S3, Azure Blob, NAS</td><td>NLP, image AI, search engines</td></tr>
+  </tbody>
+</table></div>
+
+<div class="tip"><b>📊 Data Volume Today</b> About 80% of all enterprise data is unstructured (emails, documents, images, videos). Only 20% is structured. This is why Big Data and NoSQL exist — traditional RDBMS cannot efficiently store or process the 80%.</div>
+
+<div class="dl">Data Collection Methods — Systematic Data Gathering</div>
+<p class="explain">Before any analysis or storage, data must be collected. As a data professional, you need to know how data enters your pipeline from various sources.</p>
+
+<div class="cg">
+  <div class="cc"><h4>📋 Surveys &amp; Forms</h4><p>Google Forms, paper forms digitized. Structured data, collected on demand. Good for customer feedback, research. Tool: Google Forms, SurveyMonkey, ODK.</p></div>
+  <div class="cc"><h4>🌐 Web Scraping</h4><p>Automatically extract data from websites using Python (BeautifulSoup, Scrapy). Amazon price tracking, news headlines, social media trends. Semi-structured HTML parsed to JSON/CSV.</p></div>
+  <div class="cc"><h4>📡 IoT Sensors</h4><p>Temperature sensors, smart meters, GPS trackers, factory machines. Generate continuous time-series data. Volume: billions of readings/day. Need stream processing (Kafka, Flink).</p></div>
+  <div class="cc"><h4>🔌 APIs</h4><p>REST APIs from services: Twitter API, Google Maps API, RBI data feeds, payment gateways. Data arrives as JSON/XML. Most reliable — structured, real-time.</p></div>
+  <div class="cc"><h4>📊 Database Integration (ETL)</h4><p>Pulling data from other operational databases: ERP systems (SAP), CRM (Salesforce), accounting software. Done via SQL queries or JDBC connections.</p></div>
+  <div class="cc"><h4>📁 Log Files</h4><p>Web server logs (Apache, Nginx), application logs, system event logs. Store every request, error, user action. Massive volume — analyzed with ELK Stack (Elasticsearch + Logstash + Kibana).</p></div>
+</div>
+
+<div class="info"><b>🔁 Data Pipeline (How it flows)</b>
+Source (sensors/APIs/forms) → <strong>Ingestion</strong> (Kafka/Flume) → <strong>Storage</strong> (HDFS/S3) → <strong>Processing</strong> (Spark/Hive) → <strong>Analysis</strong> (SQL/Python) → <strong>Visualization</strong> (Tableau/Power BI)</div>
+
+</div>
+</details>
+
+<!-- ══════════════ SESSION 3 ══════════════ -->
+<details id="s3">
+<summary>
+  <span class="sb sql">Session 3</span>
+  <div class="sm"><div>Introduction to SQL — DDL, DML, DCL Commands</div><div class="ss">CREATE · ALTER · DROP · INSERT · SELECT · UPDATE · DELETE · GRANT · REVOKE · 2T + 4L + 2SL</div></div>
+  <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+</summary>
+<div class="bd">
+
+<div class="an"><b>🏠 Complete House Analogy</b>
+Imagine building and living in a house. <strong>DDL</strong> = the construction crew (build walls, add rooms, demolish). <strong>DML</strong> = you living in the house (bring in furniture, rearrange, throw things away). <strong>DCL</strong> = the key-master (give your friend access to the front door, take away the spare key). <strong>TCL</strong> (bonus) = confirm/undo decisions (sign the final purchase deed or cancel the transaction).</div>
+
+<div class="dl">SQL Overview — What is SQL?</div>
+<p class="explain"><strong>SQL (Structured Query Language)</strong> is the standard language used to interact with relational databases. It was developed in the 1970s by IBM and standardized by ANSI/ISO. All major RDBMS (MySQL, Oracle, PostgreSQL, SQL Server) support SQL with minor dialect differences.</p>
+
+<div class="flow">
+  <span class="fn2">DDL — Define Structure</span><span class="arr">+</span>
+  <span class="fn2 a">DML — Manipulate Data</span><span class="arr">+</span>
+  <span class="fn2 t">DCL — Control Access</span><span class="arr">+</span>
+  <span class="fn2 c">TCL — Manage Transactions</span>
+</div>
+
+<div class="dl">DDL — Data Definition Language</div>
+<p class="explain">DDL commands define the <strong>structure</strong> of the database — they create, modify, or delete database objects like tables, indexes, views. DDL commands are <strong>auto-committed</strong> (cannot be rolled back in most databases).</p>
+
+<pre><span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  CREATE TABLE — Define a new table
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="kw">CREATE TABLE</span> Books (
+  book_id   <span class="kw">INT</span>           <span class="kw">NOT NULL</span>,    <span class="cm">-- no null allowed</span>
+  name      <span class="kw">VARCHAR</span>(<span class="nm">100</span>) <span class="kw">NOT NULL</span>,
+  author    <span class="kw">VARCHAR</span>(<span class="nm">60</span>),               <span class="cm">-- nullable</span>
+  price     <span class="kw">DECIMAL</span>(<span class="nm">8</span>,<span class="nm">2</span>) <span class="kw">DEFAULT</span> <span class="nm">0.00</span>, <span class="cm">-- default value</span>
+  genre     <span class="kw">VARCHAR</span>(<span class="nm">30</span>),
+  added_on  <span class="kw">DATE</span>          <span class="kw">DEFAULT</span> <span class="fn">CURDATE</span>(),
+  <span class="kw">PRIMARY KEY</span> (book_id),               <span class="cm">-- uniquely identifies row</span>
+  <span class="kw">CHECK</span> (price >= <span class="nm">0</span>)                   <span class="cm">-- price can't be negative</span>
+);
+
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ALTER TABLE — Modify existing table structure
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="kw">ALTER TABLE</span> Books <span class="kw">ADD COLUMN</span>    publisher  <span class="kw">VARCHAR</span>(<span class="nm">80</span>);   <span class="cm">-- add column</span>
+<span class="kw">ALTER TABLE</span> Books <span class="kw">MODIFY COLUMN</span> name       <span class="kw">VARCHAR</span>(<span class="nm">150</span>); <span class="cm">-- change type</span>
+<span class="kw">ALTER TABLE</span> Books <span class="kw">DROP COLUMN</span>   publisher;                <span class="cm">-- remove column</span>
+<span class="kw">ALTER TABLE</span> Books <span class="kw">RENAME TO</span>    Library_Books;            <span class="cm">-- rename table</span>
+
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  DROP vs TRUNCATE — both delete all data
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="kw">TRUNCATE TABLE</span> Books;  <span class="cm">-- removes all rows, keeps table structure (fast)</span>
+<span class="kw">DROP TABLE</span>    Books;   <span class="cm">-- removes ENTIRE table + structure (gone forever)</span></pre>
+
+<div class="dl">DML — Data Manipulation Language</div>
+<p class="explain">DML commands work on the <strong>data inside</strong> the tables. They can be rolled back (unlike DDL). These are the commands you'll use most often day-to-day.</p>
+
+<pre><span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  INSERT — Add new rows
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="cm">-- Method 1: Specify all columns in order</span>
+<span class="kw">INSERT INTO</span> Books <span class="kw">VALUES</span>
+  (<span class="nm">1</span>, <span class="str">'Clean Code'</span>, <span class="str">'Robert Martin'</span>, <span class="nm">499.00</span>, <span class="str">'Programming'</span>, <span class="str">'2024-01-15'</span>);
+
+<span class="cm">-- Method 2: Specify column names (recommended — safe against schema changes)</span>
+<span class="kw">INSERT INTO</span> Books (book_id, name, author, price)
+<span class="kw">VALUES</span> (<span class="nm">2</span>, <span class="str">'The Pragmatic Programmer'</span>, <span class="str">'Hunt'</span>, <span class="nm">549.00</span>);
+
+<span class="cm">-- Method 3: Multiple rows at once (faster than individual inserts)</span>
+<span class="kw">INSERT INTO</span> Books (book_id, name, price) <span class="kw">VALUES</span>
+  (<span class="nm">3</span>, <span class="str">'Design Patterns'</span>, <span class="nm">699.00</span>),
+  (<span class="nm">4</span>, <span class="str">'Refactoring'</span>,      <span class="nm">599.00</span>),
+  (<span class="nm">5</span>, <span class="str">'SICP'</span>,             <span class="nm">350.00</span>);
+
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SELECT — Query / Read data
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="cm">-- Basic select</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> Books;                        <span class="cm">-- all columns, all rows</span>
+<span class="kw">SELECT</span> name, price <span class="kw">FROM</span> Books;             <span class="cm">-- specific columns only</span>
+<span class="kw">SELECT DISTINCT</span> genre <span class="kw">FROM</span> Books;          <span class="cm">-- unique genres only</span>
+
+<span class="cm">-- Filtering with WHERE</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> Books <span class="kw">WHERE</span> price > <span class="nm">400</span>;
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> Books <span class="kw">WHERE</span> genre = <span class="str">'Programming'</span> <span class="kw">AND</span> price < <span class="nm">600</span>;
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> Books <span class="kw">WHERE</span> name <span class="kw">LIKE</span> <span class="str">'%Code%'</span>; <span class="cm">-- contains 'Code'</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> Books <span class="kw">WHERE</span> price <span class="kw">BETWEEN</span> <span class="nm">300</span> <span class="kw">AND</span> <span class="nm">600</span>;
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> Books <span class="kw">WHERE</span> author <span class="kw">IN</span> (<span class="str">'Martin'</span>, <span class="str">'Hunt'</span>);
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> Books <span class="kw">WHERE</span> publisher <span class="kw">IS NULL</span>;  <span class="cm">-- find NULL values</span>
+
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  UPDATE — Modify existing rows
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="kw">UPDATE</span> Books <span class="kw">SET</span> price = <span class="nm">449.00</span> <span class="kw">WHERE</span> book_id = <span class="nm">1</span>;  <span class="cm">-- update one row</span>
+<span class="kw">UPDATE</span> Books <span class="kw">SET</span> price = price * <span class="nm">0.9</span>               <span class="cm">-- 10% discount to all</span>
+<span class="kw">WHERE</span> genre = <span class="str">'Programming'</span>;
+
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  DELETE — Remove rows (rollbackable unlike TRUNCATE)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="kw">DELETE FROM</span> Books <span class="kw">WHERE</span> book_id = <span class="nm">5</span>;       <span class="cm">-- delete one specific row</span>
+<span class="kw">DELETE FROM</span> Books <span class="kw">WHERE</span> price < <span class="nm">100</span>;       <span class="cm">-- delete rows matching condition</span></pre>
+
+<div class="dl">DCL — Data Control Language</div>
+<p class="explain">DCL manages <strong>WHO</strong> can do <strong>WHAT</strong> in the database. In organizations, the DBA creates user accounts and assigns only the necessary permissions (principle of least privilege).</p>
+
+<pre><span class="cm">-- Step 1: Create a new DB user</span>
+<span class="kw">CREATE USER</span> <span class="str">'dbda_student'</span>@<span class="str">'localhost'</span> <span class="kw">IDENTIFIED BY</span> <span class="str">'secure_pass_2024'</span>;
+
+<span class="cm">-- Step 2: Grant specific permissions</span>
+<span class="kw">GRANT SELECT, INSERT ON</span> college_db.* <span class="kw">TO</span> <span class="str">'dbda_student'</span>@<span class="str">'localhost'</span>;
+<span class="kw">GRANT ALL PRIVILEGES ON</span> test_db.* <span class="kw">TO</span> <span class="str">'dbda_student'</span>@<span class="str">'localhost'</span>;
+
+<span class="cm">-- Step 3: Make permissions take effect</span>
+<span class="kw">FLUSH PRIVILEGES</span>;
+
+<span class="cm">-- Step 4: Revoke permissions when no longer needed</span>
+<span class="kw">REVOKE DELETE ON</span> college_db.Books <span class="kw">FROM</span> <span class="str">'dbda_student'</span>@<span class="str">'localhost'</span>;
+
+<span class="cm">-- Check what permissions a user has</span>
+<span class="kw">SHOW GRANTS FOR</span> <span class="str">'dbda_student'</span>@<span class="str">'localhost'</span>;</pre>
+
+<div class="dl">Constraints — Enforcing Data Integrity</div>
+<p class="explain">Constraints are rules applied on table columns to ensure data quality. They are enforced automatically by the DBMS — no need to write application logic for them.</p>
+
+<div class="tw"><table>
+  <thead><tr><th>Constraint</th><th>What it enforces</th><th>Example</th><th>What happens on violation</th></tr></thead>
+  <tbody>
+    <tr><td><strong>PRIMARY KEY</strong></td><td>Unique + NOT NULL. Only one per table.</td><td><code>employee_id INT PRIMARY KEY</code></td><td>INSERT rejected with duplicate key error</td></tr>
+    <tr><td><strong>FOREIGN KEY</strong></td><td>Value must exist in referenced table</td><td><code>dept_id INT REFERENCES dept(id)</code></td><td>INSERT/UPDATE rejected if parent doesn't exist</td></tr>
+    <tr><td><strong>UNIQUE</strong></td><td>No duplicate values (NULLs allowed)</td><td><code>email VARCHAR(100) UNIQUE</code></td><td>INSERT rejected with unique constraint error</td></tr>
+    <tr><td><strong>NOT NULL</strong></td><td>Value must be provided, NULL forbidden</td><td><code>name VARCHAR(50) NOT NULL</code></td><td>INSERT/UPDATE rejected if NULL passed</td></tr>
+    <tr><td><strong>CHECK</strong></td><td>Value must satisfy a logical expression</td><td><code>age INT CHECK (age BETWEEN 18 AND 65)</code></td><td>INSERT/UPDATE rejected if condition is false</td></tr>
+    <tr><td><strong>DEFAULT</strong></td><td>Auto-fill when value not provided</td><td><code>status VARCHAR(10) DEFAULT 'active'</code></td><td>Column silently filled with default</td></tr>
+  </tbody>
+</table></div>
+
+<div class="dl">TCL — Transaction Control (Bonus)</div>
+<pre><span class="cm">-- Transactions ensure ACID compliance
+-- BEGIN starts a transaction block</span>
+<span class="kw">START TRANSACTION</span>;
+  <span class="kw">UPDATE</span> accounts <span class="kw">SET</span> balance = balance - <span class="nm">5000</span> <span class="kw">WHERE</span> acc_no = <span class="str">'A001'</span>;
+  <span class="kw">UPDATE</span> accounts <span class="kw">SET</span> balance = balance + <span class="nm">5000</span> <span class="kw">WHERE</span> acc_no = <span class="str">'B002'</span>;
+<span class="kw">COMMIT</span>;    <span class="cm">-- both updates succeed → save permanently</span>
+
+<span class="cm">-- If something goes wrong between the two updates:</span>
+<span class="kw">ROLLBACK</span>;  <span class="cm">-- undo everything → no money lost, no money gained</span>
+
+<span class="kw">SAVEPOINT</span> sp1;   <span class="cm">-- create a checkpoint mid-transaction</span>
+<span class="kw">ROLLBACK TO</span> sp1; <span class="cm">-- undo back to checkpoint, not all the way</span></pre>
+
+<div class="tip"><b>💡 DELETE vs TRUNCATE vs DROP</b><br>
+<strong>DELETE FROM table WHERE condition</strong> → removes specific rows, can be rolled back, slow (logs each row).<br>
+<strong>TRUNCATE TABLE table</strong> → removes ALL rows instantly, minimal logging, cannot be rolled back in most DBs.<br>
+<strong>DROP TABLE table</strong> → removes the table AND its structure completely. Cannot be undone.</div>
+
+</div>
+</details>
+
+<!-- ══════════════ SESSION 4 ══════════════ -->
+<details id="s4">
+<summary>
+  <span class="sb sql">Session 4</span>
+  <div class="sm"><div>GROUP BY, ORDER BY, Subqueries &amp; Advanced Joins</div><div class="ss">Aggregates · HAVING · Correlated Subqueries · All Join Types · 2T + 4L + 4SL</div></div>
+  <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+</summary>
+<div class="bd">
+
+<div class="an"><b>🛒 Supermarket Bill Analogy</b>
+Imagine you're the manager of a supermarket analysing your daily bill. <strong>GROUP BY</strong> = sort the bill by category (Dairy ₹2000, Vegetables ₹3500, Snacks ₹1800). <strong>HAVING</strong> = "show me only those categories where we spend more than ₹2000." <strong>ORDER BY</strong> = "arrange those categories from highest spend to lowest." The <strong>WHERE</strong> clause is like your filter before you start grouping — "only look at bills from this month."</div>
+
+<div class="dl">Understanding GROUP BY — Step by Step</div>
+<p class="explain">GROUP BY collapses multiple rows with the same value in a column into a single summary row. It's used with aggregate functions like COUNT, SUM, AVG, MIN, MAX.</p>
+
+<div class="info"><b>🔑 Order of Execution in SQL (important for understanding WHERE vs HAVING)</b><br>
+1. FROM (get the table) → 2. WHERE (filter rows) → 3. GROUP BY (group them) → 4. HAVING (filter groups) → 5. SELECT (pick columns) → 6. ORDER BY (sort) → 7. LIMIT (paginate)</div>
+
+<pre><span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  EMPLOYEES table (what we're working with)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  emp_id | name    | dept_id | salary | city
+  -------|---------|---------|--------|-------
+  1      | Priya   | 10      | 60000  | Mumbai
+  2      | Rahul   | 10      | 55000  | Pune
+  3      | Anita   | 20      | 70000  | Mumbai
+  4      | Vikram  | 20      | 80000  | Delhi
+  5      | Sneha   | 30      | 45000  | Pune
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+
+<span class="cm">-- Q: How many employees in each department?</span>
+<span class="kw">SELECT</span> dept_id, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> headcount
+<span class="kw">FROM</span> employees
+<span class="kw">GROUP BY</span> dept_id;
+<span class="cm">-- Result: dept 10→2, dept 20→2, dept 30→1</span>
+
+<span class="cm">-- Q: Departments with more than 1 employee AND avg salary above 50000</span>
+<span class="kw">SELECT</span> dept_id,
+       <span class="fn">COUNT</span>(*) <span class="kw">AS</span> headcount,
+       <span class="fn">AVG</span>(salary) <span class="kw">AS</span> avg_salary,
+       <span class="fn">MAX</span>(salary) <span class="kw">AS</span> highest_sal,
+       <span class="fn">MIN</span>(salary) <span class="kw">AS</span> lowest_sal,
+       <span class="fn">SUM</span>(salary) <span class="kw">AS</span> total_payroll
+<span class="kw">FROM</span> employees
+<span class="kw">WHERE</span> city != <span class="str">'Delhi'</span>    <span class="cm">-- filter BEFORE grouping (Delhi excluded)</span>
+<span class="kw">GROUP BY</span> dept_id
+<span class="kw">HAVING</span> <span class="fn">COUNT</span>(*) > <span class="nm">1</span>      <span class="cm">-- filter AFTER grouping (keep dept with 2+ people)</span>
+  <span class="kw">AND</span> <span class="fn">AVG</span>(salary) > <span class="nm">50000</span>
+<span class="kw">ORDER BY</span> avg_salary <span class="kw">DESC</span>; <span class="cm">-- sort final output</span></pre>
+
+<div class="dl">All Aggregate Functions Explained</div>
+<div class="tw"><table>
+  <thead><tr><th>Function</th><th>What it calculates</th><th>Ignores NULL?</th><th>Example use</th></tr></thead>
+  <tbody>
+    <tr><td><code>COUNT(*)</code></td><td>Total number of rows (including NULLs)</td><td>No</td><td>How many orders today?</td></tr>
+    <tr><td><code>COUNT(col)</code></td><td>Count of non-NULL values in a column</td><td>Yes</td><td>How many orders have a tracking number?</td></tr>
+    <tr><td><code>SUM(col)</code></td><td>Total sum of numeric column</td><td>Yes</td><td>Total revenue this month</td></tr>
+    <tr><td><code>AVG(col)</code></td><td>Arithmetic mean (sum/count-of-non-nulls)</td><td>Yes</td><td>Average order value</td></tr>
+    <tr><td><code>MIN(col)</code></td><td>Smallest value (works on dates too)</td><td>Yes</td><td>Cheapest product, earliest order date</td></tr>
+    <tr><td><code>MAX(col)</code></td><td>Largest value</td><td>Yes</td><td>Most expensive product, latest login</td></tr>
+    <tr><td><code>STDDEV(col)</code></td><td>Standard deviation — how spread out values are</td><td>Yes</td><td>Salary consistency analysis</td></tr>
+    <tr><td><code>VARIANCE(col)</code></td><td>Statistical variance (STDDEV squared)</td><td>Yes</td><td>Data science feature analysis</td></tr>
+  </tbody>
+</table></div>
+
+<div class="dl">Subqueries — Queries inside Queries</div>
+<p class="explain">A <strong>subquery</strong> is a complete SELECT statement nested inside another SQL statement. The inner query runs first, its result is passed to the outer query. Think of it as solving a maths problem step by step.</p>
+
+<pre><span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. Simple Subquery (runs once, independent)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="cm">-- Find all employees earning above company average</span>
+<span class="kw">SELECT</span> name, salary
+<span class="kw">FROM</span> employees
+<span class="kw">WHERE</span> salary > (
+  <span class="kw">SELECT</span> <span class="fn">AVG</span>(salary) <span class="kw">FROM</span> employees  <span class="cm">← runs once, returns 62000</span>
+);
+<span class="cm">-- The inner query returns 62000, outer becomes: WHERE salary > 62000</span>
+
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  2. Correlated Subquery (runs once PER ROW of outer query)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="cm">-- Find employees earning MORE than their OWN department's average
+-- This is correlated because it references e1.dept_id from outer query</span>
+<span class="kw">SELECT</span> e1.name, e1.salary, e1.dept_id
+<span class="kw">FROM</span>  employees e1
+<span class="kw">WHERE</span> e1.salary > (
+  <span class="kw">SELECT</span> <span class="fn">AVG</span>(e2.salary)
+  <span class="kw">FROM</span>  employees e2
+  <span class="kw">WHERE</span> e2.dept_id = e1.dept_id  <span class="cm">← uses outer query's dept_id!</span>
+);
+<span class="cm">-- For Priya (dept 10): inner query calculates avg of dept 10 = 57500
+-- For Anita (dept 20): inner query calculates avg of dept 20 = 75000
+-- Each row gets its OWN calculation — hence "correlated"</span>
+
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  3. Subquery with EXISTS (check if related rows exist)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="cm">-- Find all departments that HAVE at least one employee</span>
+<span class="kw">SELECT</span> d.dept_name
+<span class="kw">FROM</span> departments d
+<span class="kw">WHERE</span> <span class="kw">EXISTS</span> (
+  <span class="kw">SELECT</span> <span class="nm">1</span> <span class="kw">FROM</span> employees e <span class="kw">WHERE</span> e.dept_id = d.id
+);</pre>
+
+<div class="dl">JOINs — Combining Data from Multiple Tables</div>
+<p class="explain">In a normalised database, related data is split across multiple tables. JOINs bring them back together. Think of it as matching puzzle pieces — you need matching values on both sides.</p>
+
+<pre><span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Sample data we'll use for JOIN examples
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  EMPLOYEES:  emp_id, name, dept_id (1,2,3,4,5)
+  DEPARTMENTS: id, dept_name        (10,20,30,99 ← 99 has no employees)
+  SALESMAN:   id, name, customer_id, commission
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+
+<span class="cm">-- INNER JOIN: Only matching rows from BOTH tables</span>
+<span class="kw">SELECT</span> e.name, d.dept_name, e.salary
+<span class="kw">FROM</span>  employees e
+<span class="kw">INNER JOIN</span> departments d <span class="kw">ON</span> e.dept_id = d.id;
+<span class="cm">-- Returns only employees whose dept_id exists in departments table</span>
+<span class="cm">-- Employees with dept 99 would be excluded</span>
+
+<span class="cm">-- LEFT OUTER JOIN: All employees + their dept (NULL if dept missing)</span>
+<span class="kw">SELECT</span> e.name, d.dept_name
+<span class="kw">FROM</span>  employees e
+<span class="kw">LEFT JOIN</span> departments d <span class="kw">ON</span> e.dept_id = d.id;
+<span class="cm">-- Returns ALL employees. If no matching dept, dept_name shows NULL</span>
+
+<span class="cm">-- RIGHT OUTER JOIN: All departments + their employees (NULL if no emp)</span>
+<span class="kw">SELECT</span> e.name, d.dept_name
+<span class="kw">FROM</span>  employees e
+<span class="kw">RIGHT JOIN</span> departments d <span class="kw">ON</span> e.dept_id = d.id;
+<span class="cm">-- Returns ALL departments. Dept 99 appears with NULL employee name</span>
+
+<span class="cm">-- FULL OUTER JOIN: Everything from both sides</span>
+<span class="kw">SELECT</span> e.name, d.dept_name
+<span class="kw">FROM</span>  employees e
+<span class="kw">FULL OUTER JOIN</span> departments d <span class="kw">ON</span> e.dept_id = d.id;
+
+<span class="cm">-- SELF JOIN: Employee-Manager hierarchy (same table joined to itself)</span>
+<span class="kw">SELECT</span> e.name <span class="kw">AS</span> employee, m.name <span class="kw">AS</span> manager
+<span class="kw">FROM</span>  employees e
+<span class="kw">LEFT JOIN</span> employees m <span class="kw">ON</span> e.manager_id = m.emp_id;
+
+<span class="cm">-- Salesperson + customer details (from syllabus lab problem)</span>
+<span class="kw">SELECT</span> c.cust_name, c.city, s.name <span class="kw">AS</span> salesman, s.commission
+<span class="kw">FROM</span>  customers c
+<span class="kw">JOIN</span>  salesman s <span class="kw">ON</span> c.salesman_id = s.id
+<span class="kw">ORDER BY</span> s.commission <span class="kw">DESC</span>;</pre>
+
+<div class="tw"><table>
+  <thead><tr><th>JOIN Type</th><th>Returns</th><th>Use case</th><th>Tip</th></tr></thead>
+  <tbody>
+    <tr><td>INNER JOIN</td><td>Only rows matching in BOTH tables</td><td>Most common — get related data</td><td>Default JOIN = INNER JOIN</td></tr>
+    <tr><td>LEFT (OUTER) JOIN</td><td>All left rows + matched right (NULL if no match)</td><td>All customers even if they never ordered</td><td>Most used outer join</td></tr>
+    <tr><td>RIGHT (OUTER) JOIN</td><td>All right rows + matched left</td><td>All products even if never sold</td><td>Equivalent to LEFT JOIN with tables swapped</td></tr>
+    <tr><td>FULL OUTER JOIN</td><td>All rows from both sides</td><td>Audit mismatches on either side</td><td>MySQL doesn't support — use UNION of LEFT+RIGHT</td></tr>
+    <tr><td>SELF JOIN</td><td>Table matched with itself</td><td>Manager-employee, friend-of-friend</td><td>Requires aliases (e1, e2)</td></tr>
+    <tr><td>CROSS JOIN</td><td>Every row from left × every row from right</td><td>Generate all combinations (sizes × colors)</td><td>Can produce huge result sets!</td></tr>
+  </tbody>
+</table></div>
+
+<div class="tip"><b>💡 LIKE Pattern Matching</b><br>
+<code>% </code> = any number of characters (including zero). <code>_</code> = exactly one character.<br>
+<code>name LIKE 'A%'</code> → starts with A. <code>name LIKE '%N'</code> → ends with N.<br>
+<code>name LIKE 'A%N'</code> → starts with A, ends with N (matches "Arjun", "Arun").<br>
+<code>name LIKE '_a%'</code> → second character is 'a'.<br>
+<em>From syllabus lab: "Print employee names who have 'A' as first letter and 'N' as last letter"</em> → <code>WHERE name LIKE 'A%N'</code></div>
+
+</div>
+</details>
+
+<!-- ══════════════ SESSION 5-6 ══════════════ -->
+<details id="s5">
+<summary>
+  <span class="sb sql">Sessions 5–6</span>
+  <div class="sm"><div>Normal Forms, ER Diagrams &amp; Stored Procedures</div><div class="ss">1NF·2NF·3NF·BCNF · ER Symbols · Relational Modelling · Stored Procedures · 4T+4L+4SL</div></div>
+  <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+</summary>
+<div class="bd">
+
+<div class="an"><b>🗃️ Filing Cabinet Analogy</b>
+Imagine a messy office where the same client's address appears in 15 different folders. When the client moves, someone must update all 15 folders. Miss one — disaster. <strong>Normalization</strong> = reorganizing so each fact lives in exactly ONE place. When the client moves, update ONE record. All other references automatically get the correct address.</div>
+
+<div class="dl">Why Normalise? — The Problems it Solves</div>
+<p class="explain">Without normalization, databases suffer from three types of anomalies that corrupt data integrity:</p>
+<div class="cg">
+  <div class="cc"><h4>🔴 Insert Anomaly</h4><p>You can't add a new department unless it already has an employee. Example: Can't record "IT Department" until someone joins it.</p></div>
+  <div class="cc"><h4>🔴 Update Anomaly</h4><p>Updating one fact requires changing multiple rows. Miss one row → inconsistent data. Example: Department head changes — must update 50 employee rows.</p></div>
+  <div class="cc"><h4>🔴 Delete Anomaly</h4><p>Deleting the last employee from a dept also deletes the department's info. Example: Last person in IT quits → IT department info vanishes from DB.</p></div>
+</div>
+
+<div class="dl">1NF — First Normal Form</div>
+<p class="explain"><strong>Rule:</strong> Every column must contain <strong>atomic (single, indivisible) values</strong>. No repeating groups. Every row must be unique.</p>
+<div class="compare-row">
+  <div class="compare-col"><h5>❌ Violates 1NF</h5><p>Student: Priya | Courses: <strong>"DBMS, OS, Networks"</strong><br><br>Problem: The "Courses" column has multiple values in one cell — not atomic. Cannot query individual courses.</p></div>
+  <div class="compare-col"><h5>✅ Satisfies 1NF</h5><p>Priya | DBMS<br>Priya | OS<br>Priya | Networks<br><br>Each course is in its own row. Now you can query "who takes DBMS?"</p></div>
+</div>
+
+<div class="dl">2NF — Second Normal Form</div>
+<p class="explain"><strong>Rule:</strong> Must be in 1NF PLUS no <strong>partial dependency</strong>. Every non-key attribute must depend on the <em>entire</em> primary key — not just part of it. This only matters when you have a <strong>composite primary key</strong>.</p>
+<div class="compare-row">
+  <div class="compare-col"><h5>❌ Violates 2NF</h5><p>Table: (student_id, course_id, student_name, marks)<br>PK = (student_id + course_id)<br>But <strong>student_name</strong> depends only on student_id — not on the full composite PK. That's a partial dependency.</p></div>
+  <div class="compare-col"><h5>✅ Satisfies 2NF</h5><p>Split into:<br>Students(student_id, student_name)<br>Enrollments(student_id, course_id, marks)<br><br>Now student_name is in its own table, depending fully on student_id.</p></div>
+</div>
+
+<div class="dl">3NF — Third Normal Form</div>
+<p class="explain"><strong>Rule:</strong> Must be in 2NF PLUS no <strong>transitive dependency</strong>. A non-key attribute should NOT depend on another non-key attribute. All non-key columns must depend DIRECTLY on the primary key.</p>
+<div class="compare-row">
+  <div class="compare-col"><h5>❌ Violates 3NF</h5><p>Table: (emp_id, dept_id, dept_name)<br>PK = emp_id<br>But <strong>dept_name</strong> depends on <strong>dept_id</strong>, not on emp_id directly. That's transitive: emp_id → dept_id → dept_name.</p></div>
+  <div class="compare-col"><h5>✅ Satisfies 3NF</h5><p>Split into:<br>Employees(emp_id, dept_id)<br>Departments(dept_id, dept_name)<br><br>dept_name is now in its own table, depending directly on dept_id PK.</p></div>
+</div>
+
+<div class="dl">BCNF — Boyce-Codd Normal Form</div>
+<p class="explain"><strong>Rule:</strong> Must be in 3NF PLUS every determinant must be a <strong>candidate key</strong>. It's a stricter version of 3NF that catches edge cases where 3NF still allows anomalies (usually involves multiple overlapping candidate keys). For most practical purposes, 3NF is sufficient.</p>
+<div class="tip"><b>📌 Summary — Which NF to aim for?</b><br>
+In practice: aim for <strong>3NF</strong> for OLTP databases. For analytics/warehouse, controlled <strong>denormalization</strong> (going back to 2NF or 1NF) is often done for query performance — this is what star/snowflake schemas do.</div>
+
+<div class="dl">ER Diagram — Entity Relationship Diagram</div>
+<p class="explain">An ER diagram is a <strong>blueprint</strong> of your database — drawn before you write a single line of SQL. It shows what entities (things) exist, what attributes they have, and how they relate to each other. Think of it as the architect's floor plan before construction begins.</p>
+
+<div class="tw"><table>
+  <thead><tr><th>ER Symbol</th><th>Shape</th><th>Represents</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td>Entity</td><td>Rectangle</td><td>A "thing" that has data — becomes a table</td><td>Student, Course, Department</td></tr>
+    <tr><td>Weak Entity</td><td>Double Rectangle</td><td>Entity that can't exist without another</td><td>OrderItem (can't exist without Order)</td></tr>
+    <tr><td>Attribute</td><td>Ellipse (oval)</td><td>A property of an entity — becomes a column</td><td>student_id, name, date_of_birth</td></tr>
+    <tr><td>Key Attribute</td><td>Underlined oval</td><td>Attribute that uniquely identifies the entity</td><td><u>student_id</u></td></tr>
+    <tr><td>Multi-valued Attribute</td><td>Double Ellipse</td><td>Attribute with multiple values</td><td>Phone numbers (person can have 2+ phones)</td></tr>
+    <tr><td>Derived Attribute</td><td>Dashed Ellipse</td><td>Computed from other attributes, not stored</td><td>Age (derived from DOB + today's date)</td></tr>
+    <tr><td>Composite Attribute</td><td>Ellipse with sub-ovals</td><td>Attribute made of multiple parts</td><td>Full Name = FirstName + LastName</td></tr>
+    <tr><td>Relationship</td><td>Diamond</td><td>Association between entities</td><td>Enrolls (Student Enrolls in Course)</td></tr>
+    <tr><td>Cardinality (1:1)</td><td>Line labels</td><td>One entity on each side</td><td>Citizen has one Passport</td></tr>
+    <tr><td>Cardinality (1:N)</td><td>Line labels</td><td>One on left, many on right</td><td>Department has many Employees</td></tr>
+    <tr><td>Cardinality (M:N)</td><td>Line labels</td><td>Many on both sides</td><td>Student takes many Courses; Course has many Students</td></tr>
+  </tbody>
+</table></div>
+
+<div class="dl">Stored Procedures — Reusable SQL Programs</div>
+<p class="explain">A <strong>stored procedure</strong> is a named, pre-compiled block of SQL code stored in the database. Instead of sending a long SQL query from your application every time, you just call the procedure name. Think of it like a function in Python — you define it once and call it many times with different arguments.</p>
+
+<div class="info"><b>🎯 Why use Stored Procedures?</b><br>
+1. <strong>Performance:</strong> Pre-compiled — the DB doesn't need to parse SQL every time.<br>
+2. <strong>Security:</strong> Grant EXECUTE permission on procedure without exposing underlying tables.<br>
+3. <strong>Reusability:</strong> Write once, call from any application (Java, Python, PHP — all call the same procedure).<br>
+4. <strong>Reduce network traffic:</strong> One procedure call instead of 10 individual SQL statements over the network.</div>
+
+<pre><span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Basic Stored Procedure
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="kw">DELIMITER</span> //
+<span class="kw">CREATE PROCEDURE</span> <span class="fn">GetDeptSummary</span>(
+  <span class="kw">IN</span>  p_dept_id   <span class="kw">INT</span>,           <span class="cm">-- input parameter (caller provides)</span>
+  <span class="kw">OUT</span> p_emp_count <span class="kw">INT</span>,           <span class="cm">-- output parameter (procedure fills)</span>
+  <span class="kw">OUT</span> p_avg_salary <span class="kw">DECIMAL</span>(<span class="nm">10</span>,<span class="nm">2</span>) <span class="cm">-- another output</span>
+)
+<span class="kw">BEGIN</span>
+  <span class="cm">-- Use IF-ELSE control structure</span>
+  <span class="kw">IF</span> p_dept_id <span class="kw">IS NULL THEN</span>
+    <span class="kw">SELECT</span> <span class="fn">COUNT</span>(*), <span class="fn">AVG</span>(salary)
+    <span class="kw">INTO</span> p_emp_count, p_avg_salary
+    <span class="kw">FROM</span> employees;              <span class="cm">-- all employees if dept not specified</span>
+  <span class="kw">ELSE</span>
+    <span class="kw">SELECT</span> <span class="fn">COUNT</span>(*), <span class="fn">AVG</span>(salary)
+    <span class="kw">INTO</span> p_emp_count, p_avg_salary
+    <span class="kw">FROM</span> employees
+    <span class="kw">WHERE</span> dept_id = p_dept_id;
+  <span class="kw">END IF</span>;
+<span class="kw">END</span> //
+<span class="kw">DELIMITER</span> ;
+
+<span class="cm">-- Call the procedure</span>
+<span class="kw">CALL</span> <span class="fn">GetDeptSummary</span>(<span class="nm">10</span>, @count, @avg);
+<span class="kw">SELECT</span> @count <span class="kw">AS</span> total_employees, @avg <span class="kw">AS</span> average_salary;
+
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Procedure with CURSOR (process row by row)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="kw">DELIMITER</span> //
+<span class="kw">CREATE PROCEDURE</span> <span class="fn">GiveRaise</span>()
+<span class="kw">BEGIN</span>
+  <span class="kw">DECLARE</span> done <span class="kw">INT DEFAULT</span> <span class="nm">0</span>;
+  <span class="kw">DECLARE</span> v_id <span class="kw">INT</span>;
+  <span class="kw">DECLARE</span> v_salary <span class="kw">DECIMAL</span>(<span class="nm">10</span>,<span class="nm">2</span>);
+
+  <span class="cm">-- Declare cursor to loop over employees</span>
+  <span class="kw">DECLARE</span> emp_cursor <span class="kw">CURSOR FOR</span>
+    <span class="kw">SELECT</span> emp_id, salary <span class="kw">FROM</span> employees;
+
+  <span class="kw">DECLARE CONTINUE HANDLER FOR NOT FOUND SET</span> done = <span class="nm">1</span>;
+
+  <span class="kw">OPEN</span> emp_cursor;
+  read_loop: <span class="kw">LOOP</span>
+    <span class="kw">FETCH</span> emp_cursor <span class="kw">INTO</span> v_id, v_salary;
+    <span class="kw">IF</span> done <span class="kw">THEN LEAVE</span> read_loop; <span class="kw">END IF</span>;
+    <span class="cm">-- Give 10% raise to those earning below 50000</span>
+    <span class="kw">IF</span> v_salary < <span class="nm">50000</span> <span class="kw">THEN</span>
+      <span class="kw">UPDATE</span> employees <span class="kw">SET</span> salary = v_salary * <span class="nm">1.10</span>
+      <span class="kw">WHERE</span> emp_id = v_id;
+    <span class="kw">END IF</span>;
+  <span class="kw">END LOOP</span>;
+  <span class="kw">CLOSE</span> emp_cursor;
+<span class="kw">END</span> //
+<span class="kw">DELIMITER</span> ;</pre>
+
+</div>
+</details>
+
+<!-- ══════════════ SESSION 7 ══════════════ -->
+<details id="s7">
+<summary>
+  <span class="sb sql">Session 7</span>
+  <div class="sm"><div>Views, Triggers, Window Functions &amp; CASE</div><div class="ss">CREATE VIEW · BEFORE/AFTER Triggers · RANK() · ROW_NUMBER() · LEAD/LAG · 2T + 4L</div></div>
+  <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+</summary>
+<div class="bd">
+
+<div class="an"><b>🪟 Three Analogies in One</b>
+<strong>VIEW = a customised window</strong> on your data. You see what the window shows — but the actual room (table) is unchanged. You can put different windows in different places showing different angles. <strong>TRIGGER = a motion sensor alarm</strong>. When someone enters a room (INSERT/UPDATE/DELETE), the alarm fires automatically. <strong>Window Function = a rolling scoreboard</strong> — shows each player's rank live while the full player list remains visible.</div>
+
+<div class="dl">Views — Virtual Tables</div>
+<p class="explain">A VIEW is a saved SELECT query that looks and behaves like a table. It does NOT store data — it runs the underlying query every time you access it. Views are used to: simplify complex queries, restrict columns/rows users can see, and present data in a specific format.</p>
+
+<pre><span class="cm">-- Create a view: employees with dept name + only salary > 50000</span>
+<span class="kw">CREATE VIEW</span> HighEarnerDetails <span class="kw">AS</span>
+  <span class="kw">SELECT</span>
+    e.emp_id,
+    e.name,
+    e.salary,
+    e.city,
+    d.dept_name
+  <span class="kw">FROM</span> employees e
+  <span class="kw">JOIN</span> departments d <span class="kw">ON</span> e.dept_id = d.id
+  <span class="kw">WHERE</span> e.salary > <span class="nm">50000</span>;
+
+<span class="cm">-- Use the view exactly like a table</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> HighEarnerDetails <span class="kw">WHERE</span> city = <span class="str">'Mumbai'</span>;
+<span class="kw">SELECT</span> dept_name, <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> HighEarnerDetails <span class="kw">GROUP BY</span> dept_name;
+
+<span class="cm">-- Update or drop a view</span>
+<span class="kw">CREATE OR REPLACE VIEW</span> HighEarnerDetails <span class="kw">AS</span> <span class="kw">SELECT</span> ...  <span class="cm">-- modify</span>
+<span class="kw">DROP VIEW</span> HighEarnerDetails;                              <span class="cm">-- remove</span>
+
+<span class="cm">-- From syllabus: View to find employee with highest salary</span>
+<span class="kw">CREATE VIEW</span> TopEarnerView <span class="kw">AS</span>
+  <span class="kw">SELECT</span> e.name, e.salary, e.dept_id, d.dept_name
+  <span class="kw">FROM</span>  employees e
+  <span class="kw">JOIN</span>  departments d <span class="kw">ON</span> e.dept_id = d.id
+  <span class="kw">WHERE</span> e.salary = (<span class="kw">SELECT</span> <span class="fn">MAX</span>(salary) <span class="kw">FROM</span> employees);</pre>
+
+<div class="dl">Triggers — Automatic Actions</div>
+<p class="explain">A TRIGGER is a stored procedure that <strong>automatically executes</strong> when a specific event (INSERT, UPDATE, DELETE) occurs on a table. You don't call triggers — the database fires them. Used for: audit logging, enforcing complex business rules, maintaining derived data.</p>
+
+<div class="tw"><table>
+  <thead><tr><th>Trigger Type</th><th>When it fires</th><th>Access to NEW/OLD</th><th>Use case</th></tr></thead>
+  <tbody>
+    <tr><td>BEFORE INSERT</td><td>Before new row is added</td><td>NEW (modify it before save)</td><td>Auto-format data, validate custom rules</td></tr>
+    <tr><td>AFTER INSERT</td><td>After row is successfully added</td><td>NEW (read-only)</td><td>Log new record, send notification</td></tr>
+    <tr><td>BEFORE UPDATE</td><td>Before row is modified</td><td>OLD (old values), NEW (new values)</td><td>Prevent unauthorized changes, capture old value</td></tr>
+    <tr><td>AFTER UPDATE</td><td>After row is successfully modified</td><td>OLD and NEW</td><td>Audit trail, sync summary tables</td></tr>
+    <tr><td>BEFORE DELETE</td><td>Before row is removed</td><td>OLD (the row being deleted)</td><td>Prevent deletion of important records</td></tr>
+    <tr><td>AFTER DELETE</td><td>After row is deleted</td><td>OLD (what was deleted)</td><td>Archive deleted records, cleanup</td></tr>
+  </tbody>
+</table></div>
+
+<pre><span class="cm">-- AFTER UPDATE trigger: audit log for salary changes</span>
+<span class="kw">DELIMITER</span> //
+<span class="kw">CREATE TRIGGER</span> trg_SalaryAudit
+<span class="kw">AFTER UPDATE ON</span> employees
+<span class="kw">FOR EACH ROW</span>
+<span class="kw">BEGIN</span>
+  <span class="kw">IF</span> OLD.salary != NEW.salary <span class="kw">THEN</span>  <span class="cm">-- only log if salary actually changed</span>
+    <span class="kw">INSERT INTO</span> salary_audit_log
+      (emp_id, old_salary, new_salary, changed_by, changed_at)
+    <span class="kw">VALUES</span>
+      (NEW.emp_id, OLD.salary, NEW.salary, <span class="fn">USER</span>(), <span class="fn">NOW</span>());
+  <span class="kw">END IF</span>;
+<span class="kw">END</span> //
+<span class="kw">DELIMITER</span> ;
+
+<span class="cm">-- BEFORE INSERT trigger: auto-uppercase the name</span>
+<span class="kw">DELIMITER</span> //
+<span class="kw">CREATE TRIGGER</span> trg_FormatName
+<span class="kw">BEFORE INSERT ON</span> employees
+<span class="kw">FOR EACH ROW</span>
+<span class="kw">BEGIN</span>
+  <span class="kw">SET</span> NEW.name = <span class="fn">UPPER</span>(<span class="fn">TRIM</span>(NEW.name));  <span class="cm">-- trim spaces + uppercase</span>
+<span class="kw">END</span> //
+<span class="kw">DELIMITER</span> ;</pre>
+
+<div class="dl">Window Functions — Analytics Without Losing Rows</div>
+<p class="explain">Window functions perform calculations <strong>across a set of related rows</strong> without collapsing them. Unlike GROUP BY (which gives one row per group), window functions give you a result for EVERY row, with that row's "window" context calculated alongside. Extremely powerful for ranking, running totals, and comparisons.</p>
+
+<pre><span class="cm">-- The OVER() clause is what makes it a window function
+-- PARTITION BY = which "window" each row belongs to
+-- ORDER BY = how to sort within each window</span>
+
+<span class="kw">SELECT</span>
+  name,
+  dept_id,
+  salary,
+  <span class="cm">-- Rank within department (ties get same rank, gap follows)</span>
+  <span class="fn">RANK</span>() <span class="kw">OVER</span>(<span class="kw">PARTITION BY</span> dept_id <span class="kw">ORDER BY</span> salary <span class="kw">DESC</span>)       <span class="kw">AS</span> dept_rank,
+  <span class="cm">-- Dense rank (ties get same rank, NO gap)</span>
+  <span class="fn">DENSE_RANK</span>() <span class="kw">OVER</span>(<span class="kw">PARTITION BY</span> dept_id <span class="kw">ORDER BY</span> salary <span class="kw">DESC</span>) <span class="kw">AS</span> dense_rank,
+  <span class="cm">-- Row number (unique sequential number)</span>
+  <span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span>(<span class="kw">ORDER BY</span> salary <span class="kw">DESC</span>)                       <span class="kw">AS</span> overall_rank,
+  <span class="cm">-- Running total of salary within dept</span>
+  <span class="fn">SUM</span>(salary) <span class="kw">OVER</span>(<span class="kw">PARTITION BY</span> dept_id <span class="kw">ORDER BY</span> salary)        <span class="kw">AS</span> running_total,
+  <span class="cm">-- Department total (same for all rows in that dept)</span>
+  <span class="fn">SUM</span>(salary) <span class="kw">OVER</span>(<span class="kw">PARTITION BY</span> dept_id)                         <span class="kw">AS</span> dept_total,
+  <span class="cm">-- Salary of next higher earner in same dept</span>
+  <span class="fn">LEAD</span>(salary, <span class="nm">1</span>) <span class="kw">OVER</span>(<span class="kw">PARTITION BY</span> dept_id <span class="kw">ORDER BY</span> salary)   <span class="kw">AS</span> next_salary,
+  <span class="cm">-- Salary of previous row in same dept</span>
+  <span class="fn">LAG</span>(salary, <span class="nm">1</span>)  <span class="kw">OVER</span>(<span class="kw">PARTITION BY</span> dept_id <span class="kw">ORDER BY</span> salary)   <span class="kw">AS</span> prev_salary
+<span class="kw">FROM</span> employees;
+
+<span class="cm">-- Practical use: Get top earner per department (without subquery)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> (
+  <span class="kw">SELECT</span> name, dept_id, salary,
+         <span class="fn">RANK</span>() <span class="kw">OVER</span>(<span class="kw">PARTITION BY</span> dept_id <span class="kw">ORDER BY</span> salary <span class="kw">DESC</span>) <span class="kw">AS</span> rnk
+  <span class="kw">FROM</span> employees
+) ranked
+<span class="kw">WHERE</span> rnk = <span class="nm">1</span>; <span class="cm">-- only top earner per dept</span></pre>
+
+<div class="dl">CASE Statement — Conditional Logic in SQL</div>
+<pre><span class="cm">-- Simple CASE: map specific values</span>
+<span class="kw">SELECT</span> name, salary,
+  <span class="kw">CASE</span> dept_id
+    <span class="kw">WHEN</span> <span class="nm">10</span> <span class="kw">THEN</span> <span class="str">'Engineering'</span>
+    <span class="kw">WHEN</span> <span class="nm">20</span> <span class="kw">THEN</span> <span class="str">'HR'</span>
+    <span class="kw">WHEN</span> <span class="nm">30</span> <span class="kw">THEN</span> <span class="str">'Finance'</span>
+    <span class="kw">ELSE</span>       <span class="str">'Unknown'</span>
+  <span class="kw">END AS</span> dept_name,
+  <span class="cm">-- Searched CASE: conditions</span>
+  <span class="kw">CASE</span>
+    <span class="kw">WHEN</span> salary >= <span class="nm">80000</span> <span class="kw">THEN</span> <span class="str">'Senior'</span>
+    <span class="kw">WHEN</span> salary >= <span class="nm">50000</span> <span class="kw">THEN</span> <span class="str">'Mid-level'</span>
+    <span class="kw">ELSE</span>                       <span class="str">'Junior'</span>
+  <span class="kw">END AS</span> level
+<span class="kw">FROM</span> employees;</pre>
+
+</div>
+</details>
+
+<!-- ══════════════ SESSION 8–9 ══════════════ -->
+<div class="gl">Data Warehousing &amp; NoSQL</div>
+
+<details id="s8">
+<summary>
+  <span class="sb dw">Sessions 8–9</span>
+  <div class="sm"><div>Data Warehousing Concepts</div><div class="ss">OLTP vs OLAP · Star/Snowflake Schema · ETL Pipeline · Columnar Storage · 4T+2L+2SL</div></div>
+  <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+</summary>
+<div class="bd">
+
+<div class="an"><b>🏪 Supermarket vs Research Analyst Analogy</b>
+A supermarket cashier (OLTP) processes one transaction at a time — scan item, take payment, print receipt. Fast, one customer, current stock. A market research analyst (OLAP) wants to answer: "Which product category grew fastest across all 500 stores over the last 5 years?" They don't need real-time stock — they need years of history, aggregated. These two needs require completely different database designs.</div>
+
+<div class="dl">OLTP vs OLAP — Deep Comparison</div>
+<div class="tw"><table>
+  <thead><tr><th>Aspect</th><th>OLTP — Operational</th><th>OLAP — Analytical</th></tr></thead>
+  <tbody>
+    <tr><td>Full form</td><td>Online Transaction Processing</td><td>Online Analytical Processing</td></tr>
+    <tr><td>Purpose</td><td>Run daily business operations</td><td>Support business intelligence &amp; decisions</td></tr>
+    <tr><td>Query type</td><td>Simple INSERT/UPDATE/DELETE + simple SELECTs</td><td>Complex multi-table JOINs, aggregations, GROUP BY</td></tr>
+    <tr><td>Data age</td><td>Current (minutes old)</td><td>Historical (months to years)</td></tr>
+    <tr><td>Data granularity</td><td>Individual transactions</td><td>Aggregated summaries</td></tr>
+    <tr><td>Schema design</td><td>Highly normalized (3NF)</td><td>Denormalized (Star / Snowflake schema)</td></tr>
+    <tr><td>DB size</td><td>Gigabytes</td><td>Terabytes to Petabytes</td></tr>
+    <tr><td>Response time</td><td>Milliseconds</td><td>Seconds to minutes (complex queries)</td></tr>
+    <tr><td>Concurrent users</td><td>Thousands</td><td>Tens to hundreds (analysts)</td></tr>
+    <tr><td>Example systems</td><td>Banking apps, e-commerce checkout, hospital records</td><td>Amazon Redshift, Google BigQuery, Snowflake, Hive</td></tr>
+  </tbody>
+</table></div>
+
+<div class="dl">Data Warehouse Architecture</div>
+<p class="explain">A Data Warehouse is a central repository that consolidates data from multiple OLTP systems (ERP, CRM, POS) into one place for analysis. Data is cleaned, transformed, and loaded through an ETL process.</p>
+
+<div class="flow">
+  <span class="fn2 c">ERP (SAP)</span><span class="arr">→</span>
+  <span class="fn2 c">CRM (Salesforce)</span><span class="arr">→</span>
+  <span class="fn2 c">POS Systems</span><span class="arr">→</span>
+  <span class="fn2 a">ETL (Transform &amp; Clean)</span><span class="arr">→</span>
+  <span class="fn2 t">Data Warehouse</span><span class="arr">→</span>
+  <span class="fn2 p">BI Tools (Tableau)</span>
+</div>
+
+<div class="dl">Star Schema — The Most Common Warehouse Design</div>
+<p class="explain">Named because the diagram looks like a star — one central <strong>Fact table</strong> surrounded by <strong>Dimension tables</strong>. The Fact table contains measurable numbers (sales amount, quantity). Dimension tables provide context (who, what, when, where).</p>
+
+<pre><span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  STAR SCHEMA for E-commerce Sales Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  FACT_Sales (the star's centre)
+  ├── sales_id (PK)
+  ├── amount         ← measure
+  ├── quantity       ← measure
+  ├── discount       ← measure
+  ├── date_id        → DIM_Date
+  ├── product_id     → DIM_Product
+  ├── customer_id    → DIM_Customer
+  ├── store_id       → DIM_Store
+  └── promotion_id   → DIM_Promotion
+
+  DIM_Date          DIM_Product       DIM_Customer
+  ├── date_id (PK)  ├── product_id    ├── customer_id
+  ├── day           ├── name          ├── name
+  ├── month         ├── category      ├── city
+  ├── quarter       ├── brand         ├── segment
+  └── year          └── price         └── age_group</span>
+
+<span class="cm">-- Sample analytical query on Star Schema</span>
+<span class="kw">SELECT</span>
+  d.year,
+  d.quarter,
+  p.category,
+  c.city,
+  <span class="fn">SUM</span>(f.amount) <span class="kw">AS</span> total_revenue,
+  <span class="fn">COUNT</span>(f.sales_id) <span class="kw">AS</span> num_transactions,
+  <span class="fn">AVG</span>(f.amount) <span class="kw">AS</span> avg_order_value
+<span class="kw">FROM</span>  FACT_Sales f
+<span class="kw">JOIN</span>  DIM_Date d     <span class="kw">ON</span> f.date_id = d.date_id
+<span class="kw">JOIN</span>  DIM_Product p  <span class="kw">ON</span> f.product_id = p.product_id
+<span class="kw">JOIN</span>  DIM_Customer c <span class="kw">ON</span> f.customer_id = c.customer_id
+<span class="kw">WHERE</span> d.year <span class="kw">IN</span> (<span class="nm">2023</span>, <span class="nm">2024</span>)
+<span class="kw">GROUP BY</span> d.year, d.quarter, p.category, c.city
+<span class="kw">ORDER BY</span> total_revenue <span class="kw">DESC</span>;</pre>
+
+<div class="tip"><b>🌟 Star vs Snowflake Schema</b><br>
+<strong>Star Schema:</strong> Dimension tables are flat (denormalized). Fast query performance, simple joins. Recommended for most cases.<br>
+<strong>Snowflake Schema:</strong> Dimension tables are normalized (split further). Example: DIM_Product → DIM_Category → DIM_Department. Less redundancy but more complex joins, slightly slower queries.<br>
+<strong>Rule of thumb:</strong> Use Star for performance (OLAP). Use Snowflake when storage is critical or dimensions are very large.</div>
+
+<div class="dl">ETL — Extract, Transform, Load in Detail</div>
+<div class="cg">
+  <div class="cc"><h4>📤 Extract</h4><p>Pull data from sources: SQL databases (JDBC), flat files (CSV/Excel), APIs (JSON/XML), mainframes. Challenge: different formats, encodings, time zones. Tools: Informatica, Talend, Apache Sqoop.</p></div>
+  <div class="cc"><h4>⚙️ Transform</h4><p>Clean and reshape: handle missing values, standardize formats (dates, phone numbers, addresses), remove duplicates, apply business rules, create surrogate keys, aggregate data. Most complex step — 70% of ETL effort.</p></div>
+  <div class="cc"><h4>📥 Load</h4><p>Write to warehouse. Two strategies: <strong>Full Load</strong> (reload everything — simple but slow), <strong>Incremental Load</strong> (only new/changed records — fast but complex). Bulk insert tools used for performance.</p></div>
+</div>
+
+<div class="dl">OLAP Operations in Detail</div>
+<div class="tw"><table>
+  <thead><tr><th>Operation</th><th>What it does</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td>Roll-up (aggregation)</td><td>Move from detail level to summary level. Reduces data.</td><td>Daily sales → Monthly sales → Annual sales</td></tr>
+    <tr><td>Drill-down (disaggregation)</td><td>Move from summary to detail. Increases data.</td><td>Annual total → Q3 total → September total → Week 3</td></tr>
+    <tr><td>Slice</td><td>Select one value for ONE dimension. Reduces cube to 2D.</td><td>"Show all data for year 2024 only" — year dimension fixed</td></tr>
+    <tr><td>Dice</td><td>Select ranges on MULTIPLE dimensions. Sub-cube.</td><td>"2023–2024, Western region, Electronics &amp; Appliances"</td></tr>
+    <tr><td>Pivot (Rotate)</td><td>Swap the row and column axes. Changes perspective.</td><td>Products on rows &amp; months on columns → swap them</td></tr>
+  </tbody>
+</table></div>
+
+</div>
+</details>
+
+<!-- ══════════════ SESSION 10 ══════════════ -->
+<details id="s10">
+<summary>
+  <span class="sb nosql">Session 10</span>
+  <div class="sm"><div>Introduction to NoSQL</div><div class="ss">4 Types · CAP Theorem · When SQL fails · Storage Architectures · 2T</div></div>
+  <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+</summary>
+<div class="bd">
+
+<div class="an"><b>🏨 Hotel vs House Analogy</b>
+A <strong>house (SQL)</strong> has a fixed floor plan. You can't add a new room overnight. Every room is the same shape. Works perfectly for a family, but when 10,000 tourists arrive? A <strong>hotel (NoSQL)</strong> can quickly add more floors (horizontal scaling), has different room types (flexible schema), and different room sizes for different needs. NoSQL doesn't mean "no structure" — it means "Not Only SQL." You might use both.</div>
+
+<div class="dl">Why did NoSQL emerge? — Limitations of RDBMS at Scale</div>
+<div class="cg">
+  <div class="cc"><h4>📈 Scale Problem</h4><p>Facebook, Google, Amazon have billions of records. Traditional RDBMS scales vertically (bigger machine). But you can't keep buying bigger machines forever. NoSQL scales horizontally (more machines).</p></div>
+  <div class="cc"><h4>🔄 Schema Flexibility</h4><p>Product catalogs vary wildly — a book has ISBN, a shirt has size/color. In SQL, you'd need 50 nullable columns or complex joins. In MongoDB, each document just has the fields it needs.</p></div>
+  <div class="cc"><h4>⚡ Speed at Scale</h4><p>Redis answers a cache lookup in under 1ms. Cassandra handles 1 million writes/second. These are impossible with a single SQL server under heavy load.</p></div>
+  <div class="cc"><h4>📊 Unstructured Data</h4><p>JSON from APIs, sensor readings, user activity logs, social media posts — don't fit neatly into rows and columns. Document and key-value stores are far more natural.</p></div>
+</div>
+
+<div class="dl">4 Types of NoSQL Databases</div>
+<div class="tw"><table>
+  <thead><tr><th>Type</th><th>Data Model</th><th>Real-world use case</th><th>Examples</th><th>Key strength</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Document Store</strong></td><td>JSON/BSON documents, each can have different fields</td><td>Product catalogs, user profiles, content management systems, e-commerce</td><td>MongoDB, CouchDB, Firestore</td><td>Flexible schema, rich queries on nested data</td></tr>
+    <tr><td><strong>Key-Value Store</strong></td><td>Simple dictionary: key → value (value is opaque blob)</td><td>Session storage, user carts, rate limiting, real-time leaderboards, pub/sub messaging</td><td>Redis, DynamoDB, Riak, Memcached</td><td>Fastest possible lookup (O(1)), massive scale</td></tr>
+    <tr><td><strong>Column-Oriented (Wide Column)</strong></td><td>Rows identified by row key, columns grouped in "column families"</td><td>IoT time-series, activity feeds, recommendation engines, write-heavy analytics</td><td>Cassandra, HBase, Google Bigtable</td><td>Extraordinary write throughput, linear scaling</td></tr>
+    <tr><td><strong>Graph Database</strong></td><td>Nodes (entities) connected by edges (relationships)</td><td>Social networks, fraud detection, recommendation engines, knowledge graphs</td><td>Neo4j, Amazon Neptune, ArangoDB</td><td>Traversing relationships is very fast; SQL JOIN chains can't match this</td></tr>
+  </tbody>
+</table></div>
+
+<div class="dl">CAP Theorem — Every Distributed System's Dilemma</div>
+<p class="explain">The <strong>CAP Theorem</strong> (Brewer's Theorem, 2000) states that in a distributed database system, you can guarantee at most <strong>2 out of 3</strong> properties simultaneously:</p>
+
+<div class="three">
+  <div class="cc"><h4>🔵 Consistency (C)</h4><p>Every read receives the most recent write. All nodes show the same data at the same time. If node A writes, node B immediately sees that write.</p></div>
+  <div class="cc"><h4>🟢 Availability (A)</h4><p>Every request receives a response (not necessarily the most recent data). The system is always up and returns something, even if a node is down.</p></div>
+  <div class="cc"><h4>🟡 Partition Tolerance (P)</h4><p>The system continues to work even if network communication breaks between nodes (network partition). Essential for any distributed system — network failures WILL happen.</div>
+</div>
+
+<div class="tip"><b>💡 CAP in Practice — Which databases choose what?</b><br>
+Since P (partition tolerance) is unavoidable in distributed systems, the real choice is C vs A:<br>
+<strong>CP (Consistency + Partition Tolerance):</strong> MongoDB (default), HBase, Zookeeper — safe for banking, financial data.<br>
+<strong>AP (Availability + Partition Tolerance):</strong> Cassandra, CouchDB, DynamoDB — safe for social media, shopping carts where slight staleness is OK.<br>
+<strong>CA (no partition tolerance):</strong> Traditional RDBMS on a single server — no distribution.</div>
+
+</div>
+</details>
+
+<!-- ══════════════ SESSION 11 ══════════════ -->
+<details id="s11">
+<summary>
+  <span class="sb nosql">Session 11</span>
+  <div class="sm"><div>Practical NoSQL Design</div><div class="ss">Embedding vs Referencing · Schema Evolution · Column-Oriented Design · 2T+2L+2SL</div></div>
+  <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+</summary>
+<div class="bd">
+
+<div class="an"><b>📁 Filing System Analogy</b>
+<strong>Embedding</strong> = stapling related documents together in one folder. Open one folder, everything is there. Fast but the folder gets thick. <strong>Referencing</strong> = writing "see folder 37B" on a sticky note instead of photocopying it. Keeps folders thin, but you have to walk to folder 37B to get the full picture.</div>
+
+<div class="dl">Embedding (Denormalized Documents)</div>
+<p class="explain">Embed related data directly inside the parent document. Best when data is: <strong>always accessed together</strong>, <strong>doesn't change often</strong>, <strong>has a 1-to-few relationship</strong>, or <strong>doesn't need independent queries</strong>.</p>
+
+<pre><span class="cm">-- Example: Blog post with embedded comments</span>
+{
+  <span class="str">"_id"</span>: <span class="str">"post_001"</span>,
+  <span class="str">"title"</span>: <span class="str">"Introduction to MongoDB"</span>,
+  <span class="str">"author"</span>: <span class="str">"Priya Sharma"</span>,
+  <span class="str">"published"</span>: <span class="str">"2024-03-15"</span>,
+  <span class="str">"tags"</span>: [<span class="str">"NoSQL"</span>, <span class="str">"MongoDB"</span>, <span class="str">"Database"</span>],
+  <span class="str">"comments"</span>: [                    <span class="cm">← embedded array of sub-documents</span>
+    {
+      <span class="str">"user"</span>: <span class="str">"Rahul"</span>,
+      <span class="str">"text"</span>: <span class="str">"Great article!"</span>,
+      <span class="str">"date"</span>: <span class="str">"2024-03-16"</span>,
+      <span class="str">"likes"</span>: <span class="nm">5</span>
+    },
+    {
+      <span class="str">"user"</span>: <span class="str">"Anita"</span>,
+      <span class="str">"text"</span>: <span class="str">"Very helpful for my exam prep"</span>,
+      <span class="str">"date"</span>: <span class="str">"2024-03-17"</span>,
+      <span class="str">"likes"</span>: <span class="nm">3</span>
+    }
+  ]
+}
+<span class="cm">-- ✅ One query fetches post + all comments
+-- ❌ If comments grow to 10,000+, document becomes huge (16MB limit in MongoDB)</span></pre>
+
+<div class="dl">Referencing (Normalized Documents)</div>
+<p class="explain">Store related data in separate collections and reference by ID. Best when: data is accessed <strong>independently</strong>, there's a <strong>1-to-many or many-to-many</strong> relationship, or the related data is <strong>frequently updated</strong>.</p>
+
+<pre><span class="cm">-- User document</span>
+{ <span class="str">"_id"</span>: <span class="str">"user_101"</span>, <span class="str">"name"</span>: <span class="str">"Priya"</span>, <span class="str">"email"</span>: <span class="str">"priya@example.com"</span> }
+
+<span class="cm">-- Order documents (separate collection, reference user_id)</span>
+{ <span class="str">"_id"</span>: <span class="str">"order_501"</span>, <span class="str">"user_id"</span>: <span class="str">"user_101"</span>, <span class="str">"item"</span>: <span class="str">"Laptop"</span>, <span class="str">"amount"</span>: <span class="nm">65000</span> }
+{ <span class="str">"_id"</span>: <span class="str">"order_502"</span>, <span class="str">"user_id"</span>: <span class="str">"user_101"</span>, <span class="str">"item"</span>: <span class="str">"Mouse"</span>,  <span class="str">"amount"</span>: <span class="nm">800</span>   }
+
+<span class="cm">-- Query with $lookup (like SQL JOIN)</span>
+db.orders.<span class="fn">aggregate</span>([
+  { <span class="kw">$lookup</span>: {
+      from:         <span class="str">"users"</span>,
+      localField:   <span class="str">"user_id"</span>,
+      foreignField: <span class="str">"_id"</span>,
+      as:           <span class="str">"user_details"</span>
+  }}
+])
+<span class="cm">-- ✅ Orders and users can be queried and updated independently
+-- ❌ Requires multiple queries (or $lookup which is slower than embedded)</span></pre>
+
+<div class="dl">Schema Evolution — Adding Fields Without Downtime</div>
+<p class="explain">One of NoSQL's greatest advantages over SQL: you can add new fields to a collection without ALTER TABLE, without downtime, and without breaking existing applications. Old documents simply don't have the new field.</p>
+
+<pre><span class="cm">-- Scenario: You need to add 'loyalty_points' to all users
+-- In SQL: ALTER TABLE users ADD loyalty_points INT DEFAULT 0; (might lock table)
+-- In MongoDB: Just start inserting new docs with the field!</span>
+
+<span class="cm">-- Backfill existing docs that don't have the field:</span>
+db.users.<span class="fn">updateMany</span>(
+  { loyalty_points: { <span class="kw">$exists</span>: <span class="kw">false</span> } },   <span class="cm">-- where field doesn't exist</span>
+  { <span class="kw">$set</span>: { loyalty_points: <span class="nm">0</span> } }             <span class="cm">-- add it with default 0</span>
+);
+
+<span class="cm">-- Rename a field across all documents:</span>
+db.users.<span class="fn">updateMany</span>({}, { <span class="kw">$rename</span>: { <span class="str">"phone"</span>: <span class="str">"mobile_number"</span> } });
+
+<span class="cm">-- Remove a field from all documents:</span>
+db.users.<span class="fn">updateMany</span>({}, { <span class="kw">$unset</span>: { <span class="str">"old_field"</span>: <span class="str">""</span> } });</pre>
+
+</div>
+</details>
+
+<!-- ══════════════ SESSION 12 ══════════════ -->
+<div class="gl">MongoDB</div>
+
+<details id="s12">
+<summary>
+  <span class="sb nosql">Session 12</span>
+  <div class="sm"><div>MongoDB — CRUD Operations in Depth</div><div class="ss">Database setup · insertOne/Many · find with operators · update operators · deleteOne/Many · 2T+4L+4SL</div></div>
+  <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+</summary>
+<div class="bd">
+
+<div class="an"><b>📦 Warehouse of Diverse Boxes</b>
+Imagine a warehouse full of cardboard boxes (documents). Each box can contain completely different items — one box has books, another has electronics, another has mixed stuff. MongoDB (the warehouse manager) doesn't open each box to check — it just stores and retrieves efficiently. The boxes are grouped by type into "aisles" (collections). You can add a new type of box anytime without redesigning the warehouse.</div>
+
+<div class="dl">MongoDB Data Model vs SQL — Side by Side</div>
+<div class="tw"><table>
+  <thead><tr><th>SQL Concept</th><th>MongoDB Equivalent</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>Database</td><td>Database</td><td>Same concept, different internal storage</td></tr>
+    <tr><td>Table</td><td>Collection</td><td>Collections don't enforce schema</td></tr>
+    <tr><td>Row / Record</td><td>Document (JSON / BSON)</td><td>Each doc can have different fields</td></tr>
+    <tr><td>Column</td><td>Field</td><td>Fields exist only if set on each doc</td></tr>
+    <tr><td>Primary Key (auto)</td><td>_id (ObjectId)</td><td>Auto-generated 12-byte unique ID</td></tr>
+    <tr><td>Index</td><td>Index</td><td>Same concept, different syntax</td></tr>
+    <tr><td>JOIN</td><td>$lookup (or embedded data)</td><td>Prefer embedding over $lookup for performance</td></tr>
+    <tr><td>GROUP BY</td><td>$group in aggregation pipeline</td><td>More powerful — can group on complex expressions</td></tr>
+    <tr><td>WHERE</td><td>Query filter document</td><td><code>{field: {$operator: value}}</code></td></tr>
+    <tr><td>NULL</td><td>null or missing field</td><td>Absence of field ≠ null value in Mongo</td></tr>
+  </tbody>
+</table></div>
+
+<div class="dl">CREATE — Database Setup + Inserting Documents</div>
+<pre><span class="cm">-- MongoDB creates DB when you first use it (no CREATE DATABASE command)</span>
+<span class="kw">use</span> restaurant_db          <span class="cm">-- switch to (or create) database</span>
+
+<span class="cm">-- Insert a single document</span>
+db.restaurants.<span class="fn">insertOne</span>({
+  name:     <span class="str">"The Spice Route"</span>,
+  borough:  <span class="str">"Manhattan"</span>,
+  cuisine:  <span class="str">"Indian"</span>,
+  address: {
+    street: <span class="str">"74 W 47th St"</span>,
+    zipcode: <span class="str">"10036"</span>,
+    coord: [-<span class="nm">73.9894</span>, <span class="nm">40.7594</span>]   <span class="cm">← nested document</span>
+  },
+  grades: [                           <span class="cm">← array of sub-documents</span>
+    { grade: <span class="str">"A"</span>, score: <span class="nm">12</span>, date: <span class="kw">new</span> <span class="fn">Date</span>(<span class="str">"2024-01-15"</span>) },
+    { grade: <span class="str">"B"</span>, score: <span class="nm">27</span>, date: <span class="kw">new</span> <span class="fn">Date</span>(<span class="str">"2023-06-20"</span>) }
+  ]
+})
+
+<span class="cm">-- Insert multiple documents at once</span>
+db.restaurants.<span class="fn">insertMany</span>([
+  { name: <span class="str">"Mumbai Magic"</span>, borough: <span class="str">"Brooklyn"</span>, cuisine: <span class="str">"Indian"</span> },
+  { name: <span class="str">"Beijing Bites"</span>, borough: <span class="str">"Queens"</span>,   cuisine: <span class="str">"Chinese"</span> },
+  { name: <span class="str">"Pasta Palace"</span>, borough: <span class="str">"Bronx"</span>,    cuisine: <span class="str">"Italian"</span> }
+])</pre>
+
+<div class="dl">READ — Querying Documents (with all operators)</div>
+<pre><span class="cm">-- Basic queries</span>
+db.restaurants.<span class="fn">find</span>({})                          <span class="cm">-- all documents</span>
+db.restaurants.<span class="fn">find</span>({ borough: <span class="str">"Manhattan"</span> })   <span class="cm">-- exact match</span>
+db.restaurants.<span class="fn">findOne</span>({ cuisine: <span class="str">"Indian"</span> })   <span class="cm">-- only first match</span>
+
+<span class="cm">-- Comparison operators</span>
+db.restaurants.<span class="fn">find</span>({ <span class="str">"grades.score"</span>: { <span class="kw">$gt</span>:  <span class="nm">90</span> } }) <span class="cm">-- score > 90</span>
+db.restaurants.<span class="fn">find</span>({ <span class="str">"grades.score"</span>: { <span class="kw">$gte</span>: <span class="nm">70</span>, <span class="kw">$lt</span>: <span class="nm">100</span> } })
+
+<span class="cm">-- From syllabus lab: restaurants NOT American, score > 70, longitude < -65.75</span>
+db.restaurants.<span class="fn">find</span>({
+  cuisine: { <span class="kw">$ne</span>: <span class="str">"American"</span> },
+  <span class="str">"grades.score"</span>: { <span class="kw">$gt</span>: <span class="nm">70</span> },
+  <span class="str">"address.coord.0"</span>: { <span class="kw">$lt</span>: -<span class="nm">65.754168</span> }
+})
+
+<span class="cm">-- NOT American, grade=A, NOT Brooklyn, sort by cuisine desc</span>
+db.restaurants.<span class="fn">find</span>({
+  cuisine: { <span class="kw">$ne</span>: <span class="str">"American"</span> },
+  <span class="str">"grades.grade"</span>: <span class="str">"A"</span>,
+  borough: { <span class="kw">$ne</span>: <span class="str">"Brooklyn"</span> }
+}).<span class="fn">sort</span>({ cuisine: -<span class="nm">1</span> })
+
+<span class="cm">-- Logical operators</span>
+db.restaurants.<span class="fn">find</span>({
+  <span class="kw">$or</span>: [
+    { cuisine: <span class="str">"Indian"</span> },
+    { cuisine: <span class="str">"Chinese"</span> }
+  ]
+})
+db.restaurants.<span class="fn">find</span>({
+  <span class="kw">$and</span>: [
+    { borough: <span class="str">"Manhattan"</span> },
+    { <span class="str">"grades.score"</span>: { <span class="kw">$gt</span>: <span class="nm">80</span> } }
+  ]
+})
+
+<span class="cm">-- Projection: specify which fields to return (1=include, 0=exclude)</span>
+db.restaurants.<span class="fn">find</span>(
+  { borough: <span class="str">"Manhattan"</span> },
+  { name: <span class="nm">1</span>, cuisine: <span class="nm">1</span>, _id: <span class="nm">0</span> }   <span class="cm">-- show name+cuisine, hide _id</span>
+)
+
+<span class="cm">-- Sort, skip, limit (for pagination)</span>
+db.restaurants.<span class="fn">find</span>({})
+  .<span class="fn">sort</span>({ name: <span class="nm">1</span> })    <span class="cm">-- ascending by name</span>
+  .<span class="fn">skip</span>(<span class="nm">20</span>)             <span class="cm">-- skip first 20 (page 2)</span>
+  .<span class="fn">limit</span>(<span class="nm">10</span>)            <span class="cm">-- return 10 results</span></pre>
+
+<div class="dl">UPDATE — Modifying Documents (all update operators)</div>
+<pre><span class="cm">-- $set: add or change specific fields</span>
+db.restaurants.<span class="fn">updateOne</span>(
+  { name: <span class="str">"The Spice Route"</span> },
+  { <span class="kw">$set</span>: { is_open: <span class="kw">true</span>, rating: <span class="nm">4.5</span> } }
+)
+
+<span class="cm">-- $inc: increment a number</span>
+db.restaurants.<span class="fn">updateMany</span>(
+  { cuisine: <span class="str">"Indian"</span> },
+  { <span class="kw">$inc</span>: { review_count: <span class="nm">1</span> } }   <span class="cm">-- add 1 to review_count</span>
+)
+
+<span class="cm">-- $push: add element to an array</span>
+db.restaurants.<span class="fn">updateOne</span>(
+  { name: <span class="str">"The Spice Route"</span> },
+  { <span class="kw">$push</span>: { grades: { grade: <span class="str">"A"</span>, score: <span class="nm">15</span>, date: <span class="kw">new</span> <span class="fn">Date</span>() } } }
+)
+
+<span class="cm">-- Upsert: update if exists, insert if not</span>
+db.restaurants.<span class="fn">updateOne</span>(
+  { name: <span class="str">"New Restaurant"</span> },
+  { <span class="kw">$set</span>: { cuisine: <span class="str">"Fusion"</span>, borough: <span class="str">"Staten Island"</span> } },
+  { upsert: <span class="kw">true</span> }            <span class="cm">-- creates new doc if not found</span>
+)</pre>
+
+</div>
+</details>
+
+<!-- ══════════════ SESSION 13–14 ══════════════ -->
+<details id="s13">
+<summary>
+  <span class="sb nosql">Sessions 13–14</span>
+  <div class="sm"><div>MongoDB Indexing — How and Why</div><div class="ss">IXSCAN vs COLLSCAN · Index types · Compound index prefix rule · explain() · 4T+2L+2SL</div></div>
+  <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+</summary>
+<div class="bd">
+
+<div class="an"><b>📚 Book Index Analogy — Detailed</b>
+Imagine searching for the word "Normalization" in a 600-page DBMS textbook. Without index = start at page 1, read every page (very slow). With index = go to index section, find "Normalization → pages 45, 89, 234" (3 page turns). MongoDB works identically. A COLLSCAN (collection scan) reads every document. An IXSCAN uses the index to jump directly to matching documents. On 10 million records, the difference is 30 seconds vs 5 milliseconds.</div>
+
+<div class="dl">Why Are Indexes Critical?</div>
+<p class="explain">Without indexes, every query performs a <strong>collection scan (COLLSCAN)</strong> — examining every single document. As your collection grows to millions of documents, this becomes unbearably slow. Indexes create a separate B-tree data structure that allows O(log n) lookup instead of O(n) scan.</p>
+
+<div class="warn"><b>⚠️ Index Trade-offs</b>
+<strong>Reads:</strong> Dramatically faster — often 1000x+ speedup on large collections.<br>
+<strong>Writes:</strong> Slightly slower — every INSERT, UPDATE, DELETE must also update all relevant indexes.<br>
+<strong>Storage:</strong> Each index takes additional disk space.<br>
+Rule: Create indexes for columns that appear in WHERE, JOIN, ORDER BY, or $group conditions that run frequently.</div>
+
+<pre><span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Creating Different Types of Indexes
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+
+<span class="cm">-- 1. Single field index (most common)</span>
+db.restaurants.<span class="fn">createIndex</span>({ borough: <span class="nm">1</span> })  <span class="cm">-- ascending</span>
+db.restaurants.<span class="fn">createIndex</span>({ rating: -<span class="nm">1</span> })  <span class="cm">-- descending</span>
+
+<span class="cm">-- 2. Compound index (multiple fields together)</span>
+db.restaurants.<span class="fn">createIndex</span>({ borough: <span class="nm">1</span>, cuisine: <span class="nm">1</span>, name: <span class="nm">1</span> })
+<span class="cm">-- This compound index helps queries on:
+--   (borough)                ← yes, prefix
+--   (borough, cuisine)       ← yes, prefix
+--   (borough, cuisine, name) ← yes, full index
+--   (cuisine)                ← NO! (no borough prefix)
+--   (cuisine, name)          ← NO!</span>
+
+<span class="cm">-- 3. Unique index — prevents duplicates</span>
+db.users.<span class="fn">createIndex</span>({ email: <span class="nm">1</span> }, { unique: <span class="kw">true</span> })
+
+<span class="cm">-- 4. Sparse index — only indexes documents WHERE field exists</span>
+db.users.<span class="fn">createIndex</span>({ phone: <span class="nm">1</span> }, { sparse: <span class="kw">true</span> })
+<span class="cm">-- Documents without 'phone' field are NOT in this index
+-- Useful when field is optional (avoid indexing many nulls)</span>
+
+<span class="cm">-- 5. Partial index — only index subset matching a condition</span>
+db.restaurants.<span class="fn">createIndex</span>(
+  { borough: <span class="nm">1</span> },
+  { partialFilterExpression: { rating: { <span class="kw">$gt</span>: <span class="nm">4.0</span> } } }
+)
+<span class="cm">-- Only indexes restaurants with rating > 4.0
+-- Much smaller index, much faster for queries on popular restaurants</span>
+
+<span class="cm">-- 6. Text index — for full-text search</span>
+db.articles.<span class="fn">createIndex</span>({ content: <span class="str">"text"</span>, title: <span class="str">"text"</span> })
+db.articles.<span class="fn">find</span>({ <span class="kw">$text</span>: { <span class="kw">$search</span>: <span class="str">"MongoDB indexing performance"</span> } })
+
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Analyzing Query Performance with explain()
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+db.restaurants.<span class="fn">find</span>(
+  { borough: <span class="str">"Manhattan"</span>, cuisine: <span class="str">"Indian"</span> }
+).<span class="fn">explain</span>(<span class="str">"executionStats"</span>)
+
+<span class="cm">-- Key things to look for in explain() output:
+-- winningPlan.stage: "IXSCAN" = ✅ using index, "COLLSCAN" = ❌ full scan
+-- totalDocsExamined: should be close to nReturned (ideally equal)
+-- executionTimeMillis: how long in milliseconds
+-- nReturned: how many docs matched</span>
+
+<span class="cm">-- Index management</span>
+db.restaurants.<span class="fn">getIndexes</span>()          <span class="cm">-- list all indexes</span>
+db.restaurants.<span class="fn">dropIndex</span>(<span class="str">"borough_1"</span>) <span class="cm">-- drop specific index by name</span>
+db.restaurants.<span class="fn">dropIndexes</span>()          <span class="cm">-- drop all except _id</span></pre>
+
+</div>
+</details>
+
+<!-- ══════════════ SESSION 15 ══════════════ -->
+<details id="s15">
+<summary>
+  <span class="sb nosql">Session 15</span>
+  <div class="sm"><div>MongoDB — Aggregation Pipeline</div><div class="ss">All stages: $match·$group·$project·$sort·$lookup·$unwind·$facet · 2T+4L+2SL</div></div>
+  <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+</summary>
+<div class="bd">
+
+<div class="an"><b>🏭 Car Manufacturing Assembly Line</b>
+A car assembly line has multiple stations. Raw metal enters station 1 (cut into parts). Station 2 paints them. Station 3 assembles. Station 4 installs electronics. Station 5 does quality check. Each station does ONE job, passes to the next. MongoDB's aggregation pipeline works identically — each stage transforms documents and passes results downstream. The power comes from chaining these stages.</div>
+
+<div class="dl">All Aggregation Pipeline Stages</div>
+<div class="tw"><table>
+  <thead><tr><th>Stage</th><th>Purpose</th><th>SQL Equivalent</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td>$match</td><td>Filter documents (always put early to reduce workload)</td><td>WHERE</td><td><code>{$match: {borough:"Manhattan"}}</code></td></tr>
+    <tr><td>$group</td><td>Group documents + compute aggregate values</td><td>GROUP BY</td><td><code>{$group: {_id:"$cuisine", count:{$sum:1}}}</code></td></tr>
+    <tr><td>$project</td><td>Include/exclude/rename/compute new fields</td><td>SELECT col AS alias</td><td><code>{$project: {name:1, price:1, _id:0}}</code></td></tr>
+    <tr><td>$sort</td><td>Sort documents by field(s)</td><td>ORDER BY</td><td><code>{$sort: {count:-1}}</code></td></tr>
+    <tr><td>$limit</td><td>Keep only first N documents</td><td>LIMIT</td><td><code>{$limit: 10}</code></td></tr>
+    <tr><td>$skip</td><td>Skip first N documents (pagination)</td><td>OFFSET</td><td><code>{$skip: 20}</code></td></tr>
+    <tr><td>$unwind</td><td>Deconstruct array — one doc per array element</td><td>(no SQL equivalent)</td><td><code>{$unwind: "$grades"}</code></td></tr>
+    <tr><td>$lookup</td><td>Left outer join with another collection</td><td>LEFT JOIN</td><td>See example below</td></tr>
+    <tr><td>$addFields</td><td>Add computed fields to documents</td><td>SELECT ..., expression AS col</td><td><code>{$addFields: {total: {$multiply:["$qty","$price"]}}}</code></td></tr>
+    <tr><td>$count</td><td>Count documents in pipeline</td><td>COUNT(*)</td><td><code>{$count: "total_restaurants"}</code></td></tr>
+    <tr><td>$out / $merge</td><td>Write pipeline results to a collection</td><td>INSERT INTO ... SELECT</td><td><code>{$out: "summary_collection"}</code></td></tr>
+  </tbody>
+</table></div>
+
+<pre><span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Complete aggregation pipeline example
+  From syllabus: restaurants with score > 90
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+db.restaurants.<span class="fn">aggregate</span>([
+  <span class="cm">// Stage 1: filter to Manhattan</span>
+  { <span class="kw">$match</span>: { borough: <span class="str">"Manhattan"</span> } },
+
+  <span class="cm">// Stage 2: explode grades array — 1 doc per grade</span>
+  { <span class="kw">$unwind</span>: <span class="str">"$grades"</span> },
+
+  <span class="cm">// Stage 3: only keep grades with score > 90</span>
+  { <span class="kw">$match</span>: { <span class="str">"grades.score"</span>: { <span class="kw">$gt</span>: <span class="nm">90</span> } } },
+
+  <span class="cm">// Stage 4: group by cuisine, compute stats</span>
+  { <span class="kw">$group</span>: {
+      _id:       <span class="str">"$cuisine"</span>,
+      avgScore:  { <span class="kw">$avg</span>:  <span class="str">"$grades.score"</span> },
+      maxScore:  { <span class="kw">$max</span>:  <span class="str">"$grades.score"</span> },
+      restCount: { <span class="kw">$addToSet</span>: <span class="str">"$name"</span> },  <span class="cm">// unique restaurant names</span>
+      total:     { <span class="kw">$sum</span>: <span class="nm">1</span> }
+  }},
+
+  <span class="cm">// Stage 5: add a field counting unique restaurants</span>
+  { <span class="kw">$addFields</span>: {
+      uniqueRestaurants: { <span class="kw">$size</span>: <span class="str">"$restCount"</span> }
+  }},
+
+  <span class="cm">// Stage 6: sort by average score descending</span>
+  { <span class="kw">$sort</span>: { avgScore: -<span class="nm">1</span> } },
+
+  <span class="cm">// Stage 7: only top 5 cuisines</span>
+  { <span class="kw">$limit</span>: <span class="nm">5</span> },
+
+  <span class="cm">// Stage 8: clean up output</span>
+  { <span class="kw">$project</span>: {
+      cuisine:           <span class="str">"$_id"</span>,
+      avgScore:          { <span class="kw">$round</span>: [<span class="str">"$avgScore"</span>, <span class="nm">2</span>] },
+      uniqueRestaurants: <span class="nm">1</span>,
+      _id:               <span class="nm">0</span>
+  }}
+])
+
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  $lookup — Join two collections
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+db.orders.<span class="fn">aggregate</span>([
+  { <span class="kw">$lookup</span>: {
+      from:         <span class="str">"customers"</span>,  <span class="cm">// collection to join</span>
+      localField:   <span class="str">"customer_id"</span>,<span class="cm">// field in orders</span>
+      foreignField: <span class="str">"_id"</span>,         <span class="cm">// field in customers</span>
+      as:           <span class="str">"customer_info"</span><span class="cm">// name for joined array</span>
+  }},
+  { <span class="kw">$unwind</span>: <span class="str">"$customer_info"</span> },  <span class="cm">// flatten the joined array</span>
+  { <span class="kw">$project</span>: {
+      order_date:    <span class="nm">1</span>,
+      amount:        <span class="nm">1</span>,
+      <span class="str">"customer_info.name"</span>: <span class="nm">1</span>,
+      <span class="str">"customer_info.city"</span>: <span class="nm">1</span>
+  }}
+])</pre>
+
+</div>
+</details>
+
+<!-- ══════════════ SESSION 16–17 ══════════════ -->
+<div class="gl">XML, OLAP &amp; Cassandra</div>
+
+<details id="s16">
+<summary>
+  <span class="sb arch">Sessions 16–17</span>
+  <div class="sm"><div>XML Data Model, Querying &amp; OLTP vs OLAP Tools</div><div class="ss">XML structure · XPath · XQuery · XSLT · OLAP cube · 4T+4L+2SL</div></div>
+  <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+</summary>
+<div class="bd">
+
+<div class="an"><b>📬 Structured Letter Analogy</b>
+XML is like a formal business letter with clearly labeled sections — "Dear [Name], Re: [Subject], Body: [Content], Signed: [Name]." Each section has a label that describes what's inside. JSON is a modern leaner format (telegram). XPath = knowing which sentence to highlight. XQuery = asking a question across many letters. XSLT = reformatting the letter into a completely different template (like translating a formal letter into a casual email).</div>
+
+<div class="dl">XML — eXtensible Markup Language</div>
+<p class="explain">XML (eXtensible Markup Language) is a text-based format for representing structured data. Every element has an opening and closing tag. It's self-describing (tags explain the data). Widely used for: configuration files, web services (SOAP), data interchange between systems, and document storage.</p>
+
+<pre><span class="cm">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+&lt;<span class="kw">library</span>&gt;
+  &lt;<span class="kw">book</span> <span class="fn">id</span>=<span class="str">"B001"</span> <span class="fn">inStock</span>=<span class="str">"true"</span>&gt;
+    &lt;<span class="kw">title</span>&gt;Clean Code&lt;/<span class="kw">title</span>&gt;
+    &lt;<span class="kw">author</span>&gt;Robert C. Martin&lt;/<span class="kw">author</span>&gt;
+    &lt;<span class="kw">price</span> <span class="fn">currency</span>=<span class="str">"INR"</span>&gt;499&lt;/<span class="kw">price</span>&gt;
+    &lt;<span class="kw">categories</span>&gt;
+      &lt;<span class="kw">category</span>&gt;Programming&lt;/<span class="kw">category</span>&gt;
+      &lt;<span class="kw">category</span>&gt;Software Engineering&lt;/<span class="kw">category</span>&gt;
+    &lt;/<span class="kw">categories</span>&gt;
+  &lt;/<span class="kw">book</span>&gt;
+  &lt;<span class="kw">book</span> <span class="fn">id</span>=<span class="str">"B002"</span> <span class="fn">inStock</span>=<span class="str">"false"</span>&gt;
+    &lt;<span class="kw">title</span>&gt;The Pragmatic Programmer&lt;/<span class="kw">title</span>&gt;
+    &lt;<span class="kw">author</span>&gt;David Thomas&lt;/<span class="kw">author</span>&gt;
+    &lt;<span class="kw">price</span> <span class="fn">currency</span>=<span class="str">"INR"</span>&gt;549&lt;/<span class="kw">price</span>&gt;
+  &lt;/<span class="kw">book</span>&gt;
+&lt;/<span class="kw">library</span>&gt;
+
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  XPath — Navigate the XML tree
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  /library              → root element
+  /library/book         → all book elements
+  /library/book[1]      → first book only
+  /library/book/@id     → all id attributes
+  /library/book[@id='B001']         → book with id B001
+  /library/book[@id='B001']/price   → price of book B001
+  //title               → all title elements anywhere in doc
+  /library/book[price > 500]        → books costing over 500</span>
+
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  XQuery — Query language for XML (like SQL for XML)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="kw">for</span>    $b <span class="kw">in</span> doc(<span class="str">"library.xml"</span>)/library/book
+<span class="kw">where</span>  $b/price &gt; <span class="nm">400</span>
+  <span class="kw">and</span> $b/@inStock = <span class="str">"true"</span>
+<span class="kw">order by</span> $b/price <span class="kw">descending</span>
+<span class="kw">return</span>
+  &lt;<span class="kw">result</span>&gt;
+    &lt;<span class="kw">bookTitle</span>&gt;{$b/title/text()}&lt;/<span class="kw">bookTitle</span>&gt;
+    &lt;<span class="kw">cost</span>&gt;{$b/price/text()}&lt;/<span class="kw">cost</span>&gt;
+  &lt;/<span class="kw">result</span>&gt;</pre>
+
+<div class="dl">XML vs JSON — Which to use when?</div>
+<div class="tw"><table>
+  <thead><tr><th>Aspect</th><th>XML</th><th>JSON</th></tr></thead>
+  <tbody>
+    <tr><td>Verbosity</td><td>Verbose (opening + closing tags)</td><td>Compact</td></tr>
+    <tr><td>Attributes support</td><td>Yes (on tags)</td><td>No native attributes</td></tr>
+    <tr><td>Comments</td><td>Supported</td><td>Not supported</td></tr>
+    <tr><td>Schema validation</td><td>XSD (XML Schema Definition)</td><td>JSON Schema</td></tr>
+    <tr><td>Transformations</td><td>XSLT (powerful)</td><td>JS/Python code</td></tr>
+    <tr><td>Use today</td><td>Enterprise systems, SOAP, config files, Office documents</td><td>REST APIs, NoSQL, web applications</td></tr>
+  </tbody>
+</table></div>
+
+</div>
+</details>
+
+<!-- ══════════════ SESSION 18 ══════════════ -->
+<details id="s18">
+<summary>
+  <span class="sb cass">Session 18</span>
+  <div class="sm"><div>Introduction to Apache Cassandra</div><div class="ss">Peer-to-peer ring · Consistent hashing · Keyspace · Replication · cqlsh commands · 2T+2L+2SL</div></div>
+  <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+</summary>
+<div class="bd">
+
+<div class="an"><b>🌐 WhatsApp Message Delivery Analogy</b>
+In MongoDB, if the master node goes down, writes stop until a new master is elected (seconds of downtime). Cassandra is like a WhatsApp group — if one member's phone is off, the message still gets delivered to everyone else. No one is "the master." Every node is equal. Data is automatically replicated to multiple nodes. Used by: Netflix (for 190+ countries), Instagram (billions of follows), Discord (billions of messages).</div>
+
+<div class="dl">Cassandra Architecture — Key Concepts</div>
+<div class="cg">
+  <div class="cc"><h4>🔵 Node</h4><p>A single Cassandra server instance. Typically holds 1-3TB of data. Each node independently handles reads and writes for its data range.</p></div>
+  <div class="cc"><h4>🔄 Ring Topology</h4><p>All nodes are arranged in a conceptual ring. Each node "owns" a range of hash values. There is NO master — every node is equal (peer-to-peer).</p></div>
+  <div class="cc"><h4>#️⃣ Consistent Hashing</h4><p>Cassandra hashes the partition key to determine which node(s) store the data. Moving data when adding/removing nodes is minimal (only neighboring ranges shift).</p></div>
+  <div class="cc"><h4>📋 Commit Log</h4><p>Every write is first appended to the commit log (sequential disk write — very fast). Then written to MemTable (in-memory). Flushed to SSTable periodically.</p></div>
+  <div class="cc"><h4>🏠 Keyspace</h4><p>= Database in SQL terms. Contains tables. Keyspace-level settings define: replication strategy and replication factor.</p></div>
+  <div class="cc"><h4>📑 Replication Factor</h4><p>How many copies of each data item to keep. RF=3 means 3 nodes each hold a copy. If 1 node dies, 2 copies remain → no data loss.</p></div>
+</div>
+
+<div class="dl">Cassandra vs MongoDB — When to Choose Which</div>
+<div class="tw"><table>
+  <thead><tr><th>Feature</th><th>MongoDB</th><th>Cassandra</th></tr></thead>
+  <tbody>
+    <tr><td>Architecture</td><td>Primary-Secondary (replica sets)</td><td>Peer-to-peer (masterless ring)</td></tr>
+    <tr><td>Schema</td><td>Dynamic (schemaless)</td><td>Static (schema must be defined)</td></tr>
+    <tr><td>Query flexibility</td><td>High (rich queries, aggregation)</td><td>Limited (must design for query patterns)</td></tr>
+    <tr><td>Joins</td><td>$lookup (or embedding)</td><td>Not supported — denormalize instead</td></tr>
+    <tr><td>Write performance</td><td>Good</td><td>Outstanding (millions/second)</td></tr>
+    <tr><td>Best for</td><td>CMS, catalogs, varied documents</td><td>Time-series, IoT, messaging, logs</td></tr>
+    <tr><td>Consistency model</td><td>Strong consistency (CP)</td><td>Tunable consistency (AP by default)</td></tr>
+    <tr><td>Used by</td><td>Forbes, eBay, Expedia</td><td>Netflix, Apple, Instagram, Discord</td></tr>
+  </tbody>
+</table></div>
+
+<pre><span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Getting Started with cqlsh
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="cm">-- Start the CQL shell</span>
+$ cqlsh
+$ cqlsh 127.0.0.1 9042    <span class="cm">-- with specific host and port</span>
+
+<span class="cm">-- Create a keyspace (with replication settings)</span>
+<span class="kw">CREATE KEYSPACE</span> college_db
+<span class="kw">WITH REPLICATION</span> = {
+  <span class="str">'class'</span>: <span class="str">'SimpleStrategy'</span>,     <span class="cm">-- for single DC</span>
+  <span class="str">'replication_factor'</span>: <span class="nm">3</span>         <span class="cm">-- 3 copies of all data</span>
+};
+<span class="cm">-- For production (multi-datacenter):</span>
+<span class="kw">CREATE KEYSPACE</span> prod_db
+<span class="kw">WITH REPLICATION</span> = {
+  <span class="str">'class'</span>: <span class="str">'NetworkTopologyStrategy'</span>,
+  <span class="str">'datacenter1'</span>: <span class="nm">3</span>,
+  <span class="str">'datacenter2'</span>: <span class="nm">2</span>
+};
+
+<span class="kw">USE</span> college_db;       <span class="cm">-- switch to keyspace</span>
+<span class="kw">DESCRIBE KEYSPACES</span>;   <span class="cm">-- list all keyspaces</span>
+<span class="kw">DESCRIBE TABLES</span>;      <span class="cm">-- list tables in current keyspace</span>
+<span class="kw">DESCRIBE TABLE</span> employees; <span class="cm">-- see table structure</span></pre>
+
+</div>
+</details>
+
+<!-- ══════════════ SESSION 19 ══════════════ -->
+<details id="s19">
+<summary>
+  <span class="sb cass">Session 19</span>
+  <div class="sm"><div>Cassandra Table Design — Partition &amp; Clustering Keys</div><div class="ss">Primary key design · Index creation · Query patterns first approach · 2T+2L+2SL</div></div>
+  <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+</summary>
+<div class="bd">
+
+<div class="an"><b>🗄️ Filing Warehouse Analogy</b>
+Imagine 6 warehouses across Mumbai. <strong>Partition key</strong> decides which warehouse (node) a box goes to — based on a hash of the key. <strong>Clustering key</strong> decides how the boxes inside that warehouse are arranged on shelves (sorted order). When you want a box, you first identify the right warehouse (partition key), then walk to the right shelf (clustering key). You CANNOT search all 6 warehouses simultaneously (no full-table scans).</div>
+
+<div class="dl">PRIMARY KEY Design — The Most Critical Decision in Cassandra</div>
+<p class="explain">Unlike SQL where you add indexes after design, Cassandra requires you to <strong>design your tables around your queries</strong>. The PRIMARY KEY determines: which node stores the data AND how data is sorted on each node. Get this wrong and your queries will either fail or be extremely slow.</p>
+
+<div class="tw"><table>
+  <thead><tr><th>Primary Key Type</th><th>Syntax</th><th>Effect</th><th>Use when</th></tr></thead>
+  <tbody>
+    <tr><td>Simple PK</td><td><code>PRIMARY KEY (user_id)</code></td><td>user_id is both partition + sort key</td><td>Data accessed by single unique ID</td></tr>
+    <tr><td>Compound PK</td><td><code>PRIMARY KEY (device_id, timestamp)</code></td><td>device_id = partition key; timestamp = clustering key (sorts within partition)</td><td>Time-series: "get all readings for device X, ordered by time"</td></tr>
+    <tr><td>Composite Partition</td><td><code>PRIMARY KEY ((country, city), user_id)</code></td><td>country+city together determine which node; user_id sorts within</td><td>When single partition key creates "hot spots" (too much data on one node)</td></tr>
+  </tbody>
+</table></div>
+
+<pre><span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Designing for query: "Get sensor readings for
+  device X in descending time order"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="kw">CREATE TABLE</span> sensor_readings (
+  device_id   <span class="kw">UUID</span>,        <span class="cm">-- partition key: groups all readings for one device</span>
+  read_time   <span class="kw">TIMESTAMP</span>,  <span class="cm">-- clustering key: sorted newest-first</span>
+  temperature <span class="kw">FLOAT</span>,
+  humidity    <span class="kw">FLOAT</span>,
+  location    <span class="kw">TEXT</span>,
+  <span class="kw">PRIMARY KEY</span> (device_id, read_time)
+) <span class="kw">WITH CLUSTERING ORDER BY</span> (read_time <span class="kw">DESC</span>);
+
+<span class="cm">-- ✅ This query is FAST:</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> sensor_readings
+<span class="kw">WHERE</span> device_id = <span class="fn">12345-uuid</span>
+<span class="kw">AND</span>   read_time > <span class="str">'2024-01-01'</span>
+<span class="kw">LIMIT</span> <span class="nm">100</span>;
+
+<span class="cm">-- ❌ This query FAILS (no partition key):</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> sensor_readings
+<span class="kw">WHERE</span> temperature > <span class="nm">30</span>;  <span class="cm">-- Cannot scan all partitions</span>
+
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Table Operations
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="cm">-- Create employees table</span>
+<span class="kw">CREATE TABLE</span> employees (
+  emp_id      <span class="kw">UUID PRIMARY KEY</span>,
+  first_name  <span class="kw">TEXT</span>,
+  last_name   <span class="kw">TEXT</span>,
+  department  <span class="kw">TEXT</span>,
+  salary      <span class="kw">DECIMAL</span>,
+  hire_date   <span class="kw">DATE</span>,
+  is_active   <span class="kw">BOOLEAN</span>
+);
+
+<span class="cm">-- Add a new column (non-breaking change)</span>
+<span class="kw">ALTER TABLE</span> employees <span class="kw">ADD</span> email <span class="kw">TEXT</span>;
+<span class="kw">ALTER TABLE</span> employees <span class="kw">ADD</span> skills <span class="kw">LIST&lt;TEXT&gt;</span>;
+
+<span class="cm">-- Create secondary index (for non-partition key queries)</span>
+<span class="kw">CREATE INDEX</span> emp_dept_idx <span class="kw">ON</span> employees(department);
+<span class="cm">-- Now you can query: WHERE department = 'Engineering'</span>
+<span class="cm">-- But use sparingly — secondary indexes are expensive at scale</span>
+
+<span class="kw">DROP INDEX</span>   emp_dept_idx;
+<span class="kw">TRUNCATE TABLE</span> employees;  <span class="cm">-- delete all rows, keep structure</span>
+<span class="kw">DROP TABLE</span>   employees;</pre>
+
+<div class="warn"><b>⚡ Cassandra Design Rules (Never Forget)</b>
+1. <strong>Design queries first, tables second.</strong> Each query pattern needs its own table (denormalize).<br>
+2. <strong>Partition key is mandatory in WHERE.</strong> Without it, Cassandra must scan all nodes.<br>
+3. <strong>Avoid too many rows per partition</strong> (&gt;100K rows/partition = performance issues).<br>
+4. <strong>No JOINs, no transactions across partitions.</strong> Cassandra is built for single-partition operations.</div>
+
+</div>
+</details>
+
+<!-- ══════════════ SESSION 20–21 ══════════════ -->
+<details id="s20">
+<summary>
+  <span class="sb cass">Sessions 20–21</span>
+  <div class="sm"><div>Cassandra CRUD, CQL Datatypes, Collections &amp; UDT</div><div class="ss">All CQL types · LIST·SET·MAP · FROZEN · UDT · BATCH operations · 4T+4L</div></div>
+  <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+</summary>
+<div class="bd">
+
+<div class="an"><b>🎒 Multi-Compartment Bag Analogy</b>
+CQL Collections = a bag with different compartments. <strong>LIST</strong> = the main compartment where order matters (books stacked in sequence — first in stays first). <strong>SET</strong> = the zipped side pocket (no duplicates allowed — you can't have 2 identical keychains). <strong>MAP</strong> = a card holder with labeled slots (key → value: "Aadhar" → "1234-5678", "PAN" → "ABCDE1234F"). <strong>UDT</strong> = a custom-shaped organizer you design yourself.</div>
+
+<div class="dl">CQL Datatypes — Complete Reference</div>
+<div class="tw"><table>
+  <thead><tr><th>Category</th><th>CQL Type</th><th>Description</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td rowspan="5">Numeric</td><td>INT</td><td>32-bit signed integer</td><td>age, quantity</td></tr>
+    <tr><td>BIGINT</td><td>64-bit signed integer</td><td>user_id, timestamp millis</td></tr>
+    <tr><td>FLOAT</td><td>32-bit floating point</td><td>temperature, rating</td></tr>
+    <tr><td>DOUBLE</td><td>64-bit floating point</td><td>latitude, longitude, precise amounts</td></tr>
+    <tr><td>DECIMAL</td><td>Exact decimal (arbitrary precision)</td><td>salary, price, financial data</td></tr>
+    <tr><td rowspan="3">Text</td><td>TEXT / VARCHAR</td><td>UTF-8 encoded string (no size limit)</td><td>name, email, description</td></tr>
+    <tr><td>ASCII</td><td>US-ASCII string only</td><td>Status codes, old system IDs</td></tr>
+    <tr><td>BLOB</td><td>Binary data, no validation</td><td>Images, files, serialized objects</td></tr>
+    <tr><td rowspan="3">Date/Time</td><td>TIMESTAMP</td><td>Date + time with millisecond precision</td><td>created_at, updated_at</td></tr>
+    <tr><td>DATE</td><td>Date only (no time)</td><td>birth_date, hire_date</td></tr>
+    <tr><td>TIME</td><td>Time of day only</td><td>office_open_time</td></tr>
+    <tr><td rowspan="2">Special</td><td>UUID</td><td>Universally unique identifier</td><td>Primary keys (use uuid() function)</td></tr>
+    <tr><td>TIMEUUID</td><td>Version 1 UUID (time-based)</td><td>Sortable by time, for time-series PKs</td></tr>
+    <tr><td>Other</td><td>BOOLEAN</td><td>true / false</td><td>is_active, is_verified</td></tr>
+    <tr><td>Collections</td><td>LIST&lt;T&gt;, SET&lt;T&gt;, MAP&lt;K,V&gt;</td><td>Multiple values in one column</td><td>See examples below</td></tr>
+  </tbody>
+</table></div>
+
+<pre><span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Collections — LIST, SET, MAP in action
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="kw">CREATE TABLE</span> student_profile (
+  student_id  <span class="kw">UUID PRIMARY KEY</span>,
+  name        <span class="kw">TEXT</span>,
+  <span class="cm">-- LIST: ordered, allows duplicates (exam scores in order)</span>
+  scores      <span class="kw">LIST&lt;INT&gt;</span>,
+  <span class="cm">-- SET: unordered, NO duplicates (enrolled courses)</span>
+  courses     <span class="kw">SET&lt;TEXT&gt;</span>,
+  <span class="cm">-- MAP: key-value (certification → date earned)</span>
+  certs       <span class="kw">MAP&lt;TEXT, DATE&gt;</span>
+);
+
+<span class="cm">-- Insert with collections</span>
+<span class="kw">INSERT INTO</span> student_profile (student_id, name, scores, courses, certs)
+<span class="kw">VALUES</span> (
+  <span class="fn">uuid</span>(),
+  <span class="str">'Priya Sharma'</span>,
+  [<span class="nm">85</span>, <span class="nm">90</span>, <span class="nm">78</span>, <span class="nm">92</span>],                              <span class="cm">-- LIST</span>
+  {<span class="str">'DBMS'</span>, <span class="str">'OS'</span>, <span class="str">'Networks'</span>, <span class="str">'ML'</span>},              <span class="cm">-- SET</span>
+  {<span class="str">'AWS_Cloud'</span>: <span class="str">'2024-03-15'</span>, <span class="str">'MongoDB'</span>: <span class="str">'2024-01-20'</span>} <span class="cm">-- MAP</span>
+);
+
+<span class="cm">-- Append to a LIST</span>
+<span class="kw">UPDATE</span> student_profile
+<span class="kw">SET</span> scores = scores + [<span class="nm">88</span>]
+<span class="kw">WHERE</span> student_id = some_uuid;
+
+<span class="cm">-- Add to a SET</span>
+<span class="kw">UPDATE</span> student_profile
+<span class="kw">SET</span> courses = courses + {<span class="str">'Big Data'</span>}
+<span class="kw">WHERE</span> student_id = some_uuid;
+
+<span class="cm">-- Add to a MAP</span>
+<span class="kw">UPDATE</span> student_profile
+<span class="kw">SET</span> certs[<span class="str">'Cassandra'</span>] = <span class="str">'2024-06-01'</span>
+<span class="kw">WHERE</span> student_id = some_uuid;
+
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  UDT — User Defined Type (custom complex type)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="cm">-- Define UDT (like a struct in C)</span>
+<span class="kw">CREATE TYPE</span> address_type (
+  street  <span class="kw">TEXT</span>,
+  city    <span class="kw">TEXT</span>,
+  state   <span class="kw">TEXT</span>,
+  pincode <span class="kw">TEXT</span>
+);
+<span class="cm">-- Use in a table (must use FROZEN for non-collection UDT columns)</span>
+<span class="kw">CREATE TABLE</span> employees (
+  emp_id     <span class="kw">UUID PRIMARY KEY</span>,
+  name       <span class="kw">TEXT</span>,
+  home_addr  <span class="kw">FROZEN&lt;address_type&gt;</span>,    <span class="cm">-- single address</span>
+  past_addrs <span class="kw">LIST&lt;FROZEN&lt;address_type&gt;&gt;</span> <span class="cm">-- list of addresses</span>
+);
+
+<span class="cm">-- Insert with UDT</span>
+<span class="kw">INSERT INTO</span> employees (emp_id, name, home_addr)
+<span class="kw">VALUES</span> (
+  <span class="fn">uuid</span>(),
+  <span class="str">'Priya'</span>,
+  { street: <span class="str">'101 Andheri East'</span>, city: <span class="str">'Mumbai'</span>, state: <span class="str">'MH'</span>, pincode: <span class="str">'400069'</span> }
+);</pre>
+
+<div class="dl">BATCH Operations</div>
+<p class="explain">A BATCH groups multiple DML statements and executes them atomically within a single partition. In Cassandra, BATCH is NOT a full transaction — it guarantees atomicity only within the same partition. Cross-partition batches should be avoided as they are slow and add coordinator load.</p>
+
+<pre><span class="cm">-- Batch: all operations executed atomically</span>
+<span class="kw">BEGIN BATCH</span>
+  <span class="cm">-- Insert new employee</span>
+  <span class="kw">INSERT INTO</span> employees (emp_id, name, salary)
+    <span class="kw">VALUES</span>(<span class="fn">uuid</span>(), <span class="str">'Neha Patil'</span>, <span class="nm">45000</span>);
+
+  <span class="cm">-- Update salary where commission = 0</span>
+  <span class="kw">UPDATE</span> employees
+    <span class="kw">SET</span> salary = <span class="nm">20000</span>
+    <span class="kw">WHERE</span> emp_id = some_uuid;
+
+  <span class="cm">-- Change names starting with N to uppercase</span>
+  <span class="kw">UPDATE</span> employees
+    <span class="kw">SET</span> name = <span class="fn">toUpperCase</span>(name)
+    <span class="kw">WHERE</span> emp_id = another_uuid;
+<span class="kw">APPLY BATCH</span>;
+
+<span class="cm">-- Logged BATCH (default): safe but slower — coordinator logs before applying
+-- Unlogged BATCH: faster but not atomic</span>
+<span class="kw">BEGIN UNLOGGED BATCH</span>
+  ...
+<span class="kw">APPLY BATCH</span>;</pre>
+
+</div>
+</details>
+
+<!-- ══════════════ SESSION 22 ══════════════ -->
+<div class="gl">Data Management</div>
+
+<details id="s22">
+<summary>
+  <span class="sb data">Session 22</span>
+  <div class="sm"><div>Data-Driven Decisions, Enterprise Data Management &amp; Data Cleaning</div><div class="ss">Data quality issues · Imputation · Outlier detection · ETL pipelines · Normalization vs Standardization · 2T+4L+2SL</div></div>
+  <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+</summary>
+<div class="bd">
+
+<div class="an"><b>🧹 Professional Kitchen Analogy</b>
+A Michelin-star chef doesn't start cooking with ingredients straight from the market. They inspect every vegetable (profile data), throw out the rotten ones (remove nulls/outliers), wash and cut to uniform size (standardize formats), arrange them for efficiency (organize structure), then cook (analyse). "Garbage In = Garbage Out" is real — a machine learning model trained on dirty data will give worse predictions than no model at all.</div>
+
+<div class="dl">Why Data Quality Matters</div>
+<p class="explain">According to IBM, bad data costs businesses $3.1 trillion annually in the USA alone. In data pipelines, dirty data causes incorrect analytics, wrong business decisions, failed ML models, and regulatory compliance failures.</p>
+
+<div class="dl">The 6 Dimensions of Data Quality</div>
+<div class="cg">
+  <div class="cc"><h4>✅ Completeness</h4><p>Are all required values present? NULL rate per column should be monitored. Critical fields like customer_id should have 0% NULL.</p></div>
+  <div class="cc"><h4>🎯 Accuracy</h4><p>Does the data correctly represent reality? Age of 150 = wrong. PIN code "00000" = wrong. Validate against reference data.</p></div>
+  <div class="cc"><h4>🔗 Consistency</h4><p>Is data the same across systems? Customer address in CRM vs ERP should match. "Mumbai" vs "Bombay" = inconsistency.</p></div>
+  <div class="cc"><h4>⏱️ Timeliness</h4><p>Is data fresh enough for its use? Yesterday's stock prices for real-time trading = useless.</p></div>
+  <div class="cc"><h4>🆔 Uniqueness</h4><p>Are there duplicate records? Same customer entered twice with slightly different names creates double billing.</p></div>
+  <div class="cc"><h4>✔️ Validity</h4><p>Does data conform to defined formats and ranges? Email must have @, phone must be 10 digits, date must be a valid date.</p></div>
+</div>
+
+<div class="dl">Common Data Problems and Solutions</div>
+<div class="tw"><table>
+  <thead><tr><th>Problem</th><th>Detection Method</th><th>Solution Options</th><th>SQL/Python example</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Missing Values (NULL)</strong></td><td>COUNT(*) WHERE col IS NULL</td><td>Mean/median imputation, mode for categorical, forward-fill, drop row, flag as "Unknown"</td><td><code>UPDATE t SET salary = (SELECT AVG(salary) FROM t) WHERE salary IS NULL</code></td></tr>
+    <tr><td><strong>Duplicate Records</strong></td><td>GROUP BY all cols + HAVING COUNT &gt; 1</td><td>Keep first occurrence, compare timestamps, fuzzy matching for near-duplicates</td><td><code>SELECT name, COUNT(*) FROM customers GROUP BY email HAVING COUNT(*) &gt; 1</code></td></tr>
+    <tr><td><strong>Outliers</strong></td><td>Z-score |z| &gt; 3; IQR method; visual box plots</td><td>Cap at threshold (winsorization), remove, treat separately, transform (log scale)</td><td>Z-score: <code>(value - mean) / std_dev</code></td></tr>
+    <tr><td><strong>Inconsistent Format</strong></td><td>SELECT DISTINCT + manual review</td><td>UPPER()/LOWER(), TRIM(), REGEXP_REPLACE(), standardization tables</td><td><code>UPDATE t SET city = UPPER(TRIM(city))</code></td></tr>
+    <tr><td><strong>Wrong Data Type</strong></td><td>Schema validation, SELECT WHERE</td><td>CAST, convert pipeline, reject invalid on ingestion</td><td><code>SELECT * FROM t WHERE age NOT REGEXP '^[0-9]+$'</code></td></tr>
+    <tr><td><strong>Referential Integrity</strong></td><td>LEFT JOIN to reference table, check NULLs</td><td>Add foreign key constraints, clean orphan records</td><td><code>SELECT * FROM orders o LEFT JOIN customers c ON ... WHERE c.id IS NULL</code></td></tr>
+  </tbody>
+</table></div>
+
+<div class="dl">Outlier Detection Methods in Detail</div>
+<div class="two">
+  <div>
+    <div class="info"><b>📊 Z-Score Method</b><br>
+    Formula: z = (x − μ) / σ<br>
+    where μ = mean, σ = standard deviation.<br>
+    If |z| &gt; 3: that value is an outlier.<br>
+    Works best when data is normally distributed.</div>
+  </div>
+  <div>
+    <div class="tip"><b>📦 IQR Method (Interquartile Range)</b><br>
+    Q1 = 25th percentile, Q3 = 75th percentile.<br>
+    IQR = Q3 - Q1.<br>
+    Lower fence = Q1 - (1.5 × IQR).<br>
+    Upper fence = Q3 + (1.5 × IQR).<br>
+    Values outside fences = outliers. Robust to skewed data.</div>
+  </div>
+</div>
+
+<div class="dl">Normalization vs Standardization — Scaling Features</div>
+<p class="explain">Machine learning algorithms (KNN, SVM, Neural Networks) are sensitive to the scale of features. If "salary" ranges from 10,000 to 1,00,000 and "age" ranges from 22 to 65, the ML model will be dominated by salary. Scaling puts all features on similar ranges.</p>
+
+<div class="tw"><table>
+  <thead><tr><th>Technique</th><th>Formula</th><th>Result Range</th><th>When to use</th><th>Sensitive to outliers?</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Min-Max Normalization</strong></td><td>(x − min) / (max − min)</td><td>[0, 1] always</td><td>When you know min/max, bounded output needed, KNN, Neural networks</td><td>Yes — one extreme outlier shifts everything</td></tr>
+    <tr><td><strong>Z-score Standardization</strong></td><td>(x − mean) / std_dev</td><td>Typically [−3, 3], mean=0, SD=1</td><td>Data has outliers, SVM, Linear/Logistic Regression, PCA</td><td>Less sensitive than min-max</td></tr>
+    <tr><td><strong>Robust Scaling</strong></td><td>(x − median) / IQR</td><td>Centered at 0, no fixed range</td><td>Heavy outliers in data, can't remove them</td><td>No — uses median and IQR</td></tr>
+  </tbody>
+</table></div>
+
+<div class="dl">ETL Data Quality Pipeline — Step by Step</div>
+<div class="step-row"><div class="step-num">1</div><div class="step-txt"><strong>Profile:</strong> Run automated statistics on every column — NULL count, distinct values, min/max/mean, data type mismatches. Build a "data quality scorecard." Tools: Great Expectations, Deequ, custom SQL.</div></div>
+<div class="step-row"><div class="step-num">2</div><div class="step-txt"><strong>Cleanse:</strong> Fix the problems found in profiling — handle NULLs, remove duplicates, fix types, standardize values. Document every transformation (data lineage).</div></div>
+<div class="step-row"><div class="step-num">3</div><div class="step-txt"><strong>Validate:</strong> Apply business rules — "age must be between 18 and 70 for this dataset," "amount cannot be negative," "date cannot be in the future." Reject or flag violating records.</div></div>
+<div class="step-row"><div class="step-num">4</div><div class="step-txt"><strong>Enrich:</strong> Add derived columns (age from DOB, full_name from first+last), join with reference data (add country name from country code), compute business metrics.</div></div>
+<div class="step-row"><div class="step-num">5</div><div class="step-txt"><strong>Load:</strong> Write to target system with incremental loading strategy. Log load statistics — rows inserted, rows rejected, load time. Alert on anomalies.</div></div>
+
+<div class="dl">Data Lineage &amp; Metadata Management</div>
+<p class="explain"><strong>Data lineage</strong> tracks the journey of data from origin to destination — where did it come from, what transformations were applied, who accessed it. Critical for: debugging data quality issues ("why is this sales figure wrong?"), regulatory compliance (GDPR, HIPAA), and impact analysis ("if I change this ETL rule, what downstream reports are affected?").</p>
+
+<div class="info"><b>📋 Incremental Loading Strategies</b><br>
+<strong>Full Load:</strong> Reload all data every time. Simple but slow and resource-heavy for large datasets. Use for small lookup tables.<br>
+<strong>Incremental (Timestamp):</strong> Load only records where updated_at &gt; last_load_time. Fast. Requires a reliable update timestamp column.<br>
+<strong>CDC (Change Data Capture):</strong> Monitor database transaction logs for changes (INSERT/UPDATE/DELETE) and apply them to the target. Near real-time, no polling delay. Tools: Debezium, Oracle GoldenGate.</div>
+
+</div>
+</details>
+
+</div> <!-- .wrap -->
+</body>
+</html>

@@ -1,0 +1,2455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python & R Revision Notes — C-DAC Kharghar PG-DBDA 2026</title>
+<style>
+/* ─── RESET & ROOT ─────────────────────────────────────────── */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --sand:#f5f0e8;
+  --sand2:#ede6d6;
+  --sand3:#e2d9c5;
+  --ink:#1c1a14;
+  --ink2:#3d3828;
+  --ink3:#6b6248;
+  --rust:#b34a22;
+  --rust2:#d4602e;
+  --teal:#1a6e5c;
+  --teal2:#228c74;
+  --plum:#4a2d7a;
+  --plum2:#6b42a8;
+  --gold:#8c6a00;
+  --gold2:#b38800;
+  --card:#fffdf7;
+  --border:#d4c8b0;
+  --border2:#c2b49a;
+  --sidebar-w:260px;
+  --code-bg:#1e1b14;
+  --code-txt:#e8dfc8;
+}
+
+/* ─── TYPOGRAPHY ─────────────────────────────────────────────── */
+body{
+  font-family:Georgia,'Times New Roman',serif;
+  background:var(--sand);
+  color:var(--ink);
+  display:flex;
+  min-height:100vh;
+  font-size:15px;
+  line-height:1.75;
+}
+
+/* ─── SIDEBAR ────────────────────────────────────────────────── */
+#sidebar{
+  width:var(--sidebar-w);
+  background:var(--card);
+  border-right:1px solid var(--border);
+  position:fixed;
+  top:0;left:0;
+  height:100vh;
+  overflow-y:auto;
+  z-index:100;
+  display:flex;
+  flex-direction:column;
+}
+#sidebar::-webkit-scrollbar{width:3px}
+#sidebar::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+.sb-head{
+  padding:18px 16px 14px;
+  border-bottom:1px solid var(--border);
+  background:var(--ink);
+}
+.sb-head h1{font-size:13px;font-weight:700;letter-spacing:.8px;color:#f0e8d0;font-family:'Segoe UI',sans-serif;text-transform:uppercase}
+.sb-head p{font-size:10px;color:#9a9080;margin-top:3px;font-family:'Segoe UI',sans-serif;letter-spacing:.3px}
+
+.sb-section{padding:6px 0}
+.sb-label{font-size:9px;font-weight:700;letter-spacing:1.8px;color:var(--ink3);padding:10px 16px 4px;text-transform:uppercase;font-family:'Segoe UI',sans-serif}
+
+.nb{
+  display:flex;align-items:center;gap:7px;
+  padding:7px 16px;cursor:pointer;
+  font-size:12px;color:var(--ink3);
+  border-left:3px solid transparent;
+  font-family:'Segoe UI',sans-serif;
+  line-height:1.3;transition:all .15s;
+  text-decoration:none;
+}
+.nb:hover{background:var(--sand2);color:var(--ink)}
+.nb.active{background:var(--sand2);color:var(--rust);border-left-color:var(--rust);font-weight:700}
+.nb.r.active{color:var(--plum);border-left-color:var(--plum)}
+.nb .badge{
+  font-size:9px;background:var(--sand);padding:1px 5px;
+  border-radius:8px;color:var(--ink3);margin-left:auto;
+  font-family:'Segoe UI',sans-serif;
+}
+
+/* ─── MAIN CONTENT ───────────────────────────────────────────── */
+#main{
+  margin-left:var(--sidebar-w);
+  flex:1;
+  max-width:860px;
+  padding:32px 36px 80px;
+}
+
+/* ─── SECTIONS ───────────────────────────────────────────────── */
+.sec{display:none}
+.sec.active{display:block}
+
+/* ─── HERO ───────────────────────────────────────────────────── */
+.hero{
+  background:var(--ink);
+  border-radius:4px;
+  padding:24px 28px;
+  margin-bottom:28px;
+  border-left:4px solid var(--rust2);
+}
+.hero h2{font-size:22px;font-weight:700;color:#f0e8d0;letter-spacing:-.3px}
+.hero p{color:#9a8e78;font-size:13px;margin-top:6px;font-family:'Segoe UI',sans-serif}
+.hero.r-hero{border-left-color:var(--plum2)}
+.meta-chips{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.chip{font-size:10px;padding:3px 10px;border-radius:2px;font-weight:700;font-family:'Segoe UI',sans-serif;letter-spacing:.5px}
+.chip-py{background:rgba(179,74,34,.2);color:#e8a070;border:1px solid rgba(179,74,34,.3)}
+.chip-r{background:rgba(74,45,122,.2);color:#a080d8;border:1px solid rgba(74,45,122,.3)}
+.chip-n{background:rgba(240,232,208,.08);color:#9a8e78;border:1px solid rgba(240,232,208,.15)}
+
+/* ─── DROP CAP ───────────────────────────────────────────────── */
+.dropcap::first-letter{
+  font-size:48px;font-weight:700;float:left;
+  line-height:.85;margin-right:6px;
+  color:var(--rust);padding-top:4px;
+}
+
+/* ─── CARDS ──────────────────────────────────────────────────── */
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:3px;
+  padding:18px 22px;
+  margin-bottom:18px;
+}
+.card-title{
+  font-size:13px;font-weight:700;color:var(--ink);
+  margin-bottom:12px;display:flex;align-items:center;gap:8px;
+  font-family:'Segoe UI',sans-serif;text-transform:uppercase;
+  letter-spacing:.6px;border-bottom:1px solid var(--border);padding-bottom:8px;
+}
+
+/* ─── ANALOGY BOX ─────────────────────────────────────────────── */
+.analogy-box{
+  background:var(--sand2);
+  border-left:4px solid var(--gold2);
+  border-radius:0 3px 3px 0;
+  padding:14px 18px;
+  margin:14px 0;
+  font-size:13px;
+}
+.analogy-box .anlabel{
+  font-size:10px;font-weight:700;letter-spacing:1.5px;
+  color:var(--gold);margin-bottom:6px;
+  font-family:'Segoe UI',sans-serif;text-transform:uppercase;
+}
+.analogy-box p{color:var(--ink2);line-height:1.65}
+
+/* ─── CALLOUTS ───────────────────────────────────────────────── */
+.callout{
+  border-radius:2px;padding:12px 16px;margin:12px 0;
+  font-size:13px;display:flex;gap:10px;align-items:flex-start;
+  font-family:'Segoe UI',sans-serif;
+}
+.tip{background:#e8f4ee;border-left:3px solid var(--teal)}
+.warn{background:#fdf0e0;border-left:3px solid var(--gold2)}
+.info{background:#eaf0fb;border-left:3px solid var(--plum2)}
+.danger{background:#fdeaea;border-left:3px solid #c0392b}
+.callout-icon{font-size:15px;flex-shrink:0;margin-top:1px}
+.callout p{color:#333;line-height:1.55}
+
+/* ─── INLINE CODE ─────────────────────────────────────────────── */
+code{
+  font-family:'Cascadia Code','Fira Code','Courier New',monospace;
+  font-size:12px;background:var(--sand2);
+  padding:1px 5px;border-radius:2px;color:var(--rust);
+}
+
+/* ─── CODE BLOCKS ─────────────────────────────────────────────── */
+.code-block{
+  background:var(--code-bg);
+  border-radius:3px;padding:16px 18px;margin:12px 0;
+  overflow-x:auto;position:relative;
+  border-left:3px solid var(--rust);
+}
+.code-block.r-block{border-left-color:var(--plum2)}
+.code-block pre{
+  color:var(--code-txt);
+  font-family:'Cascadia Code','Fira Code',monospace;
+  font-size:12px;line-height:1.75;white-space:pre;
+}
+.code-label{
+  font-size:9px;font-weight:700;letter-spacing:1.2px;
+  text-transform:uppercase;color:var(--rust2);
+  position:absolute;top:8px;right:10px;
+  font-family:'Segoe UI',sans-serif;
+}
+.code-block.r-block .code-label{color:#a080d8}
+
+/* Syntax highlight tokens */
+.kw{color:#d4a0ff}
+.fn{color:#7ed8cc}
+.str{color:#a8d878}
+.num{color:#f0b070}
+.cm{color:#5a5040;font-style:italic}
+.op{color:#88c0e8}
+.bi{color:#ff9090}
+
+/* ─── TABLES ─────────────────────────────────────────────────── */
+table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0;font-family:'Segoe UI',sans-serif}
+th{
+  background:var(--sand2);padding:9px 12px;text-align:left;
+  font-weight:700;font-size:11px;color:var(--ink2);
+  border-bottom:2px solid var(--border2);letter-spacing:.3px;text-transform:uppercase;
+}
+td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--ink2);vertical-align:top;line-height:1.5}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--sand)}
+
+/* ─── PULL QUOTE ─────────────────────────────────────────────── */
+.pull-quote{
+  border-top:2px solid var(--rust);
+  border-bottom:1px solid var(--border);
+  padding:16px 0;margin:20px 0;
+  color:var(--rust);font-size:17px;font-style:italic;line-height:1.5;
+}
+
+/* ─── LEVEL BADGES ───────────────────────────────────────────── */
+.lvl-row{display:flex;gap:6px;margin:16px 0 8px}
+.lvl{font-size:9px;padding:3px 9px;border-radius:2px;font-weight:700;font-family:'Segoe UI',sans-serif;letter-spacing:.5px}
+.lvl-b{background:#e6f0fb;color:#1a4a8c}
+.lvl-i{background:#f0eafb;color:#4a2d7a}
+.lvl-a{background:#fbeae0;color:#7a2800}
+
+/* ─── INDEX GRID ─────────────────────────────────────────────── */
+.index-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.idx-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:3px;padding:13px 16px;cursor:pointer;
+  border-left:3px solid var(--border);transition:all .15s;
+}
+.idx-card:hover{border-left-color:var(--rust);background:var(--sand)}
+.idx-card.r-card:hover{border-left-color:var(--plum)}
+.idx-card h4{font-size:12px;font-weight:700;font-family:'Segoe UI',sans-serif;color:var(--ink)}
+.idx-card p{font-size:11px;color:var(--ink3);margin-top:3px;line-height:1.4;font-family:'Segoe UI',sans-serif}
+.idx-card .stag{font-size:9px;padding:2px 7px;border-radius:2px;margin-top:7px;display:inline-block;font-family:'Segoe UI',sans-serif;font-weight:700;letter-spacing:.3px}
+.py-tag{background:rgba(179,74,34,.1);color:var(--rust)}
+.r-tag{background:rgba(74,45,122,.1);color:var(--plum)}
+
+/* ─── STATS ROW ──────────────────────────────────────────────── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:3px;padding:14px;text-align:center}
+.stat .snum{font-size:28px;font-weight:700;color:var(--rust);font-family:Georgia,serif}
+.stat.r-s .snum{color:var(--plum2)}
+.stat .slbl{font-size:10px;color:var(--ink3);margin-top:3px;font-family:'Segoe UI',sans-serif;letter-spacing:.3px}
+
+/* ─── TIMELINE ───────────────────────────────────────────────── */
+.tl{border-left:2px solid var(--border2);padding-left:20px;margin:8px 0}
+.tl-i{position:relative;margin-bottom:10px;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:2px}
+.tl-i::before{content:'';position:absolute;left:-26px;top:14px;width:8px;height:8px;border-radius:50%;background:var(--rust);border:2px solid var(--sand)}
+.tl-i.r-i::before{background:var(--plum2)}
+.tl-i h4{font-size:12px;font-weight:700;font-family:'Segoe UI',sans-serif;color:var(--ink)}
+.tl-i p{font-size:11px;color:var(--ink3);margin-top:3px;font-family:'Segoe UI',sans-serif;line-height:1.4}
+
+/* ─── QUIZ BOX ───────────────────────────────────────────────── */
+.quiz-box{background:var(--sand2);border:1px solid var(--border2);border-radius:3px;padding:18px;margin:16px 0}
+.quiz-q{font-size:13px;font-weight:700;margin-bottom:12px;color:var(--ink);font-family:'Segoe UI',sans-serif}
+.quiz-opts label{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:2px;cursor:pointer;font-size:12px;color:var(--ink2);font-family:'Segoe UI',sans-serif;border:1px solid transparent;transition:background .1s}
+.quiz-opts label:hover{background:var(--card);border-color:var(--border)}
+.quiz-opts input[type=radio]{accent-color:var(--rust)}
+.qbtn{margin-top:12px;padding:7px 18px;font-size:12px;font-weight:700;background:var(--ink);color:#f0e8d0;border:none;border-radius:2px;cursor:pointer;font-family:'Segoe UI',sans-serif;letter-spacing:.5px;transition:opacity .15s}
+.qbtn:hover{opacity:.85}
+.qres{margin-top:10px;font-size:12px;padding:8px 12px;border-radius:2px;display:none;font-family:'Segoe UI',sans-serif;line-height:1.5}
+.qcorrect{background:#e8f4ee;color:#0d4a2a;border-left:3px solid var(--teal)}
+.qwrong{background:#fbeae0;color:#7a2800;border-left:3px solid var(--rust)}
+
+/* ─── SVG WRAP ───────────────────────────────────────────────── */
+.svg-wrap{margin:18px 0;overflow-x:auto}
+.svg-wrap svg{display:block;width:100%;max-width:820px}
+
+/* ─── 2-COL CONCEPT ──────────────────────────────────────────── */
+.concept-2col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.cbox{background:var(--card);border:1px solid var(--border);padding:14px 16px;border-radius:3px;font-size:13px}
+.cbox h4{font-size:12px;font-weight:700;margin-bottom:6px;font-family:'Segoe UI',sans-serif;color:var(--ink)}
+.cbox p{color:var(--ink2);line-height:1.55;font-size:12px;font-family:'Segoe UI',sans-serif}
+.cbox.teal-l{border-left:3px solid var(--teal2)}
+.cbox.rust-l{border-left:3px solid var(--rust2)}
+.cbox.plum-l{border-left:3px solid var(--plum2)}
+.cbox.gold-l{border-left:3px solid var(--gold2)}
+
+/* ─── HEADINGS ───────────────────────────────────────────────── */
+h3{font-size:16px;font-weight:700;color:var(--ink);margin:20px 0 10px;border-bottom:1px solid var(--border);padding-bottom:5px}
+p.body{font-size:14px;line-height:1.8;color:var(--ink2);margin:10px 0}
+
+/* ─── PRINT ──────────────────────────────────────────────────── */
+@media print{
+  #sidebar{display:none}
+  #main{margin-left:0;max-width:100%;padding:20px}
+  .sec{display:block!important}
+  .hero{background:#1c1a14!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .code-block{background:#1e1b14!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .analogy-box{background:var(--sand2)!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .sec{page-break-before:always}
+  #home.sec{page-break-before:avoid}
+}
+
+/* ─── RESPONSIVE ─────────────────────────────────────────────── */
+@media(max-width:768px){
+  #sidebar{transform:translateX(-100%);transition:transform .3s}
+  #sidebar.open{transform:translateX(0)}
+  #main{margin-left:0;padding:20px 16px 60px}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .index-grid{grid-template-columns:1fr}
+  .concept-2col{grid-template-columns:1fr}
+  #menu-btn{display:flex}
+}
+#menu-btn{
+  display:none;
+  position:fixed;bottom:20px;right:20px;z-index:200;
+  width:48px;height:48px;border-radius:50%;
+  background:var(--ink);color:#f0e8d0;
+  border:none;cursor:pointer;font-size:20px;
+  align-items:center;justify-content:center;
+  box-shadow:0 4px 12px rgba(0,0,0,.3);
+}
+</style>
+</head>
+<body>
+
+<!-- ─── SIDEBAR ─────────────────────────────────────────────── -->
+<nav id="sidebar">
+  <div class="sb-head">
+    <h1>🐍 Python &amp; R Notes</h1>
+    <p>C-DAC Kharghar · PG-DBDA · 2026</p>
+  </div>
+
+  <div class="sb-section">
+    <div class="sb-label">Overview</div>
+    <div class="nb active" onclick="go('home')">🏠 Home &amp; Syllabus Map</div>
+  </div>
+
+  <div class="sb-section">
+    <div class="sb-label">Python · Sessions 1–14</div>
+    <div class="nb" onclick="go('s1')">S1 · Basics &amp; Control Flow <span class="badge">2T+4L</span></div>
+    <div class="nb" onclick="go('s2')">S2 · Strings <span class="badge">2T+2L</span></div>
+    <div class="nb" onclick="go('s3')">S3 · Dictionaries <span class="badge">2T+2L</span></div>
+    <div class="nb" onclick="go('s4')">S4 · Lists <span class="badge">2T+2L</span></div>
+    <div class="nb" onclick="go('s5')">S5–6 · Functions &amp; Modules <span class="badge">4T+4L</span></div>
+    <div class="nb" onclick="go('s7')">S7 · Tuples Deep Dive <span class="badge">2T+2L</span></div>
+    <div class="nb" onclick="go('s8')">S8–9 · OOP + Advanced <span class="badge">4T+4L</span></div>
+    <div class="nb" onclick="go('s10')">S10 · Exceptions &amp; Logging <span class="badge">2T+2L</span></div>
+    <div class="nb" onclick="go('s11')">S11 · Pandas &amp; NumPy <span class="badge">2T+6L</span></div>
+    <div class="nb" onclick="go('s12')">S12 · Viz &amp; Scraping <span class="badge">2T+4L</span></div>
+    <div class="nb" onclick="go('s13')">S13 · Pillow &amp; VEnv <span class="badge">2T+2L</span></div>
+    <div class="nb" onclick="go('s14')">S14 · Python + Databases <span class="badge">2T+2L</span></div>
+  </div>
+
+  <div class="sb-section">
+    <div class="sb-label">R Programming · Sessions 15–18</div>
+    <div class="nb r" onclick="go('s15')">S15 · Intro to R <span class="badge">2T+2L</span></div>
+    <div class="nb r" onclick="go('s16')">S16 · Data Objects <span class="badge">2T+2L</span></div>
+    <div class="nb r" onclick="go('s17')">S17 · tidyverse <span class="badge">2T+2L</span></div>
+    <div class="nb r" onclick="go('s18')">S18 · Functions &amp; R Markdown <span class="badge">2T+2L</span></div>
+  </div>
+</nav>
+
+<!-- ─── MOBILE MENU BUTTON ──────────────────────────────────── -->
+<button id="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+
+<!-- ─── MAIN ─────────────────────────────────────────────────── -->
+<main id="main">
+
+<!-- ════════════════ HOME ════════════════ -->
+<div id="home" class="sec active">
+  <div class="hero">
+    <h2>Python &amp; R Programming — Complete Revision Guide</h2>
+    <p>C-DAC Kharghar · PG-DBDA February 2026 · Beginner → Advanced</p>
+    <div class="meta-chips">
+      <span class="chip chip-n">36h Theory</span>
+      <span class="chip chip-n">44h Lab</span>
+      <span class="chip chip-n">40h Self Learning</span>
+      <span class="chip chip-py">14 Python Sessions</span>
+      <span class="chip chip-r">4 R Sessions</span>
+    </div>
+  </div>
+
+  <p class="body dropcap">This guide covers every session of the PG-DBDA Python &amp; R module at C-DAC Kharghar. Each topic is explained with real-world Indian analogies, illustrated with SVG diagrams, and backed by working, exam-ready code. Whether you are encountering programming for the first time or brushing up before the lab exam, read each session from the top — concepts build on each other deliberately.</p>
+
+  <div class="stats-row">
+    <div class="stat"><div class="snum">14</div><div class="slbl">Python Sessions</div></div>
+    <div class="stat r-s"><div class="snum">4</div><div class="slbl">R Sessions</div></div>
+    <div class="stat"><div class="snum" style="color:var(--teal)">18</div><div class="slbl">SVG Diagrams</div></div>
+    <div class="stat"><div class="snum" style="color:var(--plum2)">120+</div><div class="slbl">Code Snippets</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 Evaluation Pattern</div>
+    <table>
+      <tr><th>Component</th><th>Weightage</th><th>What it tests</th></tr>
+      <tr><td>Theory Exam</td><td><strong>40%</strong></td><td>Concepts, definitions, tracing code, explaining data structures</td></tr>
+      <tr><td>Lab Exam</td><td><strong>40%</strong></td><td>Writing programs, debugging, output prediction</td></tr>
+      <tr><td>Internal</td><td><strong>20%</strong></td><td>Assignments, quizzes, mini-projects, class participation</td></tr>
+    </table>
+  </div>
+
+  <div class="pull-quote">"Programs must be written for people to read, and only incidentally for machines to execute." — Harold Abelson</div>
+
+  <div class="card">
+    <div class="card-title">🗺️ Learning Roadmap</div>
+    <div class="tl">
+      <div class="tl-i"><h4>Sessions 1–2 · Python Foundations</h4><p>Variables · Data Types · if/else · for/while loops · Strings · Input/Output</p></div>
+      <div class="tl-i"><h4>Sessions 3–4 · Core Data Structures</h4><p>Dictionaries · Lists · Comprehensions · Functional tools (map, filter, zip)</p></div>
+      <div class="tl-i"><h4>Sessions 5–7 · Functions &amp; Tuples</h4><p>Lambda · Recursion · Modules · Pickling · Tuples as fixed records</p></div>
+      <div class="tl-i"><h4>Sessions 8–10 · Advanced Python</h4><p>OOP · Generators · Decorators · Regex · Exception Handling · Logging</p></div>
+      <div class="tl-i"><h4>Sessions 11–13 · Data Science Toolkit</h4><p>NumPy · Pandas · Matplotlib · Seaborn · Plotly · BeautifulSoup · Pillow</p></div>
+      <div class="tl-i"><h4>Session 14 · Python + Databases</h4><p>SQLite · MySQL · Pandas + SQL · CRUD operations · Parameterised queries</p></div>
+      <div class="tl-i r-i"><h4>Sessions 15–18 · R Programming</h4><p>Basics · Vectors · Data Frames · tidyverse · ggplot2 · R Markdown</p></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">⚡ Jump to Any Topic</div>
+    <div class="index-grid">
+      <div class="idx-card" onclick="go('s1')"><h4>🔀 Control Flow</h4><p>if/else, for, while, break, continue — decision and repetition</p><span class="stag py-tag">Session 1</span></div>
+      <div class="idx-card" onclick="go('s2')"><h4>📝 Strings</h4><p>Slicing, methods, palindromes, pangrams, f-strings</p><span class="stag py-tag">Session 2</span></div>
+      <div class="idx-card" onclick="go('s3')"><h4>📚 Dictionaries</h4><p>Key-value, comprehension, ROT-13 cipher lab</p><span class="stag py-tag">Session 3</span></div>
+      <div class="idx-card" onclick="go('s5')"><h4>⚙️ Functions</h4><p>Lambda, map, recursion, *args, closures, pickling</p><span class="stag py-tag">Sessions 5–6</span></div>
+      <div class="idx-card" onclick="go('s8')"><h4>🏗️ OOP</h4><p>Classes, inheritance, generators, decorators, regex</p><span class="stag py-tag">Sessions 8–9</span></div>
+      <div class="idx-card" onclick="go('s11')"><h4>🐼 Pandas &amp; NumPy</h4><p>DataFrames, arrays, groupby, diamonds dataset</p><span class="stag py-tag">Session 11</span></div>
+      <div class="idx-card r-card" onclick="go('s15')"><h4>📊 R Basics</h4><p>Vectors, assignment, arithmetic, RStudio exploration</p><span class="stag r-tag">Session 15</span></div>
+      <div class="idx-card r-card" onclick="go('s17')"><h4>🌊 tidyverse</h4><p>dplyr pipes, ggplot2 charts, data reshaping</p><span class="stag r-tag">Session 17</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ SESSION 1 ════════════════ -->
+<div id="s1" class="sec">
+  <div class="hero">
+    <h2>Session 1 · Python Basics &amp; Control Flow</h2>
+    <p>Variables · Data Types · Operators · if/else · for · while · break/continue/pass</p>
+    <div class="meta-chips"><span class="chip chip-py">2h Theory</span><span class="chip chip-n">4h Lab</span><span class="chip chip-n">2h Self-Learning</span></div>
+  </div>
+
+  <div class="analogy-box">
+    <div class="anlabel">🎯 The Core Analogy</div>
+    <p><strong>Python is like giving instructions to a very literal-minded cook.</strong> You write a recipe (program), the cook follows it exactly — no assumptions, no shortcuts. An <code>if-else</code> is: "If the milk is sour, skip it; otherwise use it." A <code>for</code> loop is: "For each student in the class roll call, say their name." The cook never improvises — that precision is Python's strength.</p>
+  </div>
+
+  <h3>How Python runs your code</h3>
+  <p class="body">Python is an <em>interpreted</em> language — unlike C or Java which compile to machine code first, Python reads your file and executes it line by line. Understanding this journey helps you understand import errors, bytecode caching, and performance characteristics.</p>
+
+  <!-- SVG: Execution pipeline -->
+  <div class="svg-wrap">
+    <svg viewBox="0 0 820 120" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="a1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#6b6248" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+      <!-- Box 1 -->
+      <rect x="20" y="30" width="155" height="54" rx="8" fill="#ede6d6" stroke="#c2b49a" stroke-width="1"/>
+      <text x="97" y="52" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="13" font-weight="700" fill="#1c1a14">your_code.py</text>
+      <text x="97" y="70" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#6b6248">plain text file</text>
+      <!-- Arrow 1 -->
+      <line x1="175" y1="57" x2="215" y2="57" stroke="#6b6248" stroke-width="1.5" marker-end="url(#a1)"/>
+      <!-- Box 2 -->
+      <rect x="217" y="30" width="185" height="54" rx="8" fill="#faeeda" stroke="#b38800" stroke-width="1"/>
+      <text x="309" y="52" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="13" font-weight="700" fill="#412402">Python Interpreter</text>
+      <text x="309" y="70" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#633806">reads line-by-line</text>
+      <!-- Arrow 2 -->
+      <line x1="402" y1="57" x2="442" y2="57" stroke="#6b6248" stroke-width="1.5" marker-end="url(#a1)"/>
+      <!-- Box 3 -->
+      <rect x="444" y="30" width="165" height="54" rx="8" fill="#e1f5ee" stroke="#1a6e5c" stroke-width="1"/>
+      <text x="526" y="52" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="13" font-weight="700" fill="#04342c">Bytecode (.pyc)</text>
+      <text x="526" y="70" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#0f6e56">compiled form</text>
+      <!-- Arrow 3 -->
+      <line x1="609" y1="57" x2="649" y2="57" stroke="#6b6248" stroke-width="1.5" marker-end="url(#a1)"/>
+      <!-- Box 4 -->
+      <rect x="651" y="30" width="150" height="54" rx="8" fill="#eeedfe" stroke="#534ab7" stroke-width="1"/>
+      <text x="726" y="52" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="13" font-weight="700" fill="#26215c">Python VM</text>
+      <text x="726" y="70" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#3c3489">executes → output</text>
+      <!-- Caption -->
+      <text x="410" y="108" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#6b6248">No separate compile step — python3 myfile.py does everything automatically</text>
+    </svg>
+  </div>
+
+  <div class="lvl-row"><span class="lvl lvl-b">Beginner</span> Data Types</div>
+  <div class="card">
+    <div class="card-title">Python's Built-in Data Types</div>
+    <table>
+      <tr><th>Type</th><th>Example</th><th>C-DAC Real-world Usage</th><th>Type Check</th></tr>
+      <tr><td><code>int</code></td><td><code>roll = 2601</code></td><td>Roll number, batch count, port number</td><td><code>type(roll)</code></td></tr>
+      <tr><td><code>float</code></td><td><code>cgpa = 8.75</code></td><td>CGPA, salary (₹), ML model accuracy</td><td><code>isinstance(x, float)</code></td></tr>
+      <tr><td><code>str</code></td><td><code>name = "Priya"</code></td><td>Names, SQL queries, file paths, JSON keys</td><td><code>type(x) == str</code></td></tr>
+      <tr><td><code>bool</code></td><td><code>passed = True</code></td><td>Pass/Fail flags, ON/OFF switches, DB flags</td><td><code>isinstance(x, bool)</code></td></tr>
+      <tr><td><code>NoneType</code></td><td><code>result = None</code></td><td>Missing data, NULL from DB, unset variable</td><td><code>result is None</code></td></tr>
+      <tr><td><code>complex</code></td><td><code>z = 3+4j</code></td><td>Signal processing, DSP, FFT</td><td><code>z.real, z.imag</code></td></tr>
+    </table>
+  </div>
+
+  <div class="code-block">
+    <span class="code-label">Python · Variables &amp; Types</span>
+    <pre><span class="cm"># Python is DYNAMICALLY TYPED — no type declaration needed</span>
+<span class="op">name</span>       = <span class="str">"Priya Nair"</span>       <span class="cm"># str</span>
+<span class="op">roll</span>       = <span class="num">2601</span>              <span class="cm"># int</span>
+<span class="op">cgpa</span>       = <span class="num">8.92</span>              <span class="cm"># float</span>
+<span class="op">is_placed</span>  = <span class="kw">True</span>              <span class="cm"># bool</span>
+<span class="op">dept</span>       = <span class="kw">None</span>              <span class="cm"># NoneType — not yet assigned</span>
+
+<span class="cm"># Python infers the type at runtime</span>
+<span class="fn">print</span>(<span class="fn">type</span>(cgpa))     <span class="cm"># &lt;class 'float'&gt;</span>
+
+<span class="cm"># Multiple assignment on one line</span>
+x, y, z = <span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>
+
+<span class="cm"># Swap without a temp variable (very Pythonic!)</span>
+x, y = y, x           <span class="cm"># x=20, y=10 — tuple packing/unpacking</span>
+
+<span class="cm"># Type conversion (casting)</span>
+<span class="fn">int</span>(<span class="str">"42"</span>)      <span class="cm"># → 42        (string to int)</span>
+<span class="fn">str</span>(<span class="num">3.14</span>)     <span class="cm"># → "3.14"    (float to string)</span>
+<span class="fn">float</span>(<span class="num">7</span>)      <span class="cm"># → 7.0       (int to float)</span>
+<span class="fn">bool</span>(<span class="num">0</span>)       <span class="cm"># → False     (0, "", [], None are all Falsy)</span>
+<span class="fn">bool</span>(<span class="str">"CDAC"</span>) <span class="cm"># → True      (any non-empty string is Truthy)</span></pre>
+  </div>
+
+  <div class="lvl-row"><span class="lvl lvl-b">Beginner</span> Control Flow — if / elif / else</div>
+  <p class="body">Control flow tells Python which path to take through your code. Python uses <em>indentation</em> (4 spaces) to define code blocks — no curly braces like Java or C. Wrong indentation is always a <code>SyntaxError</code>.</p>
+
+  <!-- SVG: if-elif-else flowchart -->
+  <div class="svg-wrap">
+    <svg viewBox="0 0 820 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="a2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#6b6248" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+      <!-- Start -->
+      <rect x="290" y="10" width="200" height="46" rx="8" fill="#d3d1c7" stroke="#888780" stroke-width="1"/>
+      <text x="390" y="29" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="13" font-weight="700" fill="#2c2c2a">marks = input()</text>
+      <text x="390" y="47" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#5f5e5a">program starts</text>
+      <line x1="390" y1="56" x2="390" y2="76" stroke="#6b6248" stroke-width="1.5" marker-end="url(#a2)"/>
+      <!-- Diamond 1 -->
+      <rect x="265" y="78" width="250" height="50" rx="8" fill="#fac775" stroke="#ba7517" stroke-width="1"/>
+      <text x="390" y="99" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="13" font-weight="700" fill="#412402">if marks ≥ 90?</text>
+      <text x="390" y="117" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#633806">first condition check</text>
+      <!-- Yes arrow right -->
+      <line x1="515" y1="103" x2="580" y2="103" stroke="#1a6e5c" stroke-width="1.5" marker-end="url(#a2)"/>
+      <text x="545" y="97" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#1a6e5c">Yes</text>
+      <rect x="582" y="78" width="130" height="50" rx="8" fill="#9fe1cb" stroke="#1d9e75" stroke-width="1"/>
+      <text x="647" y="99" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="13" font-weight="700" fill="#04342c">Grade O</text>
+      <text x="647" y="117" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#0f6e56">Outstanding</text>
+      <!-- No arrow down -->
+      <line x1="390" y1="128" x2="390" y2="150" stroke="#b34a22" stroke-width="1.5" marker-end="url(#a2)"/>
+      <text x="375" y="142" text-anchor="end" font-family="'Segoe UI',sans-serif" font-size="11" fill="#b34a22">No</text>
+      <!-- Diamond 2 -->
+      <rect x="265" y="152" width="250" height="50" rx="8" fill="#fac775" stroke="#ba7517" stroke-width="1"/>
+      <text x="390" y="173" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="13" font-weight="700" fill="#412402">elif marks ≥ 60?</text>
+      <text x="390" y="191" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#633806">second check</text>
+      <!-- Yes arrow right -->
+      <line x1="515" y1="177" x2="580" y2="177" stroke="#1a6e5c" stroke-width="1.5" marker-end="url(#a2)"/>
+      <text x="545" y="171" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#1a6e5c">Yes</text>
+      <rect x="582" y="152" width="130" height="50" rx="8" fill="#9fe1cb" stroke="#1d9e75" stroke-width="1"/>
+      <text x="647" y="173" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="13" font-weight="700" fill="#04342c">Grade B</text>
+      <text x="647" y="191" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#0f6e56">First class</text>
+      <!-- No arrow down -->
+      <line x1="390" y1="202" x2="390" y2="224" stroke="#b34a22" stroke-width="1.5" marker-end="url(#a2)"/>
+      <text x="375" y="216" text-anchor="end" font-family="'Segoe UI',sans-serif" font-size="11" fill="#b34a22">No</text>
+      <!-- else box -->
+      <rect x="290" y="226" width="200" height="46" rx="8" fill="#f0997b" stroke="#d85a30" stroke-width="1"/>
+      <text x="390" y="245" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="13" font-weight="700" fill="#4a1b0c">else</text>
+      <text x="390" y="263" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#712b13">Grade F — Fail</text>
+    </svg>
+  </div>
+
+  <div class="code-block">
+    <span class="code-label">Python · Grade Calculator (C-DAC Style)</span>
+    <pre><span class="op">marks</span> = <span class="fn">int</span>(<span class="fn">input</span>(<span class="str">"Enter marks (0-100): "</span>))
+
+<span class="kw">if</span> marks >= <span class="num">90</span>:
+    <span class="fn">print</span>(<span class="str">"O — Outstanding"</span>)
+<span class="kw">elif</span> marks >= <span class="num">75</span>:
+    <span class="fn">print</span>(<span class="str">"A — Distinction"</span>)
+<span class="kw">elif</span> marks >= <span class="num">60</span>:
+    <span class="fn">print</span>(<span class="str">"B — First Class"</span>)
+<span class="kw">elif</span> marks >= <span class="num">40</span>:
+    <span class="fn">print</span>(<span class="str">"C — Pass"</span>)
+<span class="kw">else</span>:
+    <span class="fn">print</span>(<span class="str">"F — Fail. Please reappear."</span>)
+
+<span class="cm"># One-liner ternary — for simple True/False choices</span>
+result = <span class="str">"Pass"</span> <span class="kw">if</span> marks >= <span class="num">40</span> <span class="kw">else</span> <span class="str">"Fail"</span>
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Result: {result}"</span>)</pre>
+  </div>
+
+  <div class="lvl-row"><span class="lvl lvl-b">Beginner</span><span class="lvl lvl-i">Intermediate</span> Loops — for &amp; while</div>
+
+  <!-- SVG: for vs while -->
+  <div class="svg-wrap">
+    <svg viewBox="0 0 820 175" xmlns="http://www.w3.org/2000/svg">
+      <!-- for box -->
+      <rect x="20" y="15" width="375" height="145" rx="10" fill="#e1f5ee" stroke="#1d9e75" stroke-width="1"/>
+      <text x="207" y="44" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="14" font-weight="700" fill="#04342c">for loop</text>
+      <text x="207" y="64" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" fill="#0f6e56">Use when you KNOW the count</text>
+      <text x="207" y="88" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="12" fill="#085041">for i in range(10):</text>
+      <text x="207" y="108" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="12" fill="#085041">for s in class_list:</text>
+      <text x="207" y="128" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="12" fill="#085041">for char in "CDAC":</text>
+      <text x="207" y="151" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#1a6e5c">Analogy: class roll call — 30 students</text>
+      <!-- while box -->
+      <rect x="425" y="15" width="375" height="145" rx="10" fill="#eeedfe" stroke="#534ab7" stroke-width="1"/>
+      <text x="612" y="44" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="14" font-weight="700" fill="#26215c">while loop</text>
+      <text x="612" y="64" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" fill="#3c3489">Use when CONDITION drives exit</text>
+      <text x="612" y="88" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="12" fill="#26215c">while balance &gt; 0:</text>
+      <text x="612" y="108" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="12" fill="#26215c">while not found:</text>
+      <text x="612" y="128" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="12" fill="#26215c">while user_input != 'q':</text>
+      <text x="612" y="151" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#534ab7">Analogy: wait at IRCTC until seat confirmed</text>
+    </svg>
+  </div>
+
+  <div class="code-block">
+    <span class="code-label">Python · Lab Q1 &amp; Q2 — Factorials</span>
+    <pre><span class="cm"># Q1: for loop — print 0! to 10!</span>
+f, n = <span class="num">1</span>, <span class="num">0</span>
+<span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(<span class="num">11</span>):
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"{n}! = {f}"</span>)
+    n += <span class="num">1</span>
+    f *= n
+<span class="cm"># Output: 0!=1, 1!=1, 2!=2, ... 10!=3,628,800</span>
+
+<span class="cm"># Q2: while loop — all factorials under 2 billion</span>
+f, n = <span class="num">1</span>, <span class="num">0</span>
+<span class="kw">while</span> f < <span class="num">2_000_000_000</span>:      <span class="cm"># underscore separators for readability</span>
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"{n}! = {f:,}"</span>)    <span class="cm"># :, adds comma formatting to numbers</span>
+    n += <span class="num">1</span>
+    f *= n</pre>
+  </div>
+
+  <div class="card">
+    <div class="card-title">break · continue · pass</div>
+    <table>
+      <tr><th>Keyword</th><th>Effect</th><th>Analogy</th><th>Common Use</th></tr>
+      <tr><td><code>break</code></td><td>Exit entire loop now</td><td>Emergency stop on a machine</td><td>Found what you searched for</td></tr>
+      <tr><td><code>continue</code></td><td>Skip this iteration, go to next</td><td>Skip a corrupted track on Spotify</td><td>Skip invalid data rows</td></tr>
+      <tr><td><code>pass</code></td><td>Do nothing — placeholder</td><td>Empty room stub in a blueprint</td><td>Skeleton class/function</td></tr>
+    </table>
+  </div>
+
+  <div class="quiz-box">
+    <div class="quiz-q">🧪 What does <code>print(type(True))</code> output?</div>
+    <div class="quiz-opts" id="q1o">
+      <label><input type="radio" name="q1" value="a"> &lt;class 'int'&gt;</label>
+      <label><input type="radio" name="q1" value="b"> &lt;class 'bool'&gt;</label>
+      <label><input type="radio" name="q1" value="c"> &lt;class 'boolean'&gt;</label>
+      <label><input type="radio" name="q1" value="d"> True</label>
+    </div>
+    <button class="qbtn" onclick="chk('q1','b','bool — Python has no separate boolean type keyword; bool is a class. Bonus: bool is a subclass of int, so True+True gives 2 and True==1 is True.')">Check Answer</button>
+    <div id="q1-res" class="qres"></div>
+  </div>
+</div>
+
+<!-- ════════════════ SESSION 2 ════════════════ -->
+<div id="s2" class="sec">
+  <div class="hero">
+    <h2>Session 2 · Strings</h2>
+    <p>Text manipulation — the single most critical skill for data cleaning and preprocessing</p>
+    <div class="meta-chips"><span class="chip chip-py">2h Theory</span><span class="chip chip-n">2h Lab</span><span class="chip chip-n">2h Self-Learning</span></div>
+  </div>
+
+  <div class="analogy-box">
+    <div class="anlabel">🎯 The Core Analogy</div>
+    <p><strong>A string is a Mumbai local train with coaches numbered from 0.</strong> Coach 0 is the first, coach -1 is the last (counting from the back). You can board at any coach (<code>s[3]</code>), or take a stretch of coaches (<code>s[2:7]</code>), or walk the entire train backwards (<code>s[::-1]</code>). The train is <em>immutable</em> — you can not rebuild a coach in place. <code>s[0] = 'X'</code> gives a <code>TypeError</code>; you must produce a new string.</p>
+  </div>
+
+  <!-- SVG: String indexing -->
+  <div class="svg-wrap">
+    <svg viewBox="0 0 820 165" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="a3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#6b6248" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+      <text x="410" y="20" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="14" font-weight="700" fill="#1c1a14">s = "C-DAC Kharghar"</text>
+      <!-- Characters -->
+      <rect x="60" y="30" width="62" height="48" rx="6" fill="#fac775" stroke="#ba7517" stroke-width="1"/><text x="91" y="52" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="20" font-weight="700" fill="#412402">C</text>
+      <rect x="128" y="30" width="62" height="48" rx="6" fill="#9fe1cb" stroke="#1d9e75" stroke-width="1"/><text x="159" y="52" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="20" font-weight="700" fill="#04342c">-</text>
+      <rect x="196" y="30" width="62" height="48" rx="6" fill="#9fe1cb" stroke="#1d9e75" stroke-width="1"/><text x="227" y="52" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="20" font-weight="700" fill="#04342c">D</text>
+      <rect x="264" y="30" width="62" height="48" rx="6" fill="#9fe1cb" stroke="#1d9e75" stroke-width="1"/><text x="295" y="52" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="20" font-weight="700" fill="#04342c">A</text>
+      <rect x="332" y="30" width="62" height="48" rx="6" fill="#fac775" stroke="#ba7517" stroke-width="1"/><text x="363" y="52" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="20" font-weight="700" fill="#412402">C</text>
+      <rect x="400" y="30" width="62" height="48" rx="6" fill="#d3d1c7" stroke="#888780" stroke-width="1"/><text x="431" y="52" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="16" fill="#5f5e5a">⎵</text>
+      <rect x="468" y="30" width="62" height="48" rx="6" fill="#cecbf6" stroke="#534ab7" stroke-width="1"/><text x="499" y="52" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="20" font-weight="700" fill="#26215c">K</text>
+      <!-- forward indexes -->
+      <text x="91" y="92" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#b34a22">0</text>
+      <text x="159" y="92" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#b34a22">1</text>
+      <text x="227" y="92" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#b34a22">2</text>
+      <text x="295" y="92" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#b34a22">3</text>
+      <text x="363" y="92" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#b34a22">4</text>
+      <text x="431" y="92" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#b34a22">5</text>
+      <text x="499" y="92" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#b34a22">6 …</text>
+      <!-- backward indexes -->
+      <text x="91" y="110" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#1a6e5c">-14</text>
+      <text x="159" y="110" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#1a6e5c">-13</text>
+      <text x="295" y="110" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#1a6e5c">-11</text>
+      <text x="363" y="110" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#1a6e5c">-10</text>
+      <!-- Legend / examples -->
+      <text x="60" y="140" font-family="'Segoe UI',sans-serif" font-size="12" fill="#b34a22">s[0]→'C'   s[4]→'C'   s[-1]→'r'</text>
+      <text x="60" y="157" font-family="'Segoe UI',sans-serif" font-size="12" fill="#1a6e5c">s[0:4]→'C-DA'   s[6:]→'Kharghar'   s[::-1] reverses entire string</text>
+    </svg>
+  </div>
+
+  <div class="code-block">
+    <span class="code-label">Python · String Operations — Complete Reference</span>
+    <pre><span class="op">s</span> = <span class="str">"C-DAC Kharghar Navi Mumbai"</span>
+
+<span class="cm"># SLICING — [start:stop:step]  (stop is exclusive!)</span>
+<span class="fn">print</span>(s[<span class="num">0</span>:<span class="num">5</span>])        <span class="cm"># 'C-DAC'</span>
+<span class="fn">print</span>(s[<span class="num">6</span>:])         <span class="cm"># 'Kharghar Navi Mumbai'</span>
+<span class="fn">print</span>(s[::<span class="num">-1</span>])       <span class="cm"># reverse the whole string</span>
+<span class="fn">print</span>(s[<span class="num">6</span>:<span class="num">14</span>:<span class="num">2</span>])     <span class="cm"># every 2nd char from 6 to 14</span>
+
+<span class="cm"># IMPORTANT METHODS</span>
+<span class="fn">print</span>(s.<span class="fn">upper</span>())              <span class="cm"># 'C-DAC KHARGHAR NAVI MUMBAI'</span>
+<span class="fn">print</span>(s.<span class="fn">lower</span>())              <span class="cm"># 'c-dac kharghar navi mumbai'</span>
+<span class="fn">print</span>(s.<span class="fn">replace</span>(<span class="str">'Navi'</span>,<span class="str">'New'</span>))<span class="cm"># replace substring</span>
+<span class="fn">print</span>(s.<span class="fn">split</span>(<span class="str">' '</span>))           <span class="cm"># ['C-DAC', 'Kharghar', 'Navi', 'Mumbai']</span>
+<span class="fn">print</span>(<span class="str">', '</span>.<span class="fn">join</span>([<span class="str">'a'</span>,<span class="str">'b'</span>,<span class="str">'c'</span>])) <span class="cm"># 'a, b, c'</span>
+<span class="fn">print</span>(s.<span class="fn">strip</span>())              <span class="cm"># remove leading/trailing whitespace</span>
+<span class="fn">print</span>(s.<span class="fn">count</span>(<span class="str">'a'</span>))          <span class="cm"># count occurrences of 'a'</span>
+<span class="fn">print</span>(s.<span class="fn">find</span>(<span class="str">'Kharghar'</span>))    <span class="cm"># index position or -1 if not found</span>
+<span class="fn">print</span>(s.<span class="fn">startswith</span>(<span class="str">'C-DAC'</span>))<span class="cm"># True</span>
+<span class="fn">print</span>(s.<span class="fn">endswith</span>(<span class="str">'Mumbai'</span>))  <span class="cm"># True</span>
+
+<span class="cm"># F-STRINGS — modern, fast, readable string formatting</span>
+<span class="op">batch</span>, <span class="op">cgpa</span> = <span class="num">2026</span>, <span class="num">8.9247</span>
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"PG-DBDA {batch} — C-DAC Kharghar"</span>)
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"CGPA: {cgpa:.2f}"</span>)        <span class="cm"># 'CGPA: 8.92' (2 decimal places)</span>
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Rank: {1:04d}"</span>)           <span class="cm"># 'Rank: 0001' (zero-padded)</span>
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Total: ₹{75000:,}"</span>)      <span class="cm"># 'Total: ₹75,000'</span></pre>
+  </div>
+
+  <div class="lvl-row"><span class="lvl lvl-i">Intermediate</span> Lab Q3 &amp; Q4 — Palindrome &amp; Pangram</div>
+  <div class="code-block">
+    <span class="code-label">Python · Lab Solutions</span>
+    <pre><span class="kw">import</span> re
+
+<span class="cm"># Q3: Phrase palindrome checker</span>
+<span class="kw">def</span> <span class="fn">is_palindrome</span>(phrase):
+    <span class="cm">"""Strip non-letters, lowercase, compare to reverse."""</span>
+    clean = re.<span class="fn">sub</span>(<span class="str">r'[^a-zA-Z]'</span>, <span class="str">''</span>, phrase).<span class="fn">lower</span>()
+    <span class="kw">return</span> clean == clean[::<span class="num">-1</span>]
+
+tests = [<span class="str">"Was it a rat I saw?"</span>, <span class="str">"Step on no pets"</span>, <span class="str">"Dammit, I'm mad!"</span>, <span class="str">"Hello CDAC"</span>]
+<span class="kw">for</span> t <span class="kw">in</span> tests:
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"{'✓' if is_palindrome(t) else '✗'}  {t!r}"</span>)
+
+<span class="cm"># Q4: Pangram checker (contains all 26 English letters)</span>
+<span class="kw">def</span> <span class="fn">is_pangram</span>(sentence):
+    letters = <span class="fn">set</span>(sentence.<span class="fn">lower</span>())
+    <span class="kw">return</span> <span class="fn">set</span>(<span class="str">'abcdefghijklmnopqrstuvwxyz'</span>).<span class="fn">issubset</span>(letters)
+
+<span class="fn">print</span>(<span class="fn">is_pangram</span>(<span class="str">"The quick brown fox jumps over the lazy dog"</span>))  <span class="cm"># True</span>
+<span class="fn">print</span>(<span class="fn">is_pangram</span>(<span class="str">"Hello World"</span>))                               <span class="cm"># False</span></pre>
+  </div>
+</div>
+
+<!-- ════════════════ SESSION 3 ════════════════ -->
+<div id="s3" class="sec">
+  <div class="hero">
+    <h2>Session 3 · Dictionaries</h2>
+    <p>Key-Value stores — the data structure powering Big Data, JSON, and every web API</p>
+    <div class="meta-chips"><span class="chip chip-py">2h Theory</span><span class="chip chip-n">2h Lab</span></div>
+  </div>
+
+  <div class="analogy-box">
+    <div class="anlabel">🎯 The Core Analogy</div>
+    <p><strong>A Python dict is exactly like your phone's contact book.</strong> You search by <em>name</em> (key) and get the <em>phone number</em> (value) instantly — you do not scroll through every contact. Lookup is O(1) whether you have 10 or 10 million entries. This is the same principle behind Hadoop's shuffle-sort phase, Redis, and MongoDB document stores.</p>
+  </div>
+
+  <!-- SVG: Dictionary structure -->
+  <div class="svg-wrap">
+    <svg viewBox="0 0 820 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="a4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#b34a22" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+      <text x="200" y="18" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" font-weight="700" fill="#6b6248">KEYS (must be immutable)</text>
+      <text x="600" y="18" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" font-weight="700" fill="#6b6248">VALUES (any Python object)</text>
+      <!-- Row 1 -->
+      <rect x="40" y="26" width="320" height="42" rx="6" fill="#fac775" stroke="#ba7517" stroke-width="1"/>
+      <text x="200" y="52" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="14" fill="#412402">"name"</text>
+      <rect x="430" y="26" width="350" height="42" rx="6" fill="#9fe1cb" stroke="#1d9e75" stroke-width="1"/>
+      <text x="605" y="52" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="14" fill="#04342c">"Priya Nair"</text>
+      <line x1="360" y1="47" x2="428" y2="47" stroke="#b34a22" stroke-width="2" marker-end="url(#a4)"/>
+      <!-- Row 2 -->
+      <rect x="40" y="78" width="320" height="42" rx="6" fill="#fac775" stroke="#ba7517" stroke-width="1"/>
+      <text x="200" y="104" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="14" fill="#412402">"roll"</text>
+      <rect x="430" y="78" width="350" height="42" rx="6" fill="#9fe1cb" stroke="#1d9e75" stroke-width="1"/>
+      <text x="605" y="104" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="14" fill="#04342c">2601 (integer)</text>
+      <line x1="360" y1="99" x2="428" y2="99" stroke="#b34a22" stroke-width="2" marker-end="url(#a4)"/>
+      <!-- Row 3 -->
+      <rect x="40" y="130" width="320" height="42" rx="6" fill="#fac775" stroke="#ba7517" stroke-width="1"/>
+      <text x="200" y="156" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="14" fill="#412402">"marks"</text>
+      <rect x="430" y="130" width="350" height="42" rx="6" fill="#9fe1cb" stroke="#1d9e75" stroke-width="1"/>
+      <text x="605" y="156" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="12" fill="#04342c">{"Python":88,"R":79} (dict!)</text>
+      <line x1="360" y1="151" x2="428" y2="151" stroke="#b34a22" stroke-width="2" marker-end="url(#a4)"/>
+      <text x="410" y="195" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#6b6248">O(1) average lookup via internal hash table · keys immutable · values = any object · insertion-ordered (Python 3.7+)</text>
+    </svg>
+  </div>
+
+  <div class="code-block">
+    <span class="code-label">Python · Dictionary Essentials + Lab Q1 ROT-13</span>
+    <pre><span class="cm"># CREATE</span>
+<span class="op">student</span> = {
+    <span class="str">"name"</span>: <span class="str">"Priya Nair"</span>,
+    <span class="str">"roll"</span>: <span class="num">2601</span>,
+    <span class="str">"marks"</span>: {<span class="str">"Python"</span>: <span class="num">88</span>, <span class="str">"R"</span>: <span class="num">79</span>},  <span class="cm"># nested dict!</span>
+    <span class="str">"batch"</span>: <span class="str">"PGDBDA-Feb2026"</span>
+}
+
+<span class="cm"># ACCESS — two ways</span>
+<span class="fn">print</span>(student[<span class="str">"name"</span>])              <span class="cm"># KeyError if key missing</span>
+<span class="fn">print</span>(student.<span class="fn">get</span>(<span class="str">"dept"</span>, <span class="str">"N/A"</span>))  <span class="cm"># safe — returns default</span>
+
+<span class="cm"># MODIFY &amp; ADD</span>
+student[<span class="str">"marks"</span>][<span class="str">"Java"</span>] = <span class="num">83</span>     <span class="cm"># add to nested dict</span>
+student[<span class="str">"graduated"</span>] = <span class="kw">False</span>       <span class="cm"># add new top-level key</span>
+
+<span class="cm"># DELETE</span>
+<span class="kw">del</span> student[<span class="str">"roll"</span>]
+popped = student.<span class="fn">pop</span>(<span class="str">"batch"</span>)    <span class="cm"># remove and return value</span>
+
+<span class="cm"># ITERATION</span>
+<span class="kw">for</span> key, val <span class="kw">in</span> student.<span class="fn">items</span>():
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"  {key}: {val}"</span>)
+
+<span class="cm"># DICT COMPREHENSION — like list comp but for dicts</span>
+squares = {x: x**<span class="num">2</span> <span class="kw">for</span> x <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1</span>, <span class="num">6</span>)}  <span class="cm"># {1:1, 2:4, 3:9, 4:16, 5:25}</span>
+
+<span class="cm"># ── ROT-13 CIPHER LAB Q1 ──────────────────────────────────────</span>
+<span class="kw">def</span> <span class="fn">rot13</span>(text):
+    <span class="op">upper</span> = <span class="str">'ABCDEFGHIJKLMNOPQRSTUVWXYZ'</span>
+    <span class="op">lower</span> = upper.<span class="fn">lower</span>()
+    table = str.<span class="fn">maketrans</span>(
+        upper + lower,
+        upper[<span class="num">13</span>:] + upper[:<span class="num">13</span>] + lower[<span class="num">13</span>:] + lower[:<span class="num">13</span>]
+    )
+    <span class="kw">return</span> text.<span class="fn">translate</span>(table)
+
+<span class="op">secret</span> = <span class="str">"Pnrfne pvcure? V zhpu cersre Pnrfne fnynq!"</span>
+<span class="fn">print</span>(<span class="fn">rot13</span>(secret))   <span class="cm"># Caesar cipher? I much prefer Caesar salad!</span>
+<span class="fn">print</span>(<span class="fn">rot13</span>(<span class="fn">rot13</span>(secret)) == secret)  <span class="cm"># True — self-inverse!</span></pre>
+  </div>
+</div>
+
+<!-- ════════════════ SESSION 4 ════════════════ -->
+<div id="s4" class="sec">
+  <div class="hero">
+    <h2>Session 4 · Lists</h2>
+    <p>Python's most versatile data structure — ordered, mutable, and infinitely flexible</p>
+    <div class="meta-chips"><span class="chip chip-py">2h Theory</span><span class="chip chip-n">2h Lab</span></div>
+  </div>
+
+  <div class="analogy-box">
+    <div class="anlabel">🎯 The Core Analogy</div>
+    <p><strong>A list is like a Zomato order cart.</strong> You can add items (<code>append</code>), remove one (<code>remove</code>), look at what's at the top (<code>[-1]</code>), merge two carts (<code>+</code>), and even create a mini-cart of just the first three items (<code>[:3]</code>). Everything is ordered by position, and nothing is fixed — it is completely mutable.</p>
+  </div>
+
+  <div class="code-block">
+    <span class="code-label">Python · Complete List Operations Reference</span>
+    <pre><span class="op">scores</span> = [<span class="num">88</span>, <span class="num">72</span>, <span class="num">95</span>, <span class="num">61</span>, <span class="num">84</span>, <span class="num">91</span>]
+
+<span class="cm">--- ADDING ---</span>
+scores.<span class="fn">append</span>(<span class="num">78</span>)            <span class="cm"># add to end</span>
+scores.<span class="fn">insert</span>(<span class="num">0</span>, <span class="num">100</span>)         <span class="cm"># insert at index 0</span>
+scores.<span class="fn">extend</span>([<span class="num">55</span>, <span class="num">67</span>])      <span class="cm"># merge another list</span>
+scores += [<span class="num">82</span>]               <span class="cm"># shorthand extend</span>
+
+<span class="cm">--- REMOVING ---</span>
+scores.<span class="fn">remove</span>(<span class="num">61</span>)            <span class="cm"># remove first occurrence of value 61</span>
+scores.<span class="fn">pop</span>()                 <span class="cm"># remove &amp; return last element</span>
+scores.<span class="fn">pop</span>(<span class="num">2</span>)                <span class="cm"># remove &amp; return element at index 2</span>
+<span class="kw">del</span> scores[<span class="num">0</span>:<span class="num">2</span>]              <span class="cm"># delete a slice</span>
+scores.<span class="fn">clear</span>()               <span class="cm"># empty the entire list</span>
+
+<span class="cm">--- SEARCHING &amp; STATS ---</span>
+<span class="fn">print</span>(<span class="fn">max</span>(scores), <span class="fn">min</span>(scores), <span class="fn">sum</span>(scores))
+<span class="fn">print</span>(scores.<span class="fn">index</span>(<span class="num">95</span>))      <span class="cm"># position of 95</span>
+<span class="fn">print</span>(scores.<span class="fn">count</span>(<span class="num">88</span>))      <span class="cm"># how many times 88 appears</span>
+<span class="fn">print</span>(<span class="num">95</span> <span class="kw">in</span> scores)          <span class="cm"># True — membership test</span>
+
+<span class="cm">--- SORTING ---</span>
+scores.<span class="fn">sort</span>()                <span class="cm"># ascending, modifies IN-PLACE</span>
+scores.<span class="fn">sort</span>(reverse=<span class="kw">True</span>)   <span class="cm"># descending, in-place</span>
+ranked = <span class="fn">sorted</span>(scores)     <span class="cm"># returns NEW sorted list, original unchanged</span>
+
+<span class="cm">--- LIST COMPREHENSION (Pythonic &amp; fast!) ---</span>
+passed   = [s <span class="kw">for</span> s <span class="kw">in</span> scores <span class="kw">if</span> s >= <span class="num">40</span>]
+doubled  = [s * <span class="num">2</span> <span class="kw">for</span> s <span class="kw">in</span> scores]
+grades   = [<span class="str">'P'</span> <span class="kw">if</span> s>=<span class="num">40</span> <span class="kw">else</span> <span class="str">'F'</span> <span class="kw">for</span> s <span class="kw">in</span> scores]
+
+<span class="cm">--- CRITICAL: Copy vs Reference ---</span>
+a = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>]
+b = a           <span class="cm"># SAME list! b IS a — dangerous!</span>
+c = a.<span class="fn">copy</span>()   <span class="cm"># true independent copy</span>
+d = a[:]        <span class="cm"># slice copy — also independent</span>
+e = <span class="fn">list</span>(a)    <span class="cm"># another way to copy</span>
+<span class="cm"># Test: b.append(99) → a also has 99. c.append(99) → a unchanged.</span></pre>
+  </div>
+
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <p><strong>Most common beginner mistake:</strong> <code>b = a</code> does NOT copy a list — it makes <em>b point to the same list in memory as a</em>. If you do <code>b.append(99)</code>, you will find 99 in <code>a</code> as well. Always use <code>a.copy()</code> or <code>a[:]</code> when you need an independent copy.</p>
+  </div>
+</div>
+
+<!-- ════════════════ SESSION 5-6 ════════════════ -->
+<div id="s5" class="sec">
+  <div class="hero">
+    <h2>Sessions 5–6 · Functions &amp; Modules</h2>
+    <p>Lambda · Recursion · *args/**kwargs · Modules · Pickling — reusable code building blocks</p>
+    <div class="meta-chips"><span class="chip chip-py">4h Theory</span><span class="chip chip-n">4h Lab</span><span class="chip chip-n">4h Self-Learning</span></div>
+  </div>
+
+  <div class="analogy-box">
+    <div class="anlabel">🎯 The Core Analogy</div>
+    <p><strong>A function is a mixer-grinder.</strong> You put ingredients in (parameters), it processes, you get output (return value). Once you own it, use it anytime (reusability). A <em>lambda</em> is a small hand blender — quick, one-time use, no need to give it a shelf. A <em>module</em> is the entire appliance catalogue from a brand — grouped, importable, ready to use.</p>
+  </div>
+
+  <!-- SVG: Function anatomy -->
+  <div class="svg-wrap">
+    <svg viewBox="0 0 820 160" xmlns="http://www.w3.org/2000/svg">
+      <rect x="20" y="14" width="780" height="130" rx="10" fill="#f5f0e8" stroke="#c2b49a" stroke-width="1"/>
+      <text x="60" y="48" font-family="'Cascadia Code',monospace" font-size="16" font-weight="700" fill="#b34a22">def</text>
+      <text x="102" y="48" font-family="'Cascadia Code',monospace" font-size="16" font-weight="700" fill="#1a6e5c">calculate_gpa</text>
+      <text x="310" y="48" font-family="'Cascadia Code',monospace" font-size="16" fill="#1c1a14">(</text>
+      <text x="325" y="48" font-family="'Cascadia Code',monospace" font-size="16" fill="#8c6a00">m1, m2, m3</text>
+      <text x="452" y="48" font-family="'Cascadia Code',monospace" font-size="16" fill="#1c1a14">):</text>
+      <!-- Labels -->
+      <text x="75" y="70" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="10" fill="#b34a22">keyword</text>
+      <text x="200" y="70" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="10" fill="#1a6e5c">function name</text>
+      <text x="390" y="70" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="10" fill="#8c6a00">parameters (inputs)</text>
+      <!-- Body -->
+      <rect x="40" y="82" width="740" height="30" rx="6" fill="#e1f5ee" stroke="#1d9e75" stroke-width="1"/>
+      <text x="410" y="102" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="13" fill="#04342c">    gpa = (1/3)*m1 + (1/2)*m2 + (1/4)*m3   ← function body (indented 4 spaces)</text>
+      <!-- Return -->
+      <rect x="40" y="122" width="200" height="16" rx="4" fill="#fac775" stroke="#ba7517" stroke-width="1"/>
+      <text x="140" y="134" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="12" fill="#412402">    return gpa</text>
+      <text x="260" y="134" font-family="'Segoe UI',sans-serif" font-size="11" fill="#633806">← sends output back to caller</text>
+    </svg>
+  </div>
+
+  <div class="code-block">
+    <span class="code-label">Python · Function Types — All Variants</span>
+    <pre><span class="cm"># 1. Named function with default argument</span>
+<span class="kw">def</span> <span class="fn">greet</span>(name, batch=<span class="str">"PGDBDA-2026"</span>):
+    <span class="kw">return</span> <span class="fn">f</span><span class="str">"Welcome {name} to C-DAC Kharghar — {batch}!"</span>
+
+<span class="fn">greet</span>(<span class="str">"Priya"</span>)                <span class="cm"># uses default batch</span>
+<span class="fn">greet</span>(<span class="str">"Raj"</span>, <span class="str">"AI-ML-2026"</span>)   <span class="cm"># overrides default</span>
+
+<span class="cm"># 2. *args — variable positional arguments (packed as tuple)</span>
+<span class="kw">def</span> <span class="fn">total_marks</span>(*subjects):
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"Got {len(subjects)} subjects"</span>)
+    <span class="kw">return</span> <span class="fn">sum</span>(subjects)
+
+<span class="fn">total_marks</span>(<span class="num">88</span>, <span class="num">79</span>, <span class="num">91</span>, <span class="num">83</span>)    <span class="cm"># 341</span>
+
+<span class="cm"># 3. **kwargs — variable keyword arguments (packed as dict)</span>
+<span class="kw">def</span> <span class="fn">student_info</span>(**details):
+    <span class="kw">for</span> k, v <span class="kw">in</span> details.<span class="fn">items</span>():
+        <span class="fn">print</span>(<span class="fn">f</span><span class="str">"  {k}: {v}"</span>)
+
+<span class="fn">student_info</span>(name=<span class="str">"Zara"</span>, roll=<span class="num">2610</span>, cgpa=<span class="num">9.1</span>)
+
+<span class="cm"># 4. Lambda — anonymous, one-liner, no return keyword</span>
+square    = <span class="kw">lambda</span> x: x**<span class="num">2</span>
+is_even   = <span class="kw">lambda</span> n: n % <span class="num">2</span> == <span class="num">0</span>
+
+<span class="cm"># Lambda with sorted() — sort students by marks (highest first)</span>
+students = [(<span class="str">"Priya"</span>,<span class="num">88</span>), (<span class="str">"Raj"</span>,<span class="num">74</span>), (<span class="str">"Zara"</span>,<span class="num">95</span>), (<span class="str">"Dev"</span>,<span class="num">81</span>)]
+ranked = <span class="fn">sorted</span>(students, key=<span class="kw">lambda</span> s: s[<span class="num">1</span>], reverse=<span class="kw">True</span>)
+<span class="cm"># [('Zara', 95), ('Priya', 88), ('Dev', 81), ('Raj', 74)]</span>
+
+<span class="cm"># 5. Recursive function (Lab Q2 — factorial)</span>
+<span class="kw">def</span> <span class="fn">factorial</span>(n):
+    <span class="kw">if</span> n == <span class="num">0</span>: <span class="kw">return</span> <span class="num">1</span>          <span class="cm"># BASE CASE — must exist!</span>
+    <span class="kw">return</span> n * <span class="fn">factorial</span>(n - <span class="num">1</span>)  <span class="cm"># recursive case</span>
+
+<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1</span>, <span class="num">11</span>):
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"{i:2d}  {factorial(i):>10,}"</span>)</pre>
+  </div>
+
+  <!-- SVG: Recursion call stack -->
+  <div class="svg-wrap">
+    <svg viewBox="0 0 820 230" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="a5" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#8c6a00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+      <text x="410" y="18" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="14" font-weight="700" fill="#1c1a14">Call Stack for factorial(4) — how recursion unwinds</text>
+      <rect x="245" y="28" width="260" height="40" rx="8" fill="#fac775" stroke="#ba7517" stroke-width="1"/>
+      <text x="375" y="53" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="14" fill="#412402">factorial(4) = 4 × ?</text>
+      <line x1="375" y1="68" x2="375" y2="88" stroke="#8c6a00" stroke-width="1.5" marker-end="url(#a5)"/>
+      <rect x="265" y="90" width="220" height="40" rx="8" fill="#fac775" stroke="#ba7517" stroke-width="1"/>
+      <text x="375" y="115" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="14" fill="#412402">factorial(3) = 3 × ?</text>
+      <line x1="375" y1="130" x2="375" y2="150" stroke="#8c6a00" stroke-width="1.5" marker-end="url(#a5)"/>
+      <rect x="285" y="152" width="180" height="40" rx="8" fill="#fac775" stroke="#ba7517" stroke-width="1"/>
+      <text x="375" y="177" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="14" fill="#412402">factorial(2) = 2 × ?</text>
+      <line x1="375" y1="192" x2="375" y2="212" stroke="#8c6a00" stroke-width="1.5" marker-end="url(#a5)"/>
+      <rect x="305" y="214" width="140" height="10" rx="4" fill="#9fe1cb" stroke="#1d9e75" stroke-width="1"/>
+      <text x="375" y="221" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="10" fill="#04342c">factorial(0) → 1 (BASE CASE stops recursion)</text>
+      <!-- Unwind labels -->
+      <text x="520" y="53" font-family="'Segoe UI',sans-serif" font-size="11" fill="#8c6a00">← unwinds: 4 × 6 = 24</text>
+      <text x="500" y="115" font-family="'Segoe UI',sans-serif" font-size="11" fill="#8c6a00">← unwinds: 3 × 2 = 6</text>
+      <text x="480" y="177" font-family="'Segoe UI',sans-serif" font-size="11" fill="#8c6a00">← unwinds: 2 × 1 = 2</text>
+    </svg>
+  </div>
+
+  <div class="code-block">
+    <span class="code-label">Python · Pickling — Object Serialisation</span>
+    <pre><span class="kw">import</span> pickle
+
+<span class="op">model_data</span> = {
+    <span class="str">"batch"</span>: <span class="str">"PGDBDA-2026"</span>,
+    <span class="str">"students"</span>: [<span class="str">"Priya"</span>, <span class="str">"Raj"</span>, <span class="str">"Zara"</span>],
+    <span class="str">"accuracy"</span>: <span class="num">0.94</span>
+}
+
+<span class="cm"># Serialize (pack) to disk — wb = write binary</span>
+<span class="kw">with</span> <span class="fn">open</span>(<span class="str">"batch.pkl"</span>, <span class="str">"wb"</span>) <span class="kw">as</span> f:
+    pickle.<span class="fn">dump</span>(model_data, f)
+
+<span class="cm"># Deserialize (unpack) — rb = read binary</span>
+<span class="kw">with</span> <span class="fn">open</span>(<span class="str">"batch.pkl"</span>, <span class="str">"rb"</span>) <span class="kw">as</span> f:
+    loaded = pickle.<span class="fn">load</span>(f)
+
+<span class="fn">print</span>(loaded[<span class="str">"students"</span>])   <span class="cm"># ['Priya', 'Raj', 'Zara']</span>
+<span class="cm"># Used heavily in ML to save/load trained scikit-learn models!</span></pre>
+  </div>
+</div>
+
+<!-- ════════════════ SESSION 7 ════════════════ -->
+<div id="s7" class="sec">
+  <div class="hero">
+    <h2>Session 7 · Tuples — Deep Dive</h2>
+    <p>Immutable sequences — faster, safer, hashable. The fixed-schema record of Python.</p>
+    <div class="meta-chips"><span class="chip chip-py">2h Theory</span><span class="chip chip-n">2h Lab</span></div>
+  </div>
+
+  <div class="analogy-box">
+    <div class="anlabel">🎯 The Core Analogy</div>
+    <p><strong>A tuple is a sealed Aadhaar card.</strong> Once issued, the data is fixed — you cannot change your date of birth in it. A list is an editable form. Use tuples for <em>fixed facts</em>: GPS coordinates <code>(18.92, 72.83)</code>, student record <code>(2601, "Priya", 88.5)</code>, RGB colour <code>(255, 0, 0)</code>, DB row. These facts should never change in your program.</p>
+  </div>
+
+  <div class="concept-2col">
+    <div class="cbox teal-l"><h4>Use Tuple when…</h4><p>Data is fixed and should never change: DB rows, coordinates, RGB values, function returning multiple values, dictionary keys (tuples are hashable — lists are not)</p></div>
+    <div class="cbox rust-l"><h4>Use List when…</h4><p>Data grows or shrinks: exam scores accumulating, a shopping cart, log entries, any collection that changes during the program's lifetime</p></div>
+  </div>
+
+  <div class="code-block">
+    <span class="code-label">Python · Tuple Operations — All Lab Exercises</span>
+    <pre><span class="cm"># Create</span>
+<span class="op">coords</span>  = (<span class="num">18.9220</span>, <span class="num">72.8347</span>)   <span class="cm"># lat/lon near C-DAC Kharghar area</span>
+<span class="op">rgb</span>     = (<span class="num">255</span>, <span class="num">140</span>, <span class="num">0</span>)          <span class="cm"># dark orange</span>
+<span class="op">single</span>  = (<span class="num">42</span>,)                  <span class="cm"># MUST have trailing comma for single-element!</span>
+<span class="op">t</span>       = (<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>, <span class="num">20</span>, <span class="num">10</span>)
+
+<span class="cm"># Lab Q1: Find repeated items</span>
+repeated = [x <span class="kw">for</span> x <span class="kw">in</span> <span class="fn">set</span>(t) <span class="kw">if</span> t.<span class="fn">count</span>(x) > <span class="num">1</span>]
+<span class="fn">print</span>(repeated)     <span class="cm"># [10, 20]</span>
+
+<span class="cm"># Lab Q2: Sort list of tuples by float element</span>
+items = [(<span class="str">'item1'</span>, <span class="str">'12.20'</span>), (<span class="str">'item2'</span>, <span class="str">'15.10'</span>), (<span class="str">'item3'</span>, <span class="str">'24.5'</span>)]
+items_sorted = <span class="fn">sorted</span>(items, key=<span class="kw">lambda</span> x: <span class="fn">float</span>(x[<span class="num">1</span>]), reverse=<span class="kw">True</span>)
+<span class="cm"># [('item3','24.5'), ('item2','15.10'), ('item1','12.20')]</span>
+
+<span class="cm"># Lab Q3: Count elements until a tuple is found</span>
+mixed = [<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>, (<span class="num">40</span>, <span class="num">50</span>), <span class="num">60</span>]
+count = <span class="fn">next</span>(i <span class="kw">for</span> i, x <span class="kw">in</span> <span class="fn">enumerate</span>(mixed) <span class="kw">if</span> <span class="fn">isinstance</span>(x, <span class="fn">tuple</span>))
+<span class="fn">print</span>(count)        <span class="cm"># 3</span>
+
+<span class="cm"># Lab Q4: Element-wise sum using zip()</span>
+t1, t2, t3 = (<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>,<span class="num">4</span>), (<span class="num">3</span>,<span class="num">5</span>,<span class="num">2</span>,<span class="num">1</span>), (<span class="num">2</span>,<span class="num">2</span>,<span class="num">3</span>,<span class="num">1</span>)
+result = <span class="fn">tuple</span>(a+b+c <span class="kw">for</span> a,b,c <span class="kw">in</span> <span class="fn">zip</span>(t1, t2, t3))
+<span class="fn">print</span>(result)       <span class="cm"># (6, 9, 8, 6)</span>
+
+<span class="cm"># Tuple unpacking — very Pythonic</span>
+lat, lon = coords
+x, y, *rest = (<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>)   <span class="cm"># rest = [3,4,5]</span></pre>
+  </div>
+</div>
+
+<!-- ════════════════ SESSION 8-9 ════════════════ -->
+<div id="s8" class="sec">
+  <div class="hero">
+    <h2>Sessions 8–9 · OOP, Generators, Decorators &amp; Regex</h2>
+    <p>The professional Python toolkit — how every production system is actually built</p>
+    <div class="meta-chips"><span class="chip chip-py">4h Theory</span><span class="chip chip-n">4h Lab</span><span class="chip chip-n">5h Self-Learning</span></div>
+  </div>
+
+  <div class="analogy-box">
+    <div class="anlabel">🎯 OOP — The Core Analogy</div>
+    <p><strong>A Class is the blueprint; an Object is the actual building.</strong> C-DAC has one blueprint called <em>Student</em> with attributes (name, roll, marks) and methods (calculate_gpa, display). Every enrolled student — Priya, Raj, Zara — is an <em>object</em> created from that blueprint. Same blueprint, thousands of instances, each with their own data.</p>
+  </div>
+
+  <!-- SVG: OOP Class → Objects -->
+  <div class="svg-wrap">
+    <svg viewBox="0 0 820 210" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="a6" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#8c6a00" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+      <!-- CLASS -->
+      <rect x="20" y="16" width="230" height="176" rx="10" fill="#eeedfe" stroke="#534ab7" stroke-width="1"/>
+      <text x="135" y="44" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="13" font-weight="700" fill="#26215c">CLASS: Student</text>
+      <text x="135" y="60" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#534ab7">— blueprint —</text>
+      <text x="48" y="82" font-family="'Segoe UI',sans-serif" font-size="11" fill="#3c3489">Attributes:</text>
+      <text x="48" y="98" font-family="'Cascadia Code',monospace" font-size="11" fill="#26215c">  name, roll, marks</text>
+      <text x="48" y="118" font-family="'Segoe UI',sans-serif" font-size="11" fill="#3c3489">Methods:</text>
+      <text x="48" y="134" font-family="'Cascadia Code',monospace" font-size="11" fill="#26215c">  __init__()</text>
+      <text x="48" y="150" font-family="'Cascadia Code',monospace" font-size="11" fill="#26215c">  calculate_gpa()</text>
+      <text x="48" y="166" font-family="'Cascadia Code',monospace" font-size="11" fill="#26215c">  has_failed()</text>
+      <text x="48" y="182" font-family="'Cascadia Code',monospace" font-size="11" fill="#26215c">  __str__()</text>
+      <!-- Arrows -->
+      <line x1="250" y1="76" x2="340" y2="76" stroke="#8c6a00" stroke-width="1.5" marker-end="url(#a6)"/>
+      <text x="294" y="70" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="10" fill="#8c6a00">instance</text>
+      <line x1="250" y1="156" x2="340" y2="156" stroke="#8c6a00" stroke-width="1.5" marker-end="url(#a6)"/>
+      <text x="294" y="150" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="10" fill="#8c6a00">instance</text>
+      <!-- Object 1 -->
+      <rect x="342" y="22" width="210" height="100" rx="8" fill="#e1f5ee" stroke="#1d9e75" stroke-width="1"/>
+      <text x="447" y="46" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" font-weight="700" fill="#04342c">s1: Student</text>
+      <text x="362" y="66" font-family="'Cascadia Code',monospace" font-size="11" fill="#085041">name = "Priya"</text>
+      <text x="362" y="82" font-family="'Cascadia Code',monospace" font-size="11" fill="#085041">roll = 2601</text>
+      <text x="362" y="98" font-family="'Cascadia Code',monospace" font-size="11" fill="#085041">marks = {Py:88,R:79}</text>
+      <!-- Object 2 -->
+      <rect x="342" y="132" width="210" height="60" rx="8" fill="#faeeda" stroke="#ba7517" stroke-width="1"/>
+      <text x="447" y="154" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" font-weight="700" fill="#412402">s2: Student</text>
+      <text x="362" y="172" font-family="'Cascadia Code',monospace" font-size="11" fill="#633806">name = "Raj"  roll = 2602</text>
+      <!-- Object 3 -->
+      <rect x="580" y="22" width="220" height="175" rx="8" fill="#faece7" stroke="#d85a30" stroke-width="1"/>
+      <text x="690" y="46" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" font-weight="700" fill="#4a1b0c">s3: Student</text>
+      <text x="600" y="66" font-family="'Cascadia Code',monospace" font-size="11" fill="#712b13">name = "Zara"</text>
+      <text x="600" y="82" font-family="'Cascadia Code',monospace" font-size="11" fill="#712b13">roll = 2610</text>
+      <text x="600" y="98" font-family="'Cascadia Code',monospace" font-size="11" fill="#712b13">marks = {Py:95,R:88}</text>
+      <line x1="250" y1="116" x2="578" y2="116" stroke="#8c6a00" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#a6)"/>
+    </svg>
+  </div>
+
+  <div class="code-block">
+    <span class="code-label">Python · Complete Student Class — Lab Q1 &amp; Q2</span>
+    <pre><span class="kw">class</span> <span class="fn">Student</span>:
+    course = <span class="str">"PG-DBDA"</span>               <span class="cm"># class variable — shared by ALL objects</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, roll, name, marks_dict):
+        <span class="cm"># Instance variables — unique to EACH object</span>
+        self.roll  = roll
+        self.name  = name
+        self.marks = marks_dict        <span class="cm"># {subject: [list of 5 marks]}</span>
+
+    <span class="kw">def</span> <span class="fn">__str__</span>(self):               <span class="cm"># called by print(student)</span>
+        <span class="kw">return</span> <span class="fn">f</span><span class="str">"[{self.roll}] {self.name} — {self.course}"</span>
+
+    <span class="kw">def</span> <span class="fn">calculate_gpa</span>(self, m1, m2, m3):
+        <span class="cm"># GPA formula from syllabus</span>
+        <span class="kw">return</span> (<span class="num">1</span>/<span class="num">3</span>)*m1 + (<span class="num">1</span>/<span class="num">2</span>)*m2 + (<span class="num">1</span>/<span class="num">4</span>)*m3
+
+    <span class="kw">def</span> <span class="fn">has_failed</span>(self):
+        <span class="cm"># any() short-circuits — stops at first True found</span>
+        <span class="kw">return</span> <span class="fn">any</span>(
+            m < <span class="num">40</span>
+            <span class="kw">for</span> mlist <span class="kw">in</span> self.marks.<span class="fn">values</span>()
+            <span class="kw">for</span> m <span class="kw">in</span> mlist
+        )
+
+<span class="cm"># Inheritance — Faculty extends Person</span>
+<span class="kw">class</span> <span class="fn">Person</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, name): self.name = name
+    <span class="kw">def</span> <span class="fn">speak</span>(self): <span class="kw">return</span> <span class="str">"..."</span>
+
+<span class="kw">class</span> <span class="fn">Faculty</span>(<span class="fn">Person</span>):                <span class="cm"># inherits Person</span>
+    <span class="kw">def</span> <span class="fn">speak</span>(self):                  <span class="cm"># method OVERRIDING</span>
+        <span class="kw">return</span> <span class="fn">f</span><span class="str">"Prof. {self.name}"</span>
+
+<span class="cm"># Polymorphism — same method call, different behaviour</span>
+people = [<span class="fn">Faculty</span>(<span class="str">"Dr. Mehta"</span>), <span class="fn">Person</span>(<span class="str">"Visitor"</span>)]
+<span class="kw">for</span> p <span class="kw">in</span> people: <span class="fn">print</span>(p.<span class="fn">speak</span>())</pre>
+  </div>
+
+  <div class="lvl-row"><span class="lvl lvl-a">Advanced</span> Generators &amp; Decorators</div>
+  <div class="callout info">
+    <span class="callout-icon">ℹ️</span>
+    <p><strong>Why Generators matter for Big Data:</strong> A list of 10 million rows takes ~400MB RAM. A generator produces one item at a time, using barely any memory — which is exactly how Spark processes huge datasets in chunks. <code>yield</code> pauses the function and returns one value; the next call resumes from where it stopped.</p>
+  </div>
+
+  <div class="code-block">
+    <span class="code-label">Python · Generators + Decorators — Lab Q3</span>
+    <pre><span class="cm"># Generator — memory-efficient sequence</span>
+<span class="kw">class</span> <span class="fn">NumberSeries</span>:
+    <span class="kw">def</span> <span class="fn">even_numbers</span>(self, limit):
+        n = <span class="num">0</span>
+        <span class="kw">while</span> n <= limit:
+            <span class="kw">yield</span> n      <span class="cm"># pauses here; next() call resumes</span>
+            n += <span class="num">2</span>
+
+ns = <span class="fn">NumberSeries</span>()
+<span class="kw">for</span> num <span class="kw">in</span> ns.<span class="fn">even_numbers</span>(<span class="num">20</span>):
+    <span class="fn">print</span>(num, end=<span class="str">" "</span>)   <span class="cm"># 0 2 4 6 8 10 12 14 16 18 20</span>
+
+<span class="cm"># Decorator — wraps a function to add behaviour WITHOUT changing it</span>
+<span class="cm"># Analogy: a SmartWatch wraps your wrist — your wrist is unchanged</span>
+<span class="kw">import</span> functools, time
+
+<span class="kw">def</span> <span class="fn">log_method_call</span>(func):
+    @functools.<span class="fn">wraps</span>(func)           <span class="cm"># preserves original function name</span>
+    <span class="kw">def</span> <span class="fn">wrapper</span>(*args, **kwargs):
+        <span class="fn">print</span>(<span class="fn">f</span><span class="str">"→ Calling {func.__name__}({args[1:]})"</span>)
+        start = time.<span class="fn">time</span>()
+        result = <span class="fn">func</span>(*args, **kwargs)
+        <span class="fn">print</span>(<span class="fn">f</span><span class="str">"← Done in {time.time()-start:.4f}s"</span>)
+        <span class="kw">return</span> result
+    <span class="kw">return</span> wrapper
+
+<span class="kw">class</span> <span class="fn">Student</span>:
+    @<span class="fn">log_method_call</span>                   <span class="cm"># apply decorator with @</span>
+    <span class="kw">def</span> <span class="fn">calculate_gpa</span>(self, m1, m2, m3):
+        <span class="kw">return</span> (<span class="num">1</span>/<span class="num">3</span>)*m1+(<span class="num">1</span>/<span class="num">2</span>)*m2+(<span class="num">1</span>/<span class="num">4</span>)*m3
+
+s = <span class="fn">Student</span>()
+s.<span class="fn">calculate_gpa</span>(<span class="num">80</span>, <span class="num">75</span>, <span class="num">90</span>)
+<span class="cm"># → Calling calculate_gpa((80, 75, 90))</span>
+<span class="cm"># ← Done in 0.0001s</span></pre>
+  </div>
+</div>
+
+<!-- ════════════════ SESSION 10 ════════════════ -->
+<div id="s10" class="sec">
+  <div class="hero">
+    <h2>Session 10 · Exception Handling &amp; Logging</h2>
+    <p>Writing code that survives the real world — graceful failure over catastrophic crashes</p>
+    <div class="meta-chips"><span class="chip chip-py">2h Theory</span><span class="chip chip-n">2h Lab</span></div>
+  </div>
+
+  <div class="analogy-box">
+    <div class="anlabel">🎯 The Core Analogy</div>
+    <p><strong>Exception handling is an emergency protocol at a hospital.</strong> Things you don't expect <em>will</em> go wrong. You don't prevent every scenario — you have trained responders (<code>except</code> clauses), cleanup teams (<code>finally</code> blocks), and post-incident reports (<code>logging</code>). Without this, one unexpected user input can bring down an entire production system running FRAS or Digi-Exam.</p>
+  </div>
+
+  <div class="code-block">
+    <span class="code-label">Python · Full Exception Handling + Custom Exceptions + Logging</span>
+    <pre><span class="kw">try</span>:
+    marks = <span class="fn">int</span>(<span class="fn">input</span>(<span class="str">"Enter marks: "</span>))   <span class="cm"># ValueError if "abc"</span>
+    avg   = <span class="num">500</span> / marks                    <span class="cm"># ZeroDivisionError if 0</span>
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"Average: {avg:.1f}"</span>)
+
+<span class="kw">except</span> ValueError:
+    <span class="fn">print</span>(<span class="str">"Please enter a valid integer."</span>)
+
+<span class="kw">except</span> ZeroDivisionError:
+    <span class="fn">print</span>(<span class="str">"Marks cannot be zero."</span>)
+
+<span class="kw">except</span> Exception <span class="kw">as</span> e:
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"Unexpected: {type(e).__name__}: {e}"</span>)
+
+<span class="kw">else</span>:
+    <span class="fn">print</span>(<span class="str">"Calculation successful."</span>)   <span class="cm"># runs ONLY if no exception</span>
+
+<span class="kw">finally</span>:
+    <span class="fn">print</span>(<span class="str">"Done."</span>)                       <span class="cm"># ALWAYS runs (cleanup)</span>
+
+<span class="cm"># CUSTOM EXCEPTION — for domain-specific validation</span>
+<span class="kw">class</span> <span class="fn">InvalidMarksError</span>(<span class="fn">Exception</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, val):
+        <span class="fn">super</span>().<span class="fn">__init__</span>(<span class="fn">f</span><span class="str">"Marks {val} out of range (0–100)"</span>)
+
+<span class="kw">def</span> <span class="fn">validate_marks</span>(m):
+    <span class="kw">if</span> <span class="kw">not</span> <span class="num">0</span> <= m <= <span class="num">100</span>:
+        <span class="kw">raise</span> <span class="fn">InvalidMarksError</span>(m)    <span class="cm"># explicitly raise</span>
+    <span class="kw">return</span> m
+
+<span class="cm"># LOGGING — structured, persistent, production-grade</span>
+<span class="kw">import</span> logging
+logging.<span class="fn">basicConfig</span>(
+    level   = logging.DEBUG,
+    format  = <span class="str">'%(asctime)s [%(levelname)s] %(message)s'</span>,
+    handlers = [
+        logging.<span class="fn">FileHandler</span>(<span class="str">'cdac_app.log'</span>),
+        logging.<span class="fn">StreamHandler</span>()          <span class="cm"># also print to console</span>
+    ]
+)
+logging.<span class="fn">info</span>(<span class="str">"FRAS v2.0 started — C-DAC Kharghar"</span>)
+logging.<span class="fn">warning</span>(<span class="str">"DB connection latency > 500ms"</span>)
+logging.<span class="fn">error</span>(<span class="str">"Face recognition model load failed"</span>)
+logging.<span class="fn">critical</span>(<span class="str">"Disk full — attendance records at risk!"</span>)</pre>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Logging Levels — Severity Scale (Low → High)</div>
+    <table>
+      <tr><th>Level</th><th>Number</th><th>When to use</th><th>Example</th></tr>
+      <tr><td><code>DEBUG</code></td><td>10</td><td>Detailed tracing during development</td><td>"Processing student ID 2601"</td></tr>
+      <tr><td><code>INFO</code></td><td>20</td><td>Normal operation milestones</td><td>"API server started on port 8000"</td></tr>
+      <tr><td><code>WARNING</code></td><td>30</td><td>Unexpected but recoverable</td><td>"Disk usage at 85%"</td></tr>
+      <tr><td><code>ERROR</code></td><td>40</td><td>Serious failure, function aborted</td><td>"Cannot connect to PostgreSQL"</td></tr>
+      <tr><td><code>CRITICAL</code></td><td>50</td><td>System about to die</td><td>"Out of memory — killing process"</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════ SESSION 11 ════════════════ -->
+<div id="s11" class="sec">
+  <div class="hero">
+    <h2>Session 11 · Pandas &amp; NumPy</h2>
+    <p>The data science powerhouses — arrays, DataFrames, wrangling, and the diamonds dataset lab</p>
+    <div class="meta-chips"><span class="chip chip-py">2h Theory</span><span class="chip chip-n">6h Lab</span><span class="chip chip-n">2h Self-Learning</span></div>
+  </div>
+
+  <div class="analogy-box">
+    <div class="anlabel">🎯 The Core Analogy</div>
+    <p><strong>NumPy is a scientific calculator; Pandas is Excel inside Python.</strong> NumPy works on entire arrays at once — no Python loops, C-speed math. Pandas gives you labelled rows and columns (like an Excel sheet) with SQL-like groupby, merge, and pivot. Together they turn weeks of manual spreadsheet work into a few lines of code.</p>
+  </div>
+
+  <!-- SVG: NumPy vs Pandas -->
+  <div class="svg-wrap">
+    <svg viewBox="0 0 820 155" xmlns="http://www.w3.org/2000/svg">
+      <rect x="20" y="16" width="380" height="130" rx="10" fill="#faeeda" stroke="#ba7517" stroke-width="1"/>
+      <text x="210" y="44" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="14" font-weight="700" fill="#412402">NumPy</text>
+      <text x="210" y="64" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" fill="#633806">Homogeneous arrays (all same type)</text>
+      <text x="210" y="82" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" fill="#633806">Vectorised math — no Python loops</text>
+      <text x="210" y="100" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="11" fill="#412402">arr[arr &gt; 85]  — boolean mask</text>
+      <text x="210" y="118" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#633806">Foundation of Pandas, Scikit-learn, TF</text>
+      <text x="210" y="136" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#633806">Best for: number crunching, images</text>
+      <rect x="420" y="16" width="380" height="130" rx="10" fill="#e1f5ee" stroke="#1d9e75" stroke-width="1"/>
+      <text x="610" y="44" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="14" font-weight="700" fill="#04342c">Pandas</text>
+      <text x="610" y="64" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" fill="#0f6e56">Labelled rows + columns (DataFrame)</text>
+      <text x="610" y="82" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" fill="#0f6e56">Mixed types allowed per column</text>
+      <text x="610" y="100" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" fill="#0f6e56">SQL-like: groupby, merge, pivot</text>
+      <text x="610" y="118" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#0f6e56">Built on NumPy under the hood</text>
+      <text x="610" y="136" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#0f6e56">Best for: tabular data, CSV, SQL output</text>
+    </svg>
+  </div>
+
+  <div class="code-block">
+    <span class="code-label">Python · NumPy + Pandas — Lab Q1–Q4 (Diamonds Dataset)</span>
+    <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+<span class="cm">═══ NumPy Essentials ═══════════════════════════════════════</span>
+<span class="op">marks</span> = np.<span class="fn">array</span>([<span class="num">88</span>, <span class="num">92</span>, <span class="num">76</span>, <span class="num">95</span>, <span class="num">61</span>, <span class="num">84</span>])
+
+<span class="cm"># Vectorised — all elements at once</span>
+<span class="fn">print</span>(marks + <span class="num">5</span>)                   <span class="cm"># add 5 to every element</span>
+<span class="fn">print</span>(marks[marks > <span class="num">85</span>])           <span class="cm"># [88, 92, 95] — boolean indexing</span>
+<span class="fn">print</span>(marks.<span class="fn">mean</span>(), marks.<span class="fn">std</span>())   <span class="cm"># statistics</span>
+<span class="fn">print</span>(np.<span class="fn">percentile</span>(marks, [<span class="num">25</span>,<span class="num">50</span>,<span class="num">75</span>]))
+
+<span class="cm"># Image array (Lab Q2)</span>
+<span class="kw">from</span> PIL <span class="kw">import</span> Image
+img = Image.<span class="fn">open</span>(<span class="str">'photo.jpg'</span>)
+arr = np.<span class="fn">array</span>(img)               <span class="cm"># (H, W, 3) array</span>
+restored = Image.<span class="fn">fromarray</span>(arr)
+
+<span class="cm">═══ Pandas — Diamonds Dataset (Lab Q4) ═════════════════════</span>
+df = pd.<span class="fn">read_csv</span>(<span class="str">'diamonds.csv'</span>)
+
+<span class="cm"># Print first 6 rows</span>
+<span class="fn">print</span>(df.<span class="fn">head</span>(<span class="num">6</span>))
+
+<span class="cm"># Mean of each numeric column</span>
+<span class="fn">print</span>(df.<span class="fn">mean</span>(numeric_only=<span class="kw">True</span>))
+
+<span class="cm"># Count / min / max price for each cut</span>
+<span class="fn">print</span>(df.<span class="fn">groupby</span>(<span class="str">'cut'</span>)[<span class="str">'price'</span>].<span class="fn">agg</span>([<span class="str">'count'</span>,<span class="str">'min'</span>,<span class="str">'max'</span>]))
+
+<span class="cm"># Concise summary</span>
+df.<span class="fn">info</span>()            <span class="cm"># dtypes, non-null counts</span>
+df.<span class="fn">describe</span>()        <span class="cm"># mean, std, quartiles</span>
+
+<span class="cm"># Count duplicate rows</span>
+<span class="fn">print</span>(df.<span class="fn">duplicated</span>().<span class="fn">sum</span>())
+
+<span class="cm"># Data cleaning</span>
+df.<span class="fn">dropna</span>(inplace=<span class="kw">True</span>)         <span class="cm"># drop rows with NaN</span>
+df.<span class="fn">drop_duplicates</span>(inplace=<span class="kw">True</span>)
+
+<span class="cm"># Add computed column</span>
+df[<span class="str">'price_per_carat'</span>] = df[<span class="str">'price'</span>] / df[<span class="str">'carat'</span>]
+
+<span class="cm"># Filter</span>
+premium = df[(df[<span class="str">'cut'</span>]==<span class="str">'Ideal'</span>) & (df[<span class="str">'price'</span>]><span class="num">5000</span>)]</pre>
+  </div>
+</div>
+
+<!-- ════════════════ SESSION 12 ════════════════ -->
+<div id="s12" class="sec">
+  <div class="hero">
+    <h2>Session 12 · Visualisation &amp; Web Scraping</h2>
+    <p>matplotlib · seaborn · plotly · ggplot · BeautifulSoup4 — making data speak visually</p>
+    <div class="meta-chips"><span class="chip chip-py">2h Theory</span><span class="chip chip-n">4h Lab</span><span class="chip chip-n">2h Self-Learning</span></div>
+  </div>
+
+  <div class="analogy-box">
+    <div class="anlabel">🎯 The Core Analogy</div>
+    <p><strong>Visualisation is the translation layer between numbers and human understanding.</strong> A table of 10,000 rows tells you nothing at a glance. A heatmap of correlations tells you everything in 3 seconds. The best data scientists spend more time on charts than on models — because a wrong model caught by a good plot saves weeks of wasted computation. BeautifulSoup is how you <em>collect</em> that data from the web in the first place.</p>
+  </div>
+
+  <!-- SVG: Visualisation library ecosystem -->
+  <div class="svg-wrap">
+    <svg viewBox="0 0 820 185" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="av1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#6b6248" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+      <!-- matplotlib — foundation -->
+      <rect x="280" y="130" width="260" height="44" rx="8" fill="#d3d1c7" stroke="#888780" stroke-width="1"/>
+      <text x="410" y="150" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="13" font-weight="700" fill="#2c2c2a">matplotlib</text>
+      <text x="410" y="166" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#5f5e5a">foundation — full control, any plot</text>
+      <!-- seaborn -->
+      <rect x="30" y="56" width="190" height="50" rx="8" fill="#e1f5ee" stroke="#1d9e75" stroke-width="1"/>
+      <text x="125" y="76" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="13" font-weight="700" fill="#04342c">seaborn</text>
+      <text x="125" y="93" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#0f6e56">statistics + beauty</text>
+      <line x1="220" y1="90" x2="290" y2="140" stroke="#1a6e5c" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#av1)"/>
+      <!-- plotly -->
+      <rect x="250" y="20" width="180" height="50" rx="8" fill="#eeedfe" stroke="#534ab7" stroke-width="1"/>
+      <text x="340" y="40" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="13" font-weight="700" fill="#26215c">plotly</text>
+      <text x="340" y="57" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#3c3489">interactive, web-ready</text>
+      <line x1="340" y1="70" x2="370" y2="128" stroke="#534ab7" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#av1)"/>
+      <!-- ggplot -->
+      <rect x="460" y="20" width="190" height="50" rx="8" fill="#faeeda" stroke="#ba7517" stroke-width="1"/>
+      <text x="555" y="40" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="13" font-weight="700" fill="#412402">plotnine / ggplot</text>
+      <text x="555" y="57" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#633806">grammar of graphics</text>
+      <line x1="555" y1="70" x2="490" y2="128" stroke="#b38800" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#av1)"/>
+      <!-- pandas plot -->
+      <rect x="600" y="56" width="190" height="50" rx="8" fill="#faece7" stroke="#d85a30" stroke-width="1"/>
+      <text x="695" y="76" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="13" font-weight="700" fill="#4a1b0c">pandas .plot()</text>
+      <text x="695" y="93" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#712b13">quick EDA shortcut</text>
+      <line x1="660" y1="106" x2="535" y2="130" stroke="#d85a30" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#av1)"/>
+      <!-- caption -->
+      <text x="410" y="183" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#6b6248">All high-level libraries wrap matplotlib under the hood — understanding matplotlib = understanding all of them</text>
+    </svg>
+  </div>
+
+  <div class="lvl-row"><span class="lvl lvl-b">Beginner</span> Library Selection Guide</div>
+  <div class="card">
+    <div class="card-title">Which Library for Which Job?</div>
+    <table>
+      <tr><th>Library</th><th>Best Charts</th><th>Strength</th><th>Weakness</th></tr>
+      <tr><td><code>matplotlib</code></td><td>Any — line, bar, scatter, hist, pie, 3D</td><td>Absolute control, publication-ready, subplots</td><td>Verbose code for simple charts</td></tr>
+      <tr><td><code>seaborn</code></td><td>heatmap, boxplot, violin, pairplot, distplot</td><td>Statistical defaults, beautiful out-of-box</td><td>Less flexible than matplotlib</td></tr>
+      <tr><td><code>plotly</code></td><td>Any + 3D, choropleth, sunburst, candlestick</td><td>Interactive (hover, zoom, pan), web embed</td><td>Heavy file size, slower render</td></tr>
+      <tr><td><code>plotnine</code></td><td>R-style ggplot grammar in Python</td><td>Layered aesthetic mapping, familiar to R users</td><td>Slower, smaller community</td></tr>
+      <tr><td><code>df.plot()</code></td><td>Basic line, bar, hist, scatter, box</td><td>Zero extra import — just call on DataFrame</td><td>Limited customisation</td></tr>
+    </table>
+  </div>
+
+  <h3>Part 1 — matplotlib: Anatomy &amp; Core Plots</h3>
+  <p class="body">matplotlib works on a <em>Figure → Axes → Plot</em> hierarchy. The Figure is the entire canvas. The Axes is one chart area inside it (you can have multiple). Every element — title, labels, ticks, gridlines, legend — is individually controllable.</p>
+
+  <!-- SVG: matplotlib anatomy -->
+  <div class="svg-wrap">
+    <svg viewBox="0 0 820 270" xmlns="http://www.w3.org/2000/svg">
+      <!-- Figure (outer) -->
+      <rect x="20" y="20" width="560" height="240" rx="10" fill="#f5f0e8" stroke="#c2b49a" stroke-width="2"/>
+      <text x="300" y="44" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" font-weight="700" fill="#6b6248">Figure  (the whole canvas — fig = plt.figure())</text>
+      <!-- Axes (inner) -->
+      <rect x="80" y="58" width="430" height="180" rx="6" fill="#fffdf7" stroke="#b34a22" stroke-width="1.5"/>
+      <!-- Y axis label -->
+      <text x="48" y="150" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#b34a22" transform="rotate(-90,48,150)">Y-axis label</text>
+      <!-- X axis label -->
+      <text x="295" y="256" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#b34a22">X-axis label</text>
+      <!-- Title -->
+      <text x="295" y="76" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" font-weight="700" fill="#1a6e5c">Chart Title  (ax.set_title())</text>
+      <!-- Mock data lines -->
+      <polyline points="100,220 160,170 220,190 280,130 340,150 380,100 440,120 480,80" fill="none" stroke="#b34a22" stroke-width="2"/>
+      <polyline points="100,230 160,210 220,215 280,200 340,180 380,170 440,160 480,155" fill="none" stroke="#1a6e5c" stroke-width="2" stroke-dasharray="6 3"/>
+      <!-- Legend box -->
+      <rect x="390" y="90" width="110" height="46" rx="4" fill="#fffdf7" stroke="#c2b49a" stroke-width="0.5"/>
+      <line x1="400" y1="105" x2="420" y2="105" stroke="#b34a22" stroke-width="2"/>
+      <text x="426" y="109" font-family="'Segoe UI',sans-serif" font-size="10" fill="#3d3828">Series A</text>
+      <line x1="400" y1="122" x2="420" y2="122" stroke="#1a6e5c" stroke-width="2" stroke-dasharray="4 2"/>
+      <text x="426" y="126" font-family="'Segoe UI',sans-serif" font-size="10" fill="#3d3828">Series B</text>
+      <!-- Grid lines (faint) -->
+      <line x1="80" y1="130" x2="510" y2="130" stroke="#d4c8b0" stroke-width="0.5" stroke-dasharray="3 3"/>
+      <line x1="80" y1="170" x2="510" y2="170" stroke="#d4c8b0" stroke-width="0.5" stroke-dasharray="3 3"/>
+      <line x1="80" y1="210" x2="510" y2="210" stroke="#d4c8b0" stroke-width="0.5" stroke-dasharray="3 3"/>
+      <!-- Tick marks on x -->
+      <line x1="100" y1="237" x2="100" y2="242" stroke="#6b6248" stroke-width="1"/>
+      <line x1="200" y1="237" x2="200" y2="242" stroke="#6b6248" stroke-width="1"/>
+      <line x1="300" y1="237" x2="300" y2="242" stroke="#6b6248" stroke-width="1"/>
+      <line x1="400" y1="237" x2="400" y2="242" stroke="#6b6248" stroke-width="1"/>
+      <!-- Axes label -->
+      <text x="80" y="75" font-family="'Segoe UI',sans-serif" font-size="10" fill="#b34a22">Axes (ax)</text>
+      <!-- Right side labels -->
+      <text x="615" y="50" font-family="'Segoe UI',sans-serif" font-size="11" fill="#6b6248">fig, ax = plt.subplots()</text>
+      <text x="615" y="72" font-family="'Segoe UI',sans-serif" font-size="11" fill="#6b6248">ax.set_title("...")</text>
+      <text x="615" y="94" font-family="'Segoe UI',sans-serif" font-size="11" fill="#6b6248">ax.set_xlabel("...")</text>
+      <text x="615" y="116" font-family="'Segoe UI',sans-serif" font-size="11" fill="#6b6248">ax.set_ylabel("...")</text>
+      <text x="615" y="138" font-family="'Segoe UI',sans-serif" font-size="11" fill="#6b6248">ax.legend()</text>
+      <text x="615" y="160" font-family="'Segoe UI',sans-serif" font-size="11" fill="#6b6248">ax.grid(True)</text>
+      <text x="615" y="182" font-family="'Segoe UI',sans-serif" font-size="11" fill="#6b6248">ax.set_xlim(0, 10)</text>
+      <text x="615" y="204" font-family="'Segoe UI',sans-serif" font-size="11" fill="#6b6248">plt.tight_layout()</text>
+      <text x="615" y="226" font-family="'Segoe UI',sans-serif" font-size="11" fill="#6b6248">plt.savefig("out.png")</text>
+      <text x="615" y="248" font-family="'Segoe UI',sans-serif" font-size="11" fill="#6b6248">plt.show()</text>
+    </svg>
+  </div>
+
+  <div class="code-block">
+    <span class="code-label">Python · matplotlib — Complete Chart Gallery</span>
+    <pre><span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="cm">═══ 1. Line Chart ═══════════════════════════════════════════</span>
+<span class="op">months</span> = [<span class="str">'Jan'</span>,<span class="str">'Feb'</span>,<span class="str">'Mar'</span>,<span class="str">'Apr'</span>,<span class="str">'May'</span>,<span class="str">'Jun'</span>]
+<span class="op">sales</span>  = [<span class="num">120</span>, <span class="num">145</span>, <span class="num">132</span>, <span class="num">178</span>, <span class="num">190</span>, <span class="num">210</span>]
+
+fig, ax = plt.<span class="fn">subplots</span>(figsize=(<span class="num">9</span>, <span class="num">4</span>))
+ax.<span class="fn">plot</span>(months, sales, marker=<span class="str">'o'</span>, color=<span class="str">'#b34a22'</span>,
+        linewidth=<span class="num">2</span>, label=<span class="str">'Monthly Sales'</span>)
+ax.<span class="fn">fill_between</span>(months, sales, alpha=<span class="num">0.1</span>, color=<span class="str">'#b34a22'</span>)
+ax.<span class="fn">set_title</span>(<span class="str">'C-DAC Sales Dashboard'</span>)
+ax.<span class="fn">set_xlabel</span>(<span class="str">'Month'</span>); ax.<span class="fn">set_ylabel</span>(<span class="str">'Units Sold'</span>)
+ax.<span class="fn">legend</span>(); ax.<span class="fn">grid</span>(<span class="kw">True</span>, alpha=<span class="num">0.3</span>)
+plt.<span class="fn">tight_layout</span>(); plt.<span class="fn">show</span>()
+
+<span class="cm">═══ 2. Bar Chart ════════════════════════════════════════════</span>
+<span class="op">subjects</span> = [<span class="str">'Python'</span>, <span class="str">'R'</span>, <span class="str">'Stats'</span>, <span class="str">'Java'</span>, <span class="str">'Linux'</span>]
+<span class="op">avg_marks</span> = [<span class="num">82</span>, <span class="num">76</span>, <span class="num">88</span>, <span class="num">71</span>, <span class="num">85</span>]
+colors   = [<span class="str">'#b34a22'</span> <span class="kw">if</span> m>=<span class="num">80</span> <span class="kw">else</span> <span class="str">'#d4c8b0'</span> <span class="kw">for</span> m <span class="kw">in</span> avg_marks]
+
+fig, ax = plt.<span class="fn">subplots</span>(figsize=(<span class="num">8</span>, <span class="num">4</span>))
+bars = ax.<span class="fn">bar</span>(subjects, avg_marks, color=colors, edgecolor=<span class="str">'white'</span>)
+ax.<span class="fn">bar_label</span>(bars, fmt=<span class="str">'%d'</span>)                <span class="cm"># add value labels on bars</span>
+ax.<span class="fn">axhline</span>(<span class="num">80</span>, color=<span class="str">'#1a6e5c'</span>, linestyle=<span class="str">'--'</span>, label=<span class="str">'Pass Line'</span>)
+ax.<span class="fn">set_title</span>(<span class="str">'PG-DBDA Batch Average Marks'</span>)
+ax.<span class="fn">set_ylim</span>(<span class="num">0</span>, <span class="num">100</span>); ax.<span class="fn">legend</span>()
+plt.<span class="fn">tight_layout</span>(); plt.<span class="fn">show</span>()
+
+<span class="cm">═══ 3. Histogram ════════════════════════════════════════════</span>
+<span class="op">marks_data</span> = np.random.<span class="fn">normal</span>(<span class="num">72</span>, <span class="num">12</span>, <span class="num">200</span>)  <span class="cm"># simulate marks distribution</span>
+fig, ax = plt.<span class="fn">subplots</span>(figsize=(<span class="num">8</span>, <span class="num">4</span>))
+ax.<span class="fn">hist</span>(marks_data, bins=<span class="num">20</span>, color=<span class="str">'#1a6e5c'</span>, edgecolor=<span class="str">'white'</span>, alpha=<span class="num">0.8</span>)
+ax.<span class="fn">axvline</span>(marks_data.<span class="fn">mean</span>(), color=<span class="str">'#b34a22'</span>, linestyle=<span class="str">'--'</span>, label=<span class="str">f'Mean={marks_data.mean():.1f}'</span>)
+ax.<span class="fn">set_title</span>(<span class="str">'Marks Distribution'</span>); ax.<span class="fn">legend</span>()
+plt.<span class="fn">tight_layout</span>(); plt.<span class="fn">show</span>()
+
+<span class="cm">═══ 4. Subplot Grid — show multiple charts at once ══════════</span>
+fig, axes = plt.<span class="fn">subplots</span>(<span class="num">1</span>, <span class="num">3</span>, figsize=(<span class="num">14</span>, <span class="num">4</span>))
+
+axes[<span class="num">0</span>].<span class="fn">plot</span>([<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>], [<span class="num">4</span>,<span class="num">5</span>,<span class="num">6</span>]); axes[<span class="num">0</span>].<span class="fn">set_title</span>(<span class="str">'Line'</span>)
+axes[<span class="num">1</span>].<span class="fn">bar</span>([<span class="str">'A'</span>,<span class="str">'B'</span>,<span class="str">'C'</span>], [<span class="num">3</span>,<span class="num">7</span>,<span class="num">5</span>]); axes[<span class="num">1</span>].<span class="fn">set_title</span>(<span class="str">'Bar'</span>)
+axes[<span class="num">2</span>].<span class="fn">scatter</span>([<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>], [<span class="num">3</span>,<span class="num">1</span>,<span class="num">4</span>]); axes[<span class="num">2</span>].<span class="fn">set_title</span>(<span class="str">'Scatter'</span>)
+
+plt.<span class="fn">suptitle</span>(<span class="str">'Multi-panel Dashboard'</span>)
+plt.<span class="fn">tight_layout</span>(); plt.<span class="fn">show</span>()
+
+<span class="cm">═══ 5. Save figure to file ══════════════════════════════════</span>
+fig.<span class="fn">savefig</span>(<span class="str">'report_chart.png'</span>, dpi=<span class="num">150</span>, bbox_inches=<span class="str">'tight'</span>)
+fig.<span class="fn">savefig</span>(<span class="str">'report_chart.pdf'</span>)          <span class="cm"># vector format for reports</span></pre>
+  </div>
+
+  <h3>Part 2 — seaborn: Statistical Visualisation</h3>
+  <p class="body">seaborn is built on top of matplotlib but adds a higher-level interface designed specifically for statistical graphics. It understands Pandas DataFrames natively — pass column names as strings and seaborn does the grouping, colouring, and labelling for you.</p>
+
+  <div class="code-block">
+    <span class="code-label">Python · seaborn — Statistical Charts + Lab Q2 Full Solution</span>
+    <pre><span class="kw">import</span> seaborn <span class="kw">as</span> sns
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="cm">═══ Seaborn Themes — set once, applies everywhere ═══════════</span>
+sns.<span class="fn">set_theme</span>(style=<span class="str">'whitegrid'</span>, palette=<span class="str">'muted'</span>)
+<span class="cm"># Other styles: darkgrid, white, ticks, dark</span>
+
+<span class="cm">═══ 1. Heatmap — Lab Q2 Step 1 &amp; 2 ════════════════════════</span>
+df = pd.<span class="fn">read_csv</span>(<span class="str">'data.csv'</span>)
+corr = df.<span class="fn">corr</span>(numeric_only=<span class="kw">True</span>)
+
+plt.<span class="fn">figure</span>(figsize=(<span class="num">10</span>, <span class="num">8</span>))
+sns.<span class="fn">heatmap</span>(
+    corr,
+    annot     = <span class="kw">True</span>,         <span class="cm"># show values in cells</span>
+    fmt       = <span class="str">'.2f'</span>,         <span class="cm"># 2 decimal places</span>
+    cmap      = <span class="str">'RdYlGn'</span>,      <span class="cm"># Red-Yellow-Green diverging</span>
+    center    = <span class="num">0</span>,             <span class="cm"># 0 = white centre</span>
+    linewidths= <span class="num">0.5</span>,           <span class="cm"># cell borders</span>
+    square    = <span class="kw">True</span>,          <span class="cm"># force square cells</span>
+    vmin=-<span class="num">1</span>, vmax=<span class="num">1</span>            <span class="cm"># fix scale -1 to +1</span>
+)
+plt.<span class="fn">title</span>(<span class="str">'Correlation Matrix — PG-DBDA Dataset'</span>, pad=<span class="num">14</span>)
+plt.<span class="fn">tight_layout</span>(); plt.<span class="fn">show</span>()
+
+<span class="cm">═══ 2. Find highest correlated pair (Lab Q2 Step 3) ════════</span>
+mask = np.<span class="fn">triu</span>(np.<span class="fn">ones_like</span>(corr, dtype=<span class="fn">bool</span>))   <span class="cm"># upper triangle</span>
+col1, col2 = corr.<span class="fn">mask</span>(mask).<span class="fn">stack</span>().<span class="fn">idxmax</span>()
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Highest correlation: {col1} ↔ {col2}"</span>)
+
+<span class="cm">═══ 3. Scatter plot (Lab Q2 Step 4) ════════════════════════</span>
+fig, ax = plt.<span class="fn">subplots</span>(figsize=(<span class="num">8</span>, <span class="num">6</span>))
+sns.<span class="fn">scatterplot</span>(data=df, x=col1, y=col2,
+                alpha=<span class="num">0.6</span>, color=<span class="str">'#b34a22'</span>, ax=ax)
+sns.<span class="fn">regplot</span>(data=df, x=col1, y=col2, scatter=<span class="kw">False</span>,
+            color=<span class="str">'#1a6e5c'</span>, ax=ax, label=<span class="str">'Trend line'</span>)
+ax.<span class="fn">set_title</span>(<span class="fn">f</span><span class="str">'{col1} vs {col2} (r={corr.loc[col1,col2]:.2f})'</span>)
+ax.<span class="fn">legend</span>()
+plt.<span class="fn">tight_layout</span>(); plt.<span class="fn">show</span>()
+
+<span class="cm">═══ 4. Box Plot — compare distributions by category ════════</span>
+tips = sns.<span class="fn">load_dataset</span>(<span class="str">'tips'</span>)           <span class="cm"># built-in sample dataset</span>
+plt.<span class="fn">figure</span>(figsize=(<span class="num">9</span>, <span class="num">5</span>))
+sns.<span class="fn">boxplot</span>(data=tips, x=<span class="str">'day'</span>, y=<span class="str">'total_bill'</span>, hue=<span class="str">'sex'</span>)
+plt.<span class="fn">title</span>(<span class="str">'Bill Distribution by Day and Gender'</span>)
+plt.<span class="fn">show</span>()
+
+<span class="cm">═══ 5. Violin Plot — like boxplot but shows distribution shape</span>
+plt.<span class="fn">figure</span>(figsize=(<span class="num">9</span>, <span class="num">5</span>))
+sns.<span class="fn">violinplot</span>(data=tips, x=<span class="str">'day'</span>, y=<span class="str">'total_bill'</span>,
+               hue=<span class="str">'sex'</span>, split=<span class="kw">True</span>, palette=<span class="str">'muted'</span>)
+plt.<span class="fn">title</span>(<span class="str">'Bill Distribution — Violin (shows density shape)'</span>)
+plt.<span class="fn">show</span>()
+
+<span class="cm">═══ 6. Pair Plot — all columns vs all columns at once ══════</span>
+iris = sns.<span class="fn">load_dataset</span>(<span class="str">'iris'</span>)
+sns.<span class="fn">pairplot</span>(iris, hue=<span class="str">'species'</span>, diag_kind=<span class="str">'kde'</span>)
+plt.<span class="fn">suptitle</span>(<span class="str">'Iris Dataset — Pairwise Relationships'</span>, y=<span class="num">1.02</span>)
+plt.<span class="fn">show</span>()
+
+<span class="cm">═══ 7. Count Plot — categorical frequency bar ═══════════════</span>
+sns.<span class="fn">countplot</span>(data=tips, x=<span class="str">'day'</span>, order=[<span class="str">'Thur'</span>,<span class="str">'Fri'</span>,<span class="str">'Sat'</span>,<span class="str">'Sun'</span>])
+plt.<span class="fn">title</span>(<span class="str">'Number of Customers per Day'</span>)
+plt.<span class="fn">show</span>()</pre>
+  </div>
+
+  <div class="callout tip">
+    <span class="callout-icon">💡</span>
+    <p><strong>seaborn vs matplotlib — key rule:</strong> Start with seaborn for speed. When you need to customise something seaborn can't do, use <code>ax.set_*()</code> methods on the underlying matplotlib Axes object that seaborn returns. They work together seamlessly.</p>
+  </div>
+
+  <h3>Part 3 — plotly: Interactive Visualisation</h3>
+  <p class="body">plotly produces charts that live in a browser — you can hover, zoom, pan, click to filter, and export as PNG. This is what you embed in Dash dashboards, Flask web apps, and HTML reports. The <code>plotly.express</code> module gives you the same one-liner simplicity as seaborn, but interactive.</p>
+
+  <div class="code-block">
+    <span class="code-label">Python · plotly.express — Interactive Charts (Lab Q2 Step 5)</span>
+    <pre><span class="kw">import</span> plotly.express <span class="kw">as</span> px
+<span class="kw">import</span> plotly.graph_objects <span class="kw">as</span> go
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+
+<span class="cm">═══ 1. Interactive Scatter with trendline (Lab Q2) ══════════</span>
+df = pd.<span class="fn">read_csv</span>(<span class="str">'data.csv'</span>)
+fig = px.<span class="fn">scatter</span>(
+    df, x=col1, y=col2,
+    trendline    = <span class="str">"ols"</span>,          <span class="cm"># OLS regression line</span>
+    color        = <span class="str">'category'</span>,     <span class="cm"># colour by category column</span>
+    hover_data   = [<span class="str">'id'</span>],          <span class="cm"># show extra info on hover</span>
+    title        = <span class="fn">f</span><span class="str">"{col1} vs {col2} (Interactive)"</span>
+)
+fig.<span class="fn">update_layout</span>(template=<span class="str">'plotly_white'</span>)
+fig.<span class="fn">show</span>()                          <span class="cm"># opens in browser</span>
+fig.<span class="fn">write_html</span>(<span class="str">"scatter.html"</span>)      <span class="cm"># save as shareable HTML</span>
+
+<span class="cm">═══ 2. Interactive Bar Chart ════════════════════════════════</span>
+fig = px.<span class="fn">bar</span>(
+    df.<span class="fn">groupby</span>(<span class="str">'cut'</span>)[<span class="str">'price'</span>].<span class="fn">mean</span>().<span class="fn">reset_index</span>(),
+    x=<span class="str">'cut'</span>, y=<span class="str">'price'</span>,
+    color=<span class="str">'cut'</span>, text_auto=<span class="str">'.0f'</span>,
+    title=<span class="str">'Average Diamond Price by Cut'</span>
+)
+fig.<span class="fn">show</span>()
+
+<span class="cm">═══ 3. Sunburst — hierarchical breakdown ════════════════════</span>
+fig = px.<span class="fn">sunburst</span>(
+    px.data.<span class="fn">tips</span>(),
+    path=[<span class="str">'day'</span>, <span class="str">'time'</span>, <span class="str">'sex'</span>],
+    values=<span class="str">'total_bill'</span>,
+    title=<span class="str">'Bill Breakdown (Day → Time → Gender)'</span>
+)
+fig.<span class="fn">show</span>()
+
+<span class="cm">═══ 4. 3D Scatter ═══════════════════════════════════════════</span>
+fig = px.<span class="fn">scatter_3d</span>(
+    px.data.<span class="fn">iris</span>(),
+    x=<span class="str">'sepal_length'</span>, y=<span class="str">'sepal_width'</span>, z=<span class="str">'petal_length'</span>,
+    color=<span class="str">'species'</span>, symbol=<span class="str">'species'</span>,
+    title=<span class="str">'Iris Dataset — 3D View'</span>
+)
+fig.<span class="fn">show</span>()
+
+<span class="cm">═══ 5. Animated Chart — add time dimension ══════════════════</span>
+fig = px.<span class="fn">scatter</span>(
+    px.data.<span class="fn">gapminder</span>(),
+    x=<span class="str">'gdpPercap'</span>, y=<span class="str">'lifeExp'</span>,
+    size=<span class="str">'pop'</span>, color=<span class="str">'continent'</span>,
+    hover_name=<span class="str">'country'</span>, animation_frame=<span class="str">'year'</span>,
+    log_x=<span class="kw">True</span>, title=<span class="str">'Gapminder — GDP vs Life Expectancy'</span>
+)
+fig.<span class="fn">show</span>()</pre>
+  </div>
+
+  <h3>Part 4 — ggplot / plotnine: Grammar of Graphics</h3>
+  <p class="body">The Grammar of Graphics is a principled way to describe charts. Every chart is described as: <strong>data + aesthetic mapping + geometric layer + optional scales/facets</strong>. This is the native language of R's ggplot2, and Python's <code>plotnine</code> brings this exact grammar to Python. Understanding it makes you fluent in both Python and R visualisation.</p>
+
+  <!-- SVG: Grammar of graphics concept -->
+  <div class="svg-wrap">
+    <svg viewBox="0 0 820 100" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="av2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#6b6248" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+      <rect x="10" y="22" width="120" height="50" rx="8" fill="#fac775" stroke="#ba7517" stroke-width="1"/>
+      <text x="70" y="44" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" font-weight="700" fill="#412402">data</text>
+      <text x="70" y="60" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="10" fill="#633806">DataFrame</text>
+      <text x="138" y="50" font-family="'Segoe UI',sans-serif" font-size="16" fill="#6b6248">+</text>
+      <rect x="148" y="22" width="155" height="50" rx="8" fill="#9fe1cb" stroke="#1d9e75" stroke-width="1"/>
+      <text x="225" y="44" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" font-weight="700" fill="#04342c">aes()</text>
+      <text x="225" y="60" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="10" fill="#0f6e56">x=col, y=col, color=</text>
+      <text x="311" y="50" font-family="'Segoe UI',sans-serif" font-size="16" fill="#6b6248">+</text>
+      <rect x="321" y="22" width="165" height="50" rx="8" fill="#eeedfe" stroke="#534ab7" stroke-width="1"/>
+      <text x="403" y="44" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" font-weight="700" fill="#26215c">geom_*()</text>
+      <text x="403" y="60" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="10" fill="#3c3489">point / bar / line / box</text>
+      <text x="494" y="50" font-family="'Segoe UI',sans-serif" font-size="16" fill="#6b6248">+</text>
+      <rect x="504" y="22" width="145" height="50" rx="8" fill="#faece7" stroke="#d85a30" stroke-width="1"/>
+      <text x="576" y="44" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" font-weight="700" fill="#4a1b0c">facet / theme</text>
+      <text x="576" y="60" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="10" fill="#712b13">split panels, styling</text>
+      <line x1="656" y1="47" x2="698" y2="47" stroke="#6b6248" stroke-width="1.5" marker-end="url(#av2)"/>
+      <rect x="700" y="22" width="110" height="50" rx="8" fill="#d3d1c7" stroke="#888780" stroke-width="1"/>
+      <text x="755" y="44" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" font-weight="700" fill="#2c2c2a">Chart</text>
+      <text x="755" y="60" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="10" fill="#5f5e5a">rendered output</text>
+      <text x="410" y="92" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="10" fill="#6b6248">ggplot(data, aes(x='carat', y='price', color='cut')) + geom_point() + facet_wrap('~cut')</text>
+    </svg>
+  </div>
+
+  <div class="code-block">
+    <span class="code-label">Python · plotnine (ggplot) — Grammar of Graphics</span>
+    <pre><span class="cm"># pip install plotnine</span>
+<span class="kw">from</span> plotnine <span class="kw">import</span> *
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> seaborn <span class="kw">as</span> sns
+
+diamonds = sns.<span class="fn">load_dataset</span>(<span class="str">'diamonds'</span>)
+
+<span class="cm">═══ Basic scatter ════════════════════════════════════════════</span>
+p = (<span class="fn">ggplot</span>(diamonds, <span class="fn">aes</span>(x=<span class="str">'carat'</span>, y=<span class="str">'price'</span>, color=<span class="str">'cut'</span>))
+     + <span class="fn">geom_point</span>(alpha=<span class="num">0.3</span>, size=<span class="num">0.5</span>)
+     + <span class="fn">labs</span>(title=<span class="str">'Diamond Price vs Carat'</span>,
+            x=<span class="str">'Carat Weight'</span>, y=<span class="str">'Price (USD)'</span>)
+     + <span class="fn">theme_minimal</span>()
+)
+<span class="fn">print</span>(p)
+
+<span class="cm">═══ Faceted chart — one panel per cut category ═══════════════</span>
+p2 = (<span class="fn">ggplot</span>(diamonds.<span class="fn">sample</span>(<span class="num">2000</span>), <span class="fn">aes</span>(x=<span class="str">'carat'</span>, y=<span class="str">'price'</span>))
+      + <span class="fn">geom_point</span>(color=<span class="str">'#b34a22'</span>, alpha=<span class="num">0.5</span>, size=<span class="num">1</span>)
+      + <span class="fn">geom_smooth</span>(method=<span class="str">'lm'</span>, color=<span class="str">'#1a6e5c'</span>)
+      + <span class="fn">facet_wrap</span>(<span class="str">'~cut'</span>, ncol=<span class="num">3</span>)            <span class="cm"># one panel per cut</span>
+      + <span class="fn">labs</span>(title=<span class="str">'Price vs Carat by Cut Quality'</span>)
+      + <span class="fn">theme_bw</span>()
+)
+<span class="fn">print</span>(p2)
+
+<span class="cm">═══ Bar + coord_flip ════════════════════════════════════════</span>
+p3 = (<span class="fn">ggplot</span>(diamonds, <span class="fn">aes</span>(x=<span class="str">'cut'</span>, fill=<span class="str">'cut'</span>))
+      + <span class="fn">geom_bar</span>()
+      + <span class="fn">coord_flip</span>()                           <span class="cm"># horizontal bars</span>
+      + <span class="fn">theme_classic</span>()
+      + <span class="fn">labs</span>(title=<span class="str">'Diamond Cut Counts'</span>)
+)
+<span class="fn">print</span>(p3)</pre>
+  </div>
+
+  <h3>Part 5 — pandas .plot(): Quick EDA</h3>
+  <div class="code-block">
+    <span class="code-label">Python · pandas Built-in Plotting — Fastest EDA</span>
+    <pre><span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+
+df = pd.<span class="fn">read_csv</span>(<span class="str">'diamonds.csv'</span>)
+
+<span class="cm"># Line — index vs value</span>
+df[<span class="str">'price'</span>][:<span class="num">200</span>].<span class="fn">plot</span>(title=<span class="str">'First 200 Prices'</span>); plt.<span class="fn">show</span>()
+
+<span class="cm"># Histogram of numeric columns</span>
+df.<span class="fn">hist</span>(figsize=(<span class="num">12</span>,<span class="num">8</span>), bins=<span class="num">30</span>, color=<span class="str">'#b34a22'</span>); plt.<span class="fn">show</span>()
+
+<span class="cm"># Box plot by group</span>
+df.<span class="fn">boxplot</span>(column=<span class="str">'price'</span>, by=<span class="str">'cut'</span>); plt.<span class="fn">show</span>()
+
+<span class="cm"># Grouped bar chart</span>
+df.<span class="fn">groupby</span>(<span class="str">'cut'</span>)[<span class="str">'price'</span>].<span class="fn">mean</span>().<span class="fn">plot</span>(
+    kind=<span class="str">'bar'</span>, color=<span class="str">'#1a6e5c'</span>, rot=<span class="num">0</span>
+)
+plt.<span class="fn">title</span>(<span class="str">'Mean Price by Cut'</span>); plt.<span class="fn">show</span>()</pre>
+  </div>
+
+  <h3>Part 6 — BeautifulSoup: Web Scraping</h3>
+  <p class="body">Web scraping is the process of programmatically extracting data from websites. The workflow is always: <strong>fetch the HTML → parse it → locate the elements → extract the data → clean and store</strong>. BeautifulSoup handles steps 2–4; <code>requests</code> handles step 1; Pandas handles step 5.</p>
+
+  <!-- SVG: BeautifulSoup scraping pipeline -->
+  <div class="svg-wrap">
+    <svg viewBox="0 0 820 110" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="av3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#6b6248" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+      <!-- Step 1 -->
+      <rect x="10" y="24" width="130" height="52" rx="8" fill="#d3d1c7" stroke="#888780" stroke-width="1"/>
+      <text x="75" y="46" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" font-weight="700" fill="#2c2c2a">Website</text>
+      <text x="75" y="63" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="10" fill="#5f5e5a">HTML source</text>
+      <line x1="140" y1="50" x2="168" y2="50" stroke="#6b6248" stroke-width="1.5" marker-end="url(#av3)"/>
+      <!-- Step 2 -->
+      <rect x="170" y="24" width="145" height="52" rx="8" fill="#fac775" stroke="#ba7517" stroke-width="1"/>
+      <text x="242" y="46" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" font-weight="700" fill="#412402">requests.get()</text>
+      <text x="242" y="63" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="10" fill="#633806">HTTP GET → raw HTML</text>
+      <line x1="315" y1="50" x2="343" y2="50" stroke="#6b6248" stroke-width="1.5" marker-end="url(#av3)"/>
+      <!-- Step 3 -->
+      <rect x="345" y="24" width="165" height="52" rx="8" fill="#9fe1cb" stroke="#1d9e75" stroke-width="1"/>
+      <text x="427" y="46" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" font-weight="700" fill="#04342c">BeautifulSoup</text>
+      <text x="427" y="63" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="10" fill="#0f6e56">parse → find_all → extract</text>
+      <line x1="510" y1="50" x2="538" y2="50" stroke="#6b6248" stroke-width="1.5" marker-end="url(#av3)"/>
+      <!-- Step 4 -->
+      <rect x="540" y="24" width="130" height="52" rx="8" fill="#eeedfe" stroke="#534ab7" stroke-width="1"/>
+      <text x="605" y="46" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" font-weight="700" fill="#26215c">Clean Data</text>
+      <text x="605" y="63" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="10" fill="#3c3489">list / dict</text>
+      <line x1="670" y1="50" x2="698" y2="50" stroke="#6b6248" stroke-width="1.5" marker-end="url(#av3)"/>
+      <!-- Step 5 -->
+      <rect x="700" y="24" width="110" height="52" rx="8" fill="#faece7" stroke="#d85a30" stroke-width="1"/>
+      <text x="755" y="46" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" font-weight="700" fill="#4a1b0c">DataFrame</text>
+      <text x="755" y="63" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="10" fill="#712b13">CSV / DB / viz</text>
+      <!-- Caption -->
+      <text x="410" y="96" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="10" fill="#6b6248">Always check robots.txt · Respect rate limits · Never scrape personal or sensitive data</text>
+    </svg>
+  </div>
+
+  <div class="code-block">
+    <span class="code-label">Python · BeautifulSoup — Lab Q1 + Advanced Patterns</span>
+    <pre><span class="kw">import</span> requests
+<span class="kw">from</span> bs4 <span class="kw">import</span> BeautifulSoup
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> time
+
+<span class="cm">═══ Basic Scrape (Lab Q1) ════════════════════════════════════</span>
+<span class="cm"># Set a header so you look like a real browser</span>
+headers = {<span class="str">"User-Agent"</span>: <span class="str">"Mozilla/5.0 (Windows NT 10.0)"</span>}
+
+resp = requests.<span class="fn">get</span>(<span class="str">"https://books.toscrape.com"</span>, headers=headers)
+<span class="fn">print</span>(resp.status_code)    <span class="cm"># 200 = success, 403 = blocked, 404 = not found</span>
+
+soup = <span class="fn">BeautifulSoup</span>(resp.text, <span class="str">'html.parser'</span>)
+
+<span class="cm"># Find all book titles</span>
+titles = [t.<span class="fn">find</span>(<span class="str">'a'</span>)[<span class="str">'title'</span>] <span class="kw">for</span> t <span class="kw">in</span> soup.<span class="fn">find_all</span>(<span class="str">'h3'</span>)]
+prices = [p.text <span class="kw">for</span> p <span class="kw">in</span> soup.<span class="fn">find_all</span>(<span class="str">'p'</span>, class_=<span class="str">'price_color'</span>)]
+ratings= [a[<span class="str">'class'</span>][<span class="num">1</span>] <span class="kw">for</span> a <span class="kw">in</span> soup.<span class="fn">find_all</span>(<span class="str">'p'</span>, class_=<span class="str">'star-rating'</span>)]
+
+<span class="kw">for</span> t, p, r <span class="kw">in</span> <span class="fn">zip</span>(titles[:<span class="num">5</span>], prices[:<span class="num">5</span>], ratings[:<span class="num">5</span>]):
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"{t[:35]:35s} | {p} | {r} stars"</span>)
+
+<span class="cm">═══ CSS Selector approach (alternative to find_all) ══════════</span>
+<span class="cm"># soup.select() uses CSS selectors — very powerful!</span>
+book_articles = soup.<span class="fn">select</span>(<span class="str">'article.product_pod'</span>)
+
+books = []
+<span class="kw">for</span> article <span class="kw">in</span> book_articles:
+    books.<span class="fn">append</span>({
+        <span class="str">'title'</span> : article.<span class="fn">select_one</span>(<span class="str">'h3 a'</span>)[<span class="str">'title'</span>],
+        <span class="str">'price'</span> : article.<span class="fn">select_one</span>(<span class="str">'.price_color'</span>).text,
+        <span class="str">'rating'</span>: article.<span class="fn">select_one</span>(<span class="str">'p.star-rating'</span>)[<span class="str">'class'</span>][<span class="num">1</span>],
+        <span class="str">'in_stock'</span>: <span class="str">'In stock'</span> <span class="kw">in</span> article.<span class="fn">select_one</span>(<span class="str">'.availability'</span>).text
+    })
+
+df_books = pd.<span class="fn">DataFrame</span>(books)
+<span class="fn">print</span>(df_books.<span class="fn">head</span>())
+df_books.<span class="fn">to_csv</span>(<span class="str">'books_scraped.csv'</span>, index=<span class="kw">False</span>)
+
+<span class="cm">═══ Multi-page Scraping (paginate through all 50 pages) ══════</span>
+all_books = []
+<span class="op">base_url</span> = <span class="str">"https://books.toscrape.com/catalogue/page-{}.html"</span>
+
+<span class="kw">for</span> page <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1</span>, <span class="num">6</span>):           <span class="cm"># scrape first 5 pages</span>
+    url  = base_url.<span class="fn">format</span>(page)
+    resp = requests.<span class="fn">get</span>(url, headers=headers)
+    soup = <span class="fn">BeautifulSoup</span>(resp.text, <span class="str">'html.parser'</span>)
+
+    <span class="kw">for</span> article <span class="kw">in</span> soup.<span class="fn">select</span>(<span class="str">'article.product_pod'</span>):
+        all_books.<span class="fn">append</span>({
+            <span class="str">'title'</span>: article.<span class="fn">select_one</span>(<span class="str">'h3 a'</span>)[<span class="str">'title'</span>],
+            <span class="str">'price'</span>: article.<span class="fn">select_one</span>(<span class="str">'.price_color'</span>).text,
+            <span class="str">'page'</span>:  page
+        })
+
+    time.<span class="fn">sleep</span>(<span class="num">1</span>)                   <span class="cm"># BE POLITE — 1 second delay between pages!</span>
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"Page {page} done — {len(all_books)} books so far"</span>)
+
+df_all = pd.<span class="fn">DataFrame</span>(all_books)
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Total scraped: {len(df_all)} books"</span>)
+
+<span class="cm">═══ Key Parsing Methods Reference ═══════════════════════════</span>
+<span class="cm"># soup.find('tag')           — first matching tag</span>
+<span class="cm"># soup.find_all('tag')       — all matching tags (returns list)</span>
+<span class="cm"># soup.find('tag', class_='x') — tag with specific class</span>
+<span class="cm"># soup.find('tag', id='x')   — tag with specific id</span>
+<span class="cm"># soup.select('div.card h2') — CSS selector (most flexible)</span>
+<span class="cm"># soup.select_one('...')     — CSS selector, first match only</span>
+<span class="cm"># tag.text / tag.get_text()  — extract text content</span>
+<span class="cm"># tag['href'] / tag['class'] — extract attribute value</span>
+<span class="cm"># tag.get('attr', default)   — safe attribute access</span></pre>
+  </div>
+
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <p><strong>Web Scraping Ethics &amp; Legality:</strong> (1) Always check <code>robots.txt</code> — if the site disallows scraping, do not proceed. (2) Add <code>time.sleep(1)</code> between requests — do not hammer servers. (3) Never scrape personal data (names, emails, phone numbers) without consent. (4) For heavy scraping, use an API if one exists — it is faster, more reliable, and officially permitted. Legal violations can result in banning or litigation.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">BeautifulSoup Parsing Methods — Quick Reference</div>
+    <table>
+      <tr><th>Method</th><th>What it returns</th><th>Example</th></tr>
+      <tr><td><code>soup.find('h1')</code></td><td>First &lt;h1&gt; tag object (or None)</td><td><code>soup.find('h1').text</code></td></tr>
+      <tr><td><code>soup.find_all('a')</code></td><td>List of all &lt;a&gt; tags</td><td><code>[a['href'] for a in soup.find_all('a')]</code></td></tr>
+      <tr><td><code>soup.select('div.card')</code></td><td>List via CSS selector</td><td><code>soup.select('.product h3 a')</code></td></tr>
+      <tr><td><code>soup.select_one('p.price')</code></td><td>First match via CSS selector</td><td><code>soup.select_one('.price').text</code></td></tr>
+      <tr><td><code>tag.text</code></td><td>All text content of tag</td><td><code>p_tag.text.strip()</code></td></tr>
+      <tr><td><code>tag['attr']</code></td><td>Attribute value</td><td><code>a_tag['href']</code>, <code>img_tag['src']</code></td></tr>
+      <tr><td><code>tag.get('attr', '')</code></td><td>Attribute value with default (safe)</td><td><code>a_tag.get('class', [])</code></td></tr>
+      <tr><td><code>tag.parent</code></td><td>Parent element</td><td><code>span.parent.find('h2')</code></td></tr>
+      <tr><td><code>tag.next_sibling</code></td><td>Next sibling element</td><td>Navigate DOM tree</td></tr>
+    </table>
+  </div>
+
+  <div class="quiz-box">
+    <div class="quiz-q">🧪 You want a chart where you can hover over data points to see exact values and zoom in/out — which Python library is the best choice?</div>
+    <div class="quiz-opts" id="qs12o">
+      <label><input type="radio" name="qs12" value="a"> <code>matplotlib</code></label>
+      <label><input type="radio" name="qs12" value="b"> <code>seaborn</code></label>
+      <label><input type="radio" name="qs12" value="c"> <code>plotly</code></label>
+      <label><input type="radio" name="qs12" value="d"> <code>BeautifulSoup</code></label>
+    </div>
+    <button class="qbtn" onclick="chk('qs12','c','plotly — it generates interactive HTML charts with built-in hover tooltips, zoom, pan, and click-to-filter. matplotlib and seaborn produce static images. BeautifulSoup is for scraping, not charting.')">Check Answer</button>
+    <div id="qs12-res" class="qres"></div>
+  </div>
+</div>
+
+<!-- ════════════════ SESSION 13 ════════════════ -->
+<div id="s13" class="sec">
+  <div class="hero">
+    <h2>Session 13 · Pillow, Audio &amp; Virtual Environments</h2>
+    <p>Image processing · Audio files · Isolated Python environments for production</p>
+    <div class="meta-chips"><span class="chip chip-py">2h Theory</span><span class="chip chip-n">2h Lab</span><span class="chip chip-n">3h Self-Learning</span></div>
+  </div>
+
+  <div class="code-block">
+    <span class="code-label">Python · Pillow + NumPy + VEnv Commands</span>
+    <pre><span class="cm">═══ Pillow — Image Lab ═════════════════════════════════════</span>
+<span class="kw">from</span> PIL <span class="kw">import</span> Image
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+img = Image.<span class="fn">open</span>(<span class="str">'photo.jpg'</span>)
+<span class="fn">print</span>(img.size, img.mode)      <span class="cm"># (1920, 1080) RGB</span>
+
+<span class="cm"># Convert to NumPy array (Lab Q2)</span>
+arr = np.<span class="fn">array</span>(img)
+<span class="fn">print</span>(arr.shape)                <span class="cm"># (1080, 1920, 3) — H×W×channels</span>
+<span class="fn">print</span>(arr[<span class="num">0</span>, <span class="num">0</span>])                <span class="cm"># [255 255 255] — top-left pixel RGB</span>
+
+<span class="cm"># Back to image</span>
+restored = Image.<span class="fn">fromarray</span>(arr)
+restored.<span class="fn">save</span>(<span class="str">'output.jpg'</span>)
+
+<span class="cm"># Transforms</span>
+img.<span class="fn">resize</span>((<span class="num">800</span>, <span class="num">600</span>))           <span class="cm"># new size</span>
+img.<span class="fn">rotate</span>(<span class="num">90</span>)                   <span class="cm"># rotate 90°</span>
+img.<span class="fn">convert</span>(<span class="str">'L'</span>)                 <span class="cm"># RGB → Grayscale</span>
+img.<span class="fn">crop</span>((<span class="num">100</span>,<span class="num">100</span>,<span class="num">500</span>,<span class="num">400</span>))      <span class="cm"># (left, top, right, bottom)</span>
+
+<span class="cm">═══ Virtual Environment — Essential Commands ════════════════</span>
+<span class="cm"># Create</span>
+python3 -m venv myproject_env
+
+<span class="cm"># Activate</span>
+source myproject_env/bin/activate      <span class="cm"># Linux / Mac</span>
+myproject_env\Scripts\activate         <span class="cm"># Windows PowerShell</span>
+
+<span class="cm"># Install packages (only inside this env)</span>
+pip install fastapi uvicorn pandas numpy pillow
+
+<span class="cm"># Freeze for sharing / deployment</span>
+pip freeze > requirements.txt
+
+<span class="cm"># Recreate on another machine / production server</span>
+pip install -r requirements.txt
+
+<span class="cm"># Deactivate</span>
+deactivate</pre>
+  </div>
+</div>
+
+<!-- ════════════════ SESSION 14 ════════════════ -->
+<div id="s14" class="sec">
+  <div class="hero">
+    <h2>Session 14 · Python + Databases</h2>
+    <p>Connecting Python to SQLite, MySQL, and PostgreSQL — the data pipeline bridge</p>
+    <div class="meta-chips"><span class="chip chip-py">2h Theory</span><span class="chip chip-n">2h Lab</span><span class="chip chip-n">4h Self-Learning</span></div>
+  </div>
+
+  <div class="analogy-box">
+    <div class="anlabel">🎯 The Core Analogy</div>
+    <p><strong>Python is the waiter; the database is the kitchen.</strong> The waiter (Python) takes your order (SQL query), walks it to the kitchen (DB engine), brings the food (result set), and serves it to you. The <em>connection</em> is the bridge. Always close it when done — like clocking out after shift — or you leak resources.</p>
+  </div>
+
+  <div class="code-block">
+    <span class="code-label">Python · SQLite + Pandas Integration (NEVER use string formatting for queries!)</span>
+    <pre><span class="kw">import</span> sqlite3, pandas <span class="kw">as</span> pd
+
+<span class="cm"># Connect (creates file if not exists)</span>
+conn = sqlite3.<span class="fn">connect</span>(<span class="str">'cdac_attendance.db'</span>)
+cur  = conn.<span class="fn">cursor</span>()
+
+<span class="cm"># Create table</span>
+cur.<span class="fn">execute</span>(<span class="str">"""
+    CREATE TABLE IF NOT EXISTS students (
+        id     INTEGER PRIMARY KEY AUTOINCREMENT,
+        name   TEXT    NOT NULL,
+        roll   TEXT    UNIQUE,
+        cgpa   REAL    DEFAULT 0.0,
+        batch  TEXT
+    )
+"""</span>)
+
+<span class="cm"># Insert — use ? placeholders (NEVER string format — SQL injection!)</span>
+batch_data = [
+    (<span class="str">"Priya Nair"</span>,  <span class="str">"CDAC2601"</span>, <span class="num">8.9</span>, <span class="str">"PGDBDA-26"</span>),
+    (<span class="str">"Raj Kumar"</span>,   <span class="str">"CDAC2602"</span>, <span class="num">7.4</span>, <span class="str">"PGDBDA-26"</span>),
+    (<span class="str">"Zara Sheikh"</span>, <span class="str">"CDAC2610"</span>, <span class="num">9.1</span>, <span class="str">"PGDBDA-26"</span>),
+]
+cur.<span class="fn">executemany</span>(
+    <span class="str">"INSERT OR IGNORE INTO students(name,roll,cgpa,batch) VALUES(?,?,?,?)"</span>,
+    batch_data
+)
+conn.<span class="fn">commit</span>()
+
+<span class="cm"># Query directly into Pandas DataFrame — best practice!</span>
+df = pd.<span class="fn">read_sql</span>(<span class="str">"SELECT * FROM students WHERE cgpa > 8"</span>, conn)
+<span class="fn">print</span>(df)
+
+<span class="cm"># Always close</span>
+conn.<span class="fn">close</span>()
+
+<span class="cm">═══ MySQL Connection ═══════════════════════════════════════</span>
+<span class="cm"># pip install mysql-connector-python</span>
+<span class="kw">import</span> mysql.connector
+conn = mysql.connector.<span class="fn">connect</span>(
+    host=<span class="str">"localhost"</span>, user=<span class="str">"root"</span>,
+    password=<span class="str">"cdac@123"</span>, database=<span class="str">"pgdbda"</span>
+)
+<span class="cm"># Identical cursor/execute/commit/close API as SQLite</span>
+
+<span class="cm">═══ PostgreSQL Connection ══════════════════════════════════</span>
+<span class="cm"># pip install psycopg2-binary</span>
+<span class="kw">import</span> psycopg2
+conn = psycopg2.<span class="fn">connect</span>(
+    host=<span class="str">"localhost"</span>, port=<span class="num">5432</span>,
+    dbname=<span class="str">"fras_db"</span>, user=<span class="str">"cdac"</span>, password=<span class="str">"cdac@123"</span>
+)
+<span class="cm"># Use %s instead of ? for parameterised queries in psycopg2</span></pre>
+  </div>
+
+  <div class="quiz-box">
+    <div class="quiz-q">🧪 Why should you NEVER use f-strings to build SQL queries like <code>f"SELECT * FROM users WHERE name='{user_input}'"</code>?</div>
+    <div class="quiz-opts" id="q2o">
+      <label><input type="radio" name="q2" value="a"> It is slower than using ?</label>
+      <label><input type="radio" name="q2" value="b"> SQL injection attack — malicious input can delete your entire database</label>
+      <label><input type="radio" name="q2" value="c"> f-strings don't work in Python 3.5</label>
+      <label><input type="radio" name="q2" value="d"> It only works for SQLite, not MySQL</label>
+    </div>
+    <button class="qbtn" onclick="chk('q2','b','SQL Injection! If user_input = \'x\' OR 1=1; DROP TABLE users; --\' the query becomes a destructive command. Always use parameterised queries with ? or %s — the DB driver escapes dangerous characters for you.')">Check Answer</button>
+    <div id="q2-res" class="qres"></div>
+  </div>
+</div>
+
+<!-- ════════════════ SESSION 15 ════════════════ -->
+<div id="s15" class="sec">
+  <div class="hero r-hero">
+    <h2>Session 15 · Introduction to R</h2>
+    <p>Statistical computing — built for data by statisticians, beloved by researchers worldwide</p>
+    <div class="meta-chips"><span class="chip chip-r">2h Theory</span><span class="chip chip-n">2h Lab</span><span class="chip chip-n">2h Self-Learning</span></div>
+  </div>
+
+  <div class="analogy-box">
+    <div class="anlabel">🎯 The Core Analogy</div>
+    <p><strong>If Python is a Swiss Army knife, R is a surgeon's precision scalpel.</strong> Python does everything — web, ML, automation, APIs, databases. R is purpose-built for statistical analysis, hypothesis testing, and publication-quality charts. A data scientist at a pharmaceutical company, IIM, or ISRO research lab will almost certainly use R.</p>
+  </div>
+
+  <div class="concept-2col">
+    <div class="cbox plum-l"><h4>Why R over Python for stats?</h4><p>10,000+ CRAN packages for every statistical method. Built-in distributions and hypothesis tests. ggplot2 produces research-grade graphics. R Markdown → PDF/HTML reports directly. Factor data type for categorical variables.</p></div>
+    <div class="cbox gold-l"><h4>Why Python over R for ML?</h4><p>Better production deployment (FastAPI, Docker). Richer deep learning ecosystem (PyTorch, TensorFlow). Better for large-scale ETL pipelines. Stronger OS integration and scripting. Larger ML community and job market.</p></div>
+  </div>
+
+  <div class="code-block r-block">
+    <span class="code-label">R · Basics — Syntax &amp; Key Differences from Python</span>
+    <pre><span class="cm"># Assignment — use <- (convention) or = (works too)</span>
+<span class="op">name</span>  <- <span class="str">"Priya Nair"</span>
+<span class="op">marks</span> <- <span class="num">88.5</span>
+<span class="op">batch</span>  = <span class="str">"PGDBDA-2026"</span>      <span class="cm"># = also works</span>
+
+<span class="cm"># Print</span>
+<span class="fn">print</span>(marks)                   <span class="cm"># [1] 88.5  ← [1] means "first element"</span>
+<span class="fn">cat</span>(<span class="str">"Student:"</span>, name, <span class="str">"\n"</span>)   <span class="cm"># no [1] prefix — like Python print</span>
+
+<span class="cm"># Arithmetic — KEY DIFFERENCES from Python!</span>
+<span class="num">5</span> + <span class="num">3</span>           <span class="cm"># 8</span>
+<span class="num">10</span> / <span class="num">3</span>          <span class="cm"># 3.333...  (always true division)</span>
+<span class="num">2</span> ^ <span class="num">10</span>          <span class="cm"># 1024      (^ not ** like Python)</span>
+<span class="num">17</span> %% <span class="num">5</span>         <span class="cm"># 2         (modulo — same as Python)</span>
+<span class="num">17</span> %/% <span class="num">5</span>        <span class="cm"># 3         (integer division)</span>
+<span class="fn">sqrt</span>(<span class="num">144</span>)       <span class="cm"># 12</span>
+<span class="fn">abs</span>(-<span class="num">7</span>)         <span class="cm"># 7</span>
+<span class="fn">log</span>(<span class="num">100</span>, <span class="num">10</span>)    <span class="cm"># 2  (log base 10)</span>
+<span class="fn">log</span>(<span class="num">100</span>)        <span class="cm"># 4.60...  (natural log — default in R!)</span>
+<span class="fn">exp</span>(<span class="num">1</span>)          <span class="cm"># 2.71828... (e)</span>
+<span class="fn">ceiling</span>(<span class="num">3.2</span>)    <span class="cm"># 4  (round up)</span>
+<span class="fn">floor</span>(<span class="num">3.8</span>)      <span class="cm"># 3  (round down)</span>
+<span class="fn">round</span>(<span class="num">3.5672</span>, <span class="num">2</span>)<span class="cm"># 3.57</span>
+
+<span class="cm"># Type checking</span>
+<span class="fn">class</span>(marks)       <span class="cm"># "numeric"  (R's float)</span>
+<span class="fn">class</span>(name)        <span class="cm"># "character" (R's string)</span>
+<span class="fn">is.numeric</span>(marks)  <span class="cm"># TRUE</span>
+<span class="fn">is.character</span>(name) <span class="cm"># TRUE</span>
+
+<span class="cm"># R indexing starts at 1 (NOT 0 like Python!)</span>
+v <- <span class="fn">c</span>(<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>, <span class="num">40</span>, <span class="num">50</span>)
+v[<span class="num">1</span>]    <span class="cm"># 10  (first element — index 1!)</span>
+v[<span class="num">5</span>]    <span class="cm"># 50  (last element)</span>
+v[<span class="num">2</span>:<span class="num">4</span>]  <span class="cm"># 20 30 40  (INCLUSIVE on both ends — unlike Python!)</span></pre>
+  </div>
+</div>
+
+<!-- ════════════════ SESSION 16 ════════════════ -->
+<div id="s16" class="sec">
+  <div class="hero r-hero">
+    <h2>Session 16 · R Data Objects &amp; Packages</h2>
+    <p>Vectors, Lists, Matrices, Data Frames — R's elegantly statistical data structures</p>
+    <div class="meta-chips"><span class="chip chip-r">2h Theory</span><span class="chip chip-n">2h Lab</span><span class="chip chip-n">2h Self-Learning</span></div>
+  </div>
+
+  <div class="analogy-box">
+    <div class="anlabel">🎯 The Core Analogy</div>
+    <p><strong>R's data structures map directly to statistical thinking.</strong> A <em>vector</em> is one column of data (a single variable in SPSS). A <em>data frame</em> is the complete dataset — rows are observations, columns are variables. A <em>list</em> is a filing cabinet that can hold anything: text, numbers, plots, other lists, or even functions.</p>
+  </div>
+
+  <!-- SVG: R data structures -->
+  <div class="svg-wrap">
+    <svg viewBox="0 0 820 155" xmlns="http://www.w3.org/2000/svg">
+      <rect x="20" y="16" width="370" height="130" rx="10" fill="#eeedfe" stroke="#534ab7" stroke-width="1"/>
+      <text x="205" y="44" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="13" font-weight="700" fill="#26215c">matrix / array (2D, same type)</text>
+      <rect x="50" y="60" width="310" height="68" rx="8" fill="#d3d1c7" stroke="#888780" stroke-width="1"/>
+      <text x="205" y="84" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="12" font-weight="700" fill="#2c2c2a">vector (1D, homogeneous)</text>
+      <text x="205" y="100" text-anchor="middle" font-family="'Cascadia Code',monospace" font-size="11" fill="#2c2c2a">c(88, 92, 76, 95, 81)</text>
+      <text x="205" y="118" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" fill="#5f5e5a">all elements must be same type</text>
+      <rect x="430" y="16" width="370" height="130" rx="10" fill="#e1f5ee" stroke="#1d9e75" stroke-width="1"/>
+      <text x="615" y="44" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="13" font-weight="700" fill="#04342c">data.frame (2D, mixed types)</text>
+      <rect x="450" y="58" width="158" height="70" rx="6" fill="#fac775" stroke="#ba7517" stroke-width="1"/>
+      <text x="529" y="78" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" font-weight="700" fill="#412402">numeric col</text>
+      <text x="529" y="96" font-family="'Cascadia Code',monospace" font-size="11" text-anchor="middle" fill="#412402">88, 74, 95</text>
+      <text x="529" y="120" font-family="'Segoe UI',sans-serif" font-size="10" text-anchor="middle" fill="#633806">marks, cgpa</text>
+      <rect x="624" y="58" width="158" height="70" rx="6" fill="#cecbf6" stroke="#534ab7" stroke-width="1"/>
+      <text x="703" y="78" text-anchor="middle" font-family="'Segoe UI',sans-serif" font-size="11" font-weight="700" fill="#26215c">factor col</text>
+      <text x="703" y="96" font-family="'Cascadia Code',monospace" font-size="11" text-anchor="middle" fill="#3c3489">"A","B","A"</text>
+      <text x="703" y="120" font-family="'Segoe UI',sans-serif" font-size="10" text-anchor="middle" fill="#534ab7">grade, cut, gender</text>
+    </svg>
+  </div>
+
+  <div class="code-block r-block">
+    <span class="code-label">R · Lab Exercises — All 5 Tasks</span>
+    <pre><span class="cm"># VECTOR — R's most fundamental object</span>
+<span class="op">marks</span> <- <span class="fn">c</span>(<span class="num">88</span>, <span class="num">92</span>, <span class="num">76</span>, <span class="num">95</span>, <span class="num">81</span>)    <span class="cm"># c() = combine/concatenate</span>
+
+<span class="cm"># Lab Q1 — sum, mean, product</span>
+<span class="fn">sum</span>(marks)        <span class="cm"># 432</span>
+<span class="fn">mean</span>(marks)       <span class="cm"># 86.4</span>
+<span class="fn">prod</span>(marks)       <span class="cm"># product of all elements</span>
+
+<span class="cm"># Lab Q2 — airquality built-in dataset</span>
+<span class="fn">data</span>(airquality)
+<span class="fn">head</span>(airquality)
+<span class="fn">summary</span>(airquality)
+<span class="fn">colSums</span>(<span class="fn">is.na</span>(airquality))   <span class="cm"># count NAs per column</span>
+
+<span class="cm"># Lab Q3 — list of dataframes</span>
+<span class="op">df_list</span> <- <span class="fn">list</span>(
+    batch1 = <span class="fn">data.frame</span>(name=<span class="fn">c</span>(<span class="str">"Priya"</span>,<span class="str">"Raj"</span>),  marks=<span class="fn">c</span>(<span class="num">88</span>,<span class="num">74</span>)),
+    batch2 = <span class="fn">data.frame</span>(name=<span class="fn">c</span>(<span class="str">"Zara"</span>,<span class="str">"Arun"</span>), marks=<span class="fn">c</span>(<span class="num">95</span>,<span class="num">81</span>))
+)
+<span class="cm"># Lab Q4 — access each dataframe from list</span>
+<span class="fn">print</span>(df_list[["batch1"]])    <span class="cm"># by name</span>
+<span class="fn">print</span>(df_list[[<span class="num">2</span>]])          <span class="cm"># by index</span>
+
+<span class="cm"># Lab Q5 — create, summarise, sort, add column, export</span>
+<span class="op">students</span> <- <span class="fn">data.frame</span>(
+    name   = <span class="fn">c</span>(<span class="str">"Priya"</span>, <span class="str">"Raj"</span>, <span class="str">"Zara"</span>, <span class="str">"Arun"</span>),
+    marks  = <span class="fn">c</span>(<span class="num">88</span>, <span class="num">74</span>, <span class="num">95</span>, <span class="num">81</span>),
+    passed = <span class="fn">c</span>(<span class="kw">TRUE</span>, <span class="kw">TRUE</span>, <span class="kw">TRUE</span>, <span class="kw">TRUE</span>)
+)
+<span class="fn">summary</span>(students)                              <span class="cm"># statistical summary</span>
+<span class="fn">str</span>(students)                                  <span class="cm"># structure and data types</span>
+students$grade <- <span class="fn">ifelse</span>(students$marks>=<span class="num">85</span>, <span class="str">"A"</span>, <span class="str">"B"</span>)
+students_sorted <- students[<span class="fn">order</span>(-students$marks), ]
+
+<span class="cm"># Export to Excel</span>
+<span class="cm"># install.packages("writexl")</span>
+<span class="kw">library</span>(writexl)
+<span class="fn">write_xlsx</span>(students_sorted, <span class="str">"students_report.xlsx"</span>)</pre>
+  </div>
+</div>
+
+<!-- ════════════════ SESSION 17 ════════════════ -->
+<div id="s17" class="sec">
+  <div class="hero r-hero">
+    <h2>Session 17 · tidyverse &amp; Data Manipulation</h2>
+    <p>dplyr · ggplot2 · tidyr · rvest — the modern R ecosystem for data science</p>
+    <div class="meta-chips"><span class="chip chip-r">2h Theory</span><span class="chip chip-n">2h Lab</span><span class="chip chip-n">3h Self-Learning</span></div>
+  </div>
+
+  <div class="analogy-box">
+    <div class="anlabel">🎯 The Core Analogy</div>
+    <p><strong>tidyverse is a LEGO system for data.</strong> Each package (dplyr, tidyr, ggplot2) is a compatible brick that snaps together. The pipe <code>%&gt;%</code> connects them: "Take this data, THEN filter, THEN group, THEN summarise, THEN plot." You read it left to right like English — no nested parentheses, no intermediate variables to track.</p>
+  </div>
+
+  <div class="code-block r-block">
+    <span class="code-label">R · dplyr + ggplot2 + rvest — All Lab Tasks</span>
+    <pre><span class="kw">library</span>(tidyverse)   <span class="cm"># loads dplyr, ggplot2, tidyr, readr, etc.</span>
+
+<span class="cm">═══ The 5 Core dplyr Verbs ══════════════════════════════════</span>
+diamonds %>%
+    <span class="fn">filter</span>(cut == <span class="str">"Premium"</span>, price > <span class="num">5000</span>) %>% <span class="cm"># 1. filter rows</span>
+    <span class="fn">select</span>(carat, cut, color, price) %>%          <span class="cm"># 2. pick columns</span>
+    <span class="fn">mutate</span>(ppc = price / carat) %>%               <span class="cm"># 3. add/transform col</span>
+    <span class="fn">arrange</span>(<span class="fn">desc</span>(ppc)) %>%                        <span class="cm"># 4. sort</span>
+    <span class="fn">head</span>(<span class="num">10</span>)                                       <span class="cm"># top 10 rows</span>
+
+<span class="cm"># group_by + summarise = SQL GROUP BY + aggregate</span>
+diamonds %>%
+    <span class="fn">group_by</span>(cut) %>%
+    <span class="fn">summarise</span>(
+        count     = <span class="fn">n</span>(),
+        avg_price = <span class="fn">mean</span>(price),
+        max_p     = <span class="fn">max</span>(price)
+    ) %>%
+    <span class="fn">arrange</span>(<span class="fn">desc</span>(avg_price))
+
+<span class="cm">═══ Lab Q3: Pie Chart + Bar Chart ═══════════════════════════</span>
+<span class="cm"># Bar chart</span>
+<span class="fn">ggplot</span>(diamonds, <span class="fn">aes</span>(x=cut, fill=cut)) +
+    <span class="fn">geom_bar</span>() +
+    <span class="fn">labs</span>(title=<span class="str">"Diamond Cut Distribution"</span>, x=<span class="str">"Cut"</span>, y=<span class="str">"Count"</span>) +
+    <span class="fn">theme_minimal</span>() +
+    <span class="fn">theme</span>(legend.position=<span class="str">"none"</span>)
+
+<span class="cm"># Pie chart (bar + coord_polar trick)</span>
+cut_counts <- diamonds %>% <span class="fn">count</span>(cut)
+<span class="fn">ggplot</span>(cut_counts, <span class="fn">aes</span>(x=<span class="str">""</span>, y=n, fill=cut)) +
+    <span class="fn">geom_col</span>(width=<span class="num">1</span>, color=<span class="str">"white"</span>) +
+    <span class="fn">coord_polar</span>(<span class="str">"y"</span>, start=<span class="num">0</span>) +    <span class="cm"># this transforms bar → pie</span>
+    <span class="fn">labs</span>(title=<span class="str">"Diamond Cut Proportions"</span>) +
+    <span class="fn">theme_void</span>()
+
+<span class="cm">═══ Lab Q1: Load JSON and XML ════════════════════════════════</span>
+<span class="kw">library</span>(jsonlite); <span class="kw">library</span>(XML)
+json_df <- <span class="fn">fromJSON</span>(<span class="str">"data.json"</span>, flatten=<span class="kw">TRUE</span>)
+xml_df  <- <span class="fn">xmlToDataFrame</span>(<span class="fn">xmlParse</span>(<span class="str">"data.xml"</span>))
+<span class="fn">summary</span>(json_df); <span class="fn">summary</span>(xml_df)
+
+<span class="cm">═══ Lab Q2: Web Scraping with rvest ═════════════════════════</span>
+<span class="kw">library</span>(rvest)
+page   <- <span class="fn">read_html</span>(<span class="str">"https://books.toscrape.com"</span>)
+titles <- page %>% <span class="fn">html_nodes</span>(<span class="str">"h3 a"</span>) %>% <span class="fn">html_attr</span>(<span class="str">"title"</span>)
+prices <- page %>% <span class="fn">html_nodes</span>(<span class="str">".price_color"</span>) %>% <span class="fn">html_text</span>()
+books  <- <span class="fn">data.frame</span>(title=titles, price=prices)
+<span class="fn">head</span>(books, <span class="num">5</span>)</pre>
+  </div>
+</div>
+
+<!-- ════════════════ SESSION 18 ════════════════ -->
+<div id="s18" class="sec">
+  <div class="hero r-hero">
+    <h2>Session 18 · R Functions &amp; R Markdown</h2>
+    <p>Writing reusable functions · ChickWeight case study · Reproducible reports</p>
+    <div class="meta-chips"><span class="chip chip-r">2h Theory</span><span class="chip chip-n">2h Lab</span><span class="chip chip-n">2h Self-Learning</span></div>
+  </div>
+
+  <div class="analogy-box">
+    <div class="anlabel">🎯 R Markdown Analogy</div>
+    <p><strong>R Markdown is a lab notebook that runs its own experiments.</strong> You write prose, embed R code chunks, and when you click "Knit" in RStudio, every chunk executes and its output — tables, charts, statistics — appears right there in the final PDF or HTML. No copy-pasting from console. The report <em>is</em> the reproducible code.</p>
+  </div>
+
+  <div class="code-block r-block">
+    <span class="code-label">R · Functions + ChickWeight Case Study — Complete Lab Q1</span>
+    <pre><span class="cm"># User-defined function</span>
+<span class="op">calculate_gpa</span> <- <span class="kw">function</span>(m1, m2, m3) {
+    gpa <- (<span class="num">1</span>/<span class="num">3</span>)*m1 + (<span class="num">1</span>/<span class="num">2</span>)*m2 + (<span class="num">1</span>/<span class="num">4</span>)*m3
+    <span class="fn">cat</span>(<span class="fn">sprintf</span>(<span class="str">"GPA = %.2f\n"</span>, gpa))
+    <span class="fn">return</span>(gpa)
+}
+<span class="fn">calculate_gpa</span>(<span class="num">80</span>, <span class="num">75</span>, <span class="num">90</span>)   <span class="cm"># GPA = 79.17</span>
+
+<span class="cm">═══ ChickWeight Case Study ═══════════════════════════════════</span>
+<span class="fn">data</span>(ChickWeight)
+<span class="fn">str</span>(ChickWeight)    <span class="cm"># weight, Time, Chick, Diet</span>
+
+<span class="cm"># (a) Weight vs Time for Chick 34</span>
+<span class="op">chick34</span> <- ChickWeight[ChickWeight$Chick == <span class="num">34</span>, ]
+<span class="fn">plot</span>(chick34$Time, chick34$weight,
+     type  = <span class="str">"b"</span>,          <span class="cm"># b = both lines and points</span>
+     col   = <span class="str">"#b34a22"</span>,
+     pch   = <span class="num">16</span>,           <span class="cm"># filled circles</span>
+     xlab  = <span class="str">"Days after birth"</span>,
+     ylab  = <span class="str">"Weight (grams)"</span>,
+     main  = <span class="str">"Chick 34 — Growth Over Time"</span>)
+
+<span class="cm"># (b) Boxplot for Diet group 4</span>
+<span class="op">diet4</span> <- <span class="fn">subset</span>(ChickWeight, Diet == <span class="num">4</span>)
+<span class="fn">boxplot</span>(weight ~ Time, data = diet4,
+        col = <span class="str">"lightblue"</span>,
+        main = <span class="str">"Diet 4: Weight by Time Point"</span>)
+
+<span class="cm"># (c) Mean weight per time for Diet 4</span>
+<span class="op">mean_d4</span> <- <span class="fn">tapply</span>(diet4$weight, diet4$Time, mean)
+<span class="fn">plot</span>(<span class="fn">names</span>(mean_d4), mean_d4, type=<span class="str">"b"</span>,
+     col=<span class="str">"#b34a22"</span>, pch=<span class="num">16</span>,
+     xlab=<span class="str">"Time"</span>, ylab=<span class="str">"Mean Weight (g)"</span>,
+     main=<span class="str">"Mean Weight — Diet 4 vs 2"</span>)
+
+<span class="cm"># (d) Add Diet 2 line to same plot</span>
+<span class="op">diet2</span>   <- <span class="fn">subset</span>(ChickWeight, Diet == <span class="num">2</span>)
+<span class="op">mean_d2</span> <- <span class="fn">tapply</span>(diet2$weight, diet2$Time, mean)
+<span class="fn">lines</span>(<span class="fn">names</span>(mean_d2), mean_d2, col=<span class="str">"#1a6e5c"</span>, type=<span class="str">"b"</span>, pch=<span class="num">17</span>)
+
+<span class="cm"># (e) Legend and title</span>
+<span class="fn">legend</span>(<span class="str">"topleft"</span>,
+       legend = <span class="fn">c</span>(<span class="str">"Diet 4"</span>, <span class="str">"Diet 2"</span>),
+       col    = <span class="fn">c</span>(<span class="str">"#b34a22"</span>, <span class="str">"#1a6e5c"</span>),
+       lty = <span class="num">1</span>, pch = <span class="fn">c</span>(<span class="num">16</span>,<span class="num">17</span>), bty=<span class="str">"n"</span>)</pre>
+  </div>
+
+  <div class="card">
+    <div class="card-title">R Markdown — Structure of a Report</div>
+    <div class="code-block r-block">
+      <span class="code-label">R Markdown (.Rmd) — Knit to HTML with Ctrl+Shift+K</span>
+      <pre><span class="cm">---
+title:   "PG-DBDA Data Analysis Report"
+author:  "Your Name — C-DAC Kharghar"
+date:    "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+---</span>
+
+<span class="cm">## Introduction
+
+Analyse the **ChickWeight** dataset to compare dietary groups.</span>
+
+<span class="str">```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE, warning=FALSE, message=FALSE)
+library(tidyverse)
+```</span>
+
+<span class="str">```{r growth-chart, fig.width=9, fig.height=5}
+data(ChickWeight)
+ggplot(ChickWeight, aes(x=Time, y=weight,
+       color=factor(Diet), group=Chick)) +
+  geom_line(alpha=0.4) +
+  stat_summary(aes(group=Diet), fun=mean,
+               geom="line", linewidth=1.5) +
+  labs(title="Chick Growth by Diet Group", color="Diet") +
+  theme_minimal()
+```</span>
+
+<span class="cm">## Conclusion
+
+Diet 4 shows the highest mean weight gain by day 21 (p &lt; 0.05).</span>
+
+<span class="cm"># Inline R: "The dataset has `r nrow(ChickWeight)` observations."</span></pre>
+    </div>
+  </div>
+
+  <div class="quiz-box">
+    <div class="quiz-q">🧪 Which single R package loads dplyr, ggplot2, tidyr, readr, and more together?</div>
+    <div class="quiz-opts" id="q3o">
+      <label><input type="radio" name="q3" value="a"> <code>ggverse</code></label>
+      <label><input type="radio" name="q3" value="b"> <code>tidyverse</code></label>
+      <label><input type="radio" name="q3" value="c"> <code>dataverse</code></label>
+      <label><input type="radio" name="q3" value="d"> <code>rtools</code></label>
+    </div>
+    <button class="qbtn" onclick="chk('q3','b','tidyverse — a curated collection of R packages designed to work together harmoniously. Hadley Wickham created most of them. library(tidyverse) loads 8 packages at once: ggplot2, dplyr, tidyr, readr, purrr, tibble, stringr, forcats.')">Check Answer</button>
+    <div id="q3-res" class="qres"></div>
+  </div>
+</div>
+
+</main>
+
+<!-- ─── JAVASCRIPT ─────────────────────────────────────────── -->
+<script>
+// Navigation
+const IDs = ['home','s1','s2','s3','s4','s5','s7','s8','s10','s11','s12','s13','s14','s15','s16','s17','s18'];
+const navEls = document.querySelectorAll('.nb');
+
+function go(id) {
+  document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
+  navEls.forEach(n => n.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+  const idx = IDs.indexOf(id);
+  if (idx >= 0 && navEls[idx]) navEls[idx].classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  // Close sidebar on mobile
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+// Quiz checker
+function chk(qid, correct, explanation) {
+  const sel = document.querySelector(`input[name="${qid}"]:checked`);
+  const res = document.getElementById(`${qid}-res`);
+  if (!sel) {
+    res.style.display = 'block';
+    res.className = 'qres qwrong';
+    res.textContent = 'Please select an answer first.';
+    return;
+  }
+  res.style.display = 'block';
+  if (sel.value === correct) {
+    res.className = 'qres qcorrect';
+    res.textContent = '✓ Correct! ' + explanation;
+  } else {
+    res.className = 'qres qwrong';
+    res.textContent = '✗ Not quite. ' + explanation;
+  }
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    const cur = IDs.indexOf(document.querySelector('.sec.active')?.id);
+    if (cur < IDs.length - 1) go(IDs[cur + 1]);
+  }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    const cur = IDs.indexOf(document.querySelector('.sec.active')?.id);
+    if (cur > 0) go(IDs[cur - 1]);
+  }
+});
+</script>
+
+</body>
+</html>

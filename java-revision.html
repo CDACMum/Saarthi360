@@ -1,0 +1,2336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java Revision Notes — PGCP-BDA | C-DAC Kharghar</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Sora:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,700;1,600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e1a;
+  --surface: #111827;
+  --surface2: #1a2236;
+  --border: #1e2d45;
+  --accent: #00d4ff;
+  --accent2: #ff6b35;
+  --accent3: #7c3aed;
+  --accent4: #10b981;
+  --text: #e2e8f0;
+  --text-muted: #7a8ba0;
+  --text-dim: #4a5568;
+  --code-bg: #0d1117;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --sidebar-w: 290px;
+  --header-h: 60px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Sora', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent3); }
+
+/* ─── TOP HEADER ─── */
+.top-header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  height: var(--header-h);
+  background: rgba(10,14,26,0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 20px;
+  gap: 16px;
+}
+.top-header .logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem; color: var(--accent);
+  white-space: nowrap;
+}
+.top-header .subtitle {
+  font-size: 0.72rem; color: var(--text-muted);
+  border-left: 1px solid var(--border); padding-left: 16px;
+}
+.hamburger {
+  display: none; background: none; border: none;
+  cursor: pointer; color: var(--text); font-size: 1.4rem; margin-left: auto;
+}
+.search-bar {
+  margin-left: auto;
+  display: flex; align-items: center;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 12px; gap: 8px;
+}
+.search-bar input {
+  background: none; border: none; outline: none;
+  color: var(--text); font-family: 'Sora', sans-serif;
+  font-size: 0.82rem; width: 200px;
+}
+.search-bar input::placeholder { color: var(--text-dim); }
+
+/* ─── SIDEBAR ─── */
+.sidebar {
+  position: fixed; top: var(--header-h); left: 0; bottom: 0;
+  width: var(--sidebar-w); background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto; z-index: 900;
+  padding: 20px 0 40px;
+  transition: transform 0.3s ease;
+}
+.sidebar.hidden { transform: translateX(-100%); }
+
+.nav-section-label {
+  font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em;
+  color: var(--text-dim); text-transform: uppercase;
+  padding: 16px 20px 6px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 20px; cursor: pointer;
+  color: var(--text-muted); font-size: 0.8rem;
+  border-left: 3px solid transparent;
+  transition: all 0.2s; text-decoration: none;
+}
+.nav-item:hover { color: var(--text); background: var(--surface2); }
+.nav-item.active {
+  color: var(--accent); border-left-color: var(--accent);
+  background: rgba(0,212,255,0.06);
+}
+.nav-item .badge {
+  margin-left: auto; font-size: 0.65rem; padding: 2px 7px;
+  border-radius: 20px; background: var(--surface2);
+  color: var(--text-dim);
+}
+.nav-item.active .badge { background: rgba(0,212,255,0.15); color: var(--accent); }
+.nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+
+/* ─── MAIN CONTENT ─── */
+.main {
+  margin-left: var(--sidebar-w);
+  margin-top: var(--header-h);
+  min-height: calc(100vh - var(--header-h));
+  padding: 40px 48px;
+  max-width: 1100px;
+}
+
+/* ─── HERO ─── */
+.hero {
+  background: linear-gradient(135deg, var(--surface2) 0%, #0f1929 50%, #1a0a2e 100%);
+  border: 1px solid var(--border); border-radius: 20px;
+  padding: 48px; margin-bottom: 48px; position: relative; overflow: hidden;
+}
+.hero::before {
+  content: ''; position: absolute; top: -80px; right: -80px;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(0,212,255,0.08) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.2);
+  color: var(--accent); padding: 6px 14px; border-radius: 20px;
+  font-size: 0.72rem; font-weight: 600; margin-bottom: 20px;
+}
+.hero h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.8rem; line-height: 1.2;
+  background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 16px;
+}
+.hero p { color: var(--text-muted); font-size: 1rem; max-width: 600px; }
+.hero-stats {
+  display: flex; gap: 24px; margin-top: 28px; flex-wrap: wrap;
+}
+.stat-pill {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 18px; text-align: center;
+}
+.stat-pill .val { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+.stat-pill .lbl { font-size: 0.7rem; color: var(--text-muted); }
+
+/* ─── SECTION CARD ─── */
+.section-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; margin-bottom: 32px; overflow: hidden;
+}
+.section-header {
+  padding: 20px 28px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 14px;
+  background: linear-gradient(90deg, var(--surface2), var(--surface));
+}
+.section-icon {
+  width: 42px; height: 42px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem;
+}
+.section-header h2 {
+  font-size: 1.15rem; font-weight: 700; color: var(--text);
+}
+.section-header .session-tag {
+  margin-left: auto; font-size: 0.7rem; padding: 4px 10px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text-muted);
+}
+.section-body { padding: 28px; }
+
+/* ─── TYPOGRAPHY ─── */
+h3 { font-size: 1rem; font-weight: 700; color: var(--accent2); margin: 24px 0 10px; }
+h4 { font-size: 0.88rem; font-weight: 600; color: var(--accent4); margin: 16px 0 8px; }
+p { color: var(--text-muted); font-size: 0.87rem; margin-bottom: 12px; }
+strong { color: var(--text); }
+
+/* ─── CODE BLOCKS ─── */
+pre {
+  background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 10px; padding: 18px 20px; overflow-x: auto;
+  margin: 16px 0; position: relative;
+}
+pre::before {
+  content: 'Java'; position: absolute; top: 8px; right: 12px;
+  font-size: 0.65rem; color: var(--text-dim); font-family: 'JetBrains Mono', monospace;
+}
+code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem; line-height: 1.8;
+  color: #a8dadc;
+}
+.kw { color: #c792ea; }
+.str { color: #c3e88d; }
+.num { color: #f78c6c; }
+.cmt { color: #546e7a; font-style: italic; }
+.cls { color: #ffcb6b; }
+.mth { color: #82aaff; }
+.ann { color: #f07178; }
+.op { color: #89ddff; }
+
+/* ─── CALLOUTS ─── */
+.callout {
+  border-radius: 10px; padding: 14px 18px; margin: 16px 0;
+  border-left: 4px solid; font-size: 0.85rem;
+}
+.callout-info { background: rgba(0,212,255,0.06); border-color: var(--accent); }
+.callout-info .callout-title { color: var(--accent); }
+.callout-warning { background: rgba(245,158,11,0.06); border-color: var(--warning); }
+.callout-warning .callout-title { color: var(--warning); }
+.callout-tip { background: rgba(16,185,129,0.06); border-color: var(--accent4); }
+.callout-tip .callout-title { color: var(--accent4); }
+.callout-danger { background: rgba(239,68,68,0.06); border-color: var(--danger); }
+.callout-danger .callout-title { color: var(--danger); }
+.callout-title { font-weight: 700; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+
+/* ─── ANALOGY BOX ─── */
+.analogy {
+  background: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(0,212,255,0.05));
+  border: 1px solid rgba(124,58,237,0.25); border-radius: 10px;
+  padding: 16px 18px; margin: 16px 0;
+}
+.analogy-icon { font-size: 1.5rem; margin-bottom: 8px; }
+.analogy h4 { color: var(--accent3); margin: 0 0 6px; font-size: 0.82rem; }
+.analogy p { color: var(--text-muted); font-size: 0.83rem; margin: 0; }
+
+/* ─── COMPARISON TABLE ─── */
+.compare-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.82rem; }
+.compare-table th {
+  background: var(--surface2); color: var(--accent);
+  padding: 10px 14px; text-align: left; font-weight: 600;
+  border: 1px solid var(--border);
+}
+.compare-table td {
+  padding: 9px 14px; border: 1px solid var(--border);
+  color: var(--text-muted); vertical-align: top;
+}
+.compare-table tr:hover td { background: rgba(255,255,255,0.02); }
+.compare-table .yes { color: var(--accent4); }
+.compare-table .no { color: var(--danger); }
+
+/* ─── PILL TAGS ─── */
+.tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.tag {
+  padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600;
+}
+.tag-blue { background: rgba(0,212,255,0.1); color: var(--accent); border: 1px solid rgba(0,212,255,0.2); }
+.tag-orange { background: rgba(255,107,53,0.1); color: var(--accent2); border: 1px solid rgba(255,107,53,0.2); }
+.tag-green { background: rgba(16,185,129,0.1); color: var(--accent4); border: 1px solid rgba(16,185,129,0.2); }
+.tag-purple { background: rgba(124,58,237,0.1); color: #a78bfa; border: 1px solid rgba(124,58,237,0.2); }
+
+/* ─── SVG DIAGRAMS ─── */
+.diagram-wrap {
+  background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px; margin: 20px 0;
+  overflow-x: auto; text-align: center;
+}
+.diagram-label {
+  font-size: 0.72rem; color: var(--text-dim); text-align: center; margin-top: 8px;
+}
+
+/* ─── LEVEL BADGES ─── */
+.level-strip {
+  display: flex; gap: 8px; margin: 8px 0 20px; flex-wrap: wrap;
+}
+.level-badge {
+  font-size: 0.7rem; padding: 3px 10px; border-radius: 4px; font-weight: 600;
+}
+.beginner { background: rgba(16,185,129,0.15); color: var(--accent4); }
+.intermediate { background: rgba(245,158,11,0.15); color: var(--warning); }
+.advanced { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+/* ─── GRID LAYOUTS ─── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin: 16px 0; }
+.mini-card {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 16px;
+}
+.mini-card h4 { margin: 0 0 6px; font-size: 0.78rem; }
+.mini-card p { margin: 0; font-size: 0.78rem; }
+
+/* ─── FLOW STEPS ─── */
+.flow-steps { display: flex; gap: 0; margin: 16px 0; flex-wrap: wrap; }
+.flow-step {
+  flex: 1; min-width: 120px; background: var(--surface2);
+  border: 1px solid var(--border); padding: 12px 14px;
+  position: relative; text-align: center;
+}
+.flow-step:not(:last-child)::after {
+  content: '→'; position: absolute; right: -12px; top: 50%;
+  transform: translateY(-50%); color: var(--accent); z-index: 1; font-size: 1rem;
+}
+.flow-step .step-num {
+  display: block; font-size: 1.4rem; font-weight: 800; color: var(--accent);
+}
+.flow-step .step-lbl { font-size: 0.72rem; color: var(--text-muted); }
+
+/* ─── TOC JUMP ─── */
+.toc-jump { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 32px; }
+.toc-btn {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 14px;
+  color: var(--text-muted); font-size: 0.78rem; cursor: pointer;
+  text-decoration: none; transition: all 0.2s;
+  display: flex; align-items: center; gap: 6px;
+}
+.toc-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ─── BACK TO TOP ─── */
+.back-top {
+  position: fixed; bottom: 24px; right: 24px; z-index: 999;
+  background: var(--accent3); border: none; border-radius: 50%;
+  width: 46px; height: 46px; cursor: pointer; color: #fff; font-size: 1.2rem;
+  box-shadow: 0 4px 20px rgba(124,58,237,0.4); transition: transform 0.2s;
+}
+.back-top:hover { transform: translateY(-3px); }
+
+/* ─── PROGRESS BAR ─── */
+.progress-bar {
+  position: fixed; top: var(--header-h); left: 0; right: 0; z-index: 1001;
+  height: 3px; background: transparent;
+}
+.progress-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--accent3), var(--accent));
+  transition: width 0.1s;
+}
+
+/* ─── QUIZ BOX ─── */
+.quiz-box {
+  background: var(--surface2); border: 1px solid rgba(124,58,237,0.3);
+  border-radius: 12px; padding: 18px 20px; margin: 20px 0;
+}
+.quiz-box .quiz-title { font-size: 0.75rem; color: var(--accent3); font-weight: 700; margin-bottom: 12px; }
+.quiz-q { font-size: 0.85rem; color: var(--text); margin-bottom: 10px; }
+.quiz-answers { display: flex; flex-direction: column; gap: 6px; }
+.quiz-ans {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 7px; padding: 8px 14px; cursor: pointer;
+  font-size: 0.8rem; color: var(--text-muted); transition: all 0.2s;
+}
+.quiz-ans:hover { border-color: var(--accent); color: var(--text); }
+.quiz-ans.correct { border-color: var(--accent4); color: var(--accent4); background: rgba(16,185,129,0.08); }
+.quiz-ans.wrong { border-color: var(--danger); color: var(--danger); background: rgba(239,68,68,0.08); }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 900px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: none; }
+  .main { margin-left: 0; padding: 20px 18px; }
+  .hamburger { display: block; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 1.9rem; }
+  .flow-steps { flex-direction: column; }
+  .flow-step:not(:last-child)::after { content: '↓'; right: 50%; top: auto; bottom: -14px; transform: translateX(50%); }
+}
+
+/* ─── ANIMATION ─── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.section-card { animation: fadeInUp 0.5s ease both; }
+
+/* ─── INLINE CODE ─── */
+.ic {
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 4px; padding: 1px 6px; font-size: 0.8em; color: #ffcb6b;
+}
+
+/* ─── COLLAPSIBLE ─── */
+details { margin: 12px 0; }
+summary {
+  cursor: pointer; padding: 10px 14px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font-size: 0.85rem; font-weight: 600;
+  list-style: none; display: flex; align-items: center; gap: 8px;
+}
+summary::before { content: '▶'; font-size: 0.7rem; color: var(--accent); transition: transform 0.2s; }
+details[open] summary::before { transform: rotate(90deg); }
+details > *:not(summary) { padding: 14px; background: var(--surface); border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; }
+</style>
+</head>
+<body>
+
+<!-- PROGRESS BAR -->
+<div class="progress-bar"><div class="progress-fill" id="prog"></div></div>
+
+<!-- HEADER -->
+<header class="top-header">
+  <button class="hamburger" onclick="toggleSidebar()">☰</button>
+  <div class="logo">☕ Java — PGCP-BDA</div>
+  <div class="subtitle">C-DAC Kharghar · Feb 2026 · 34T + 36L + 20SL hrs</div>
+  <div class="search-bar">
+    <span style="color:var(--text-dim)">🔍</span>
+    <input type="text" placeholder="Search topics..." oninput="searchTopics(this.value)" id="searchInput">
+  </div>
+</header>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="nav-section-label">Quick Nav</div>
+  <a class="nav-item active" href="#hero"><span class="nav-icon">🏠</span> Overview <span class="badge">Start</span></a>
+  <div class="nav-section-label">Sessions 1–2</div>
+  <a class="nav-item" href="#s1"><span class="nav-icon">🏗️</span> Java Basics & JVM <span class="badge">S1–2</span></a>
+  <div class="nav-section-label">Session 3</div>
+  <a class="nav-item" href="#s3"><span class="nav-icon">📦</span> OOP & Arrays <span class="badge">S3</span></a>
+  <div class="nav-section-label">Session 4</div>
+  <a class="nav-item" href="#s4"><span class="nav-icon">🔤</span> Strings & Encapsulation <span class="badge">S4</span></a>
+  <div class="nav-section-label">Session 5</div>
+  <a class="nav-item" href="#s5"><span class="nav-icon">🧬</span> Inheritance & Polymorphism <span class="badge">S5</span></a>
+  <div class="nav-section-label">Session 6</div>
+  <a class="nav-item" href="#s6"><span class="nav-icon">🚨</span> Exception Handling <span class="badge">S6</span></a>
+  <div class="nav-section-label">Sessions 7–8</div>
+  <a class="nav-item" href="#s7"><span class="nav-icon">🗃️</span> Generics & Collections <span class="badge">S7–8</span></a>
+  <div class="nav-section-label">Session 9</div>
+  <a class="nav-item" href="#s9"><span class="nav-icon">🏷️</span> Enums, Autoboxing <span class="badge">S9</span></a>
+  <div class="nav-section-label">Session 10</div>
+  <a class="nav-item" href="#s10"><span class="nav-icon">λ</span> Functional & Lambdas <span class="badge">S10</span></a>
+  <div class="nav-section-label">Sessions 11–12</div>
+  <a class="nav-item" href="#s11"><span class="nav-icon">🌊</span> Streams & Date API <span class="badge">S11–12</span></a>
+  <div class="nav-section-label">Session 13</div>
+  <a class="nav-item" href="#s13"><span class="nav-icon">🧵</span> Concurrency & Threads <span class="badge">S13</span></a>
+  <div class="nav-section-label">Session 14</div>
+  <a class="nav-item" href="#s14"><span class="nav-icon">💾</span> I/O & Serialization <span class="badge">S14</span></a>
+  <div class="nav-section-label">Session 15</div>
+  <a class="nav-item" href="#s15"><span class="nav-icon">🔍</span> JVM & Reflection <span class="badge">S15</span></a>
+  <div class="nav-section-label">Sessions 16–17</div>
+  <a class="nav-item" href="#s16"><span class="nav-icon">🗄️</span> JDBC <span class="badge">S16–17</span></a>
+</nav>
+
+<!-- MAIN -->
+<main class="main" id="main">
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero">
+    <div class="hero-badge">📘 Complete Revision Guide · All Levels</div>
+    <h1>Java Programming<br>Revision Notes</h1>
+    <p>A complete, beginner-to-advanced reference covering all 17 sessions of the PG-DBDA Java module. Packed with analogies, diagrams, code examples, and exam-ready explanations.</p>
+    <div class="hero-stats">
+      <div class="stat-pill"><div class="val">17</div><div class="lbl">Sessions</div></div>
+      <div class="stat-pill"><div class="val">34h</div><div class="lbl">Theory</div></div>
+      <div class="stat-pill"><div class="val">36h</div><div class="lbl">Lab</div></div>
+      <div class="stat-pill"><div class="val">20h</div><div class="lbl">Self Learning</div></div>
+      <div class="stat-pill"><div class="val">100%</div><div class="lbl">Syllabus Covered</div></div>
+    </div>
+  </div>
+
+  <!-- QUICK JUMP -->
+  <div class="toc-jump">
+    <a class="toc-btn" href="#s1">🏗️ S1-2: Basics</a>
+    <a class="toc-btn" href="#s3">📦 S3: OOP</a>
+    <a class="toc-btn" href="#s4">🔤 S4: Strings</a>
+    <a class="toc-btn" href="#s5">🧬 S5: Inheritance</a>
+    <a class="toc-btn" href="#s6">🚨 S6: Exceptions</a>
+    <a class="toc-btn" href="#s7">🗃️ S7-8: Collections</a>
+    <a class="toc-btn" href="#s9">🏷️ S9: Enums</a>
+    <a class="toc-btn" href="#s10">λ S10: Lambdas</a>
+    <a class="toc-btn" href="#s11">🌊 S11-12: Streams</a>
+    <a class="toc-btn" href="#s13">🧵 S13: Threads</a>
+    <a class="toc-btn" href="#s14">💾 S14: I/O</a>
+    <a class="toc-btn" href="#s15">🔍 S15: Reflection</a>
+    <a class="toc-btn" href="#s16">🗄️ S16-17: JDBC</a>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     SESSION 1–2: Java Basics & JVM
+════════════════════════════════════════ -->
+<section id="s1" class="section-card">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(0,212,255,0.1)">🏗️</div>
+    <div>
+      <h2>Sessions 1–2: Java Basics, JVM & Data Types</h2>
+      <div style="font-size:0.75rem;color:var(--text-muted)">4T + 4L + 2SL hours</div>
+    </div>
+    <span class="session-tag">S1–S2</span>
+  </div>
+  <div class="section-body">
+    <div class="level-strip">
+      <span class="level-badge beginner">🟢 Beginner</span>
+      <span class="level-badge intermediate">🟡 Intermediate</span>
+    </div>
+
+    <h3>What is Java? Why Java?</h3>
+    <div class="analogy">
+      <div class="analogy-icon">🏪</div>
+      <h4>Analogy: Java is like a Universal Outlet Adapter</h4>
+      <p>When you travel from India to Europe, your Indian charger won't fit directly. You need a universal adapter. Java does the same — you write code once and it runs on Windows, Linux, Mac, Android — anywhere! This is <strong>Write Once, Run Anywhere (WORA)</strong>.</p>
+    </div>
+
+    <div class="grid-3">
+      <div class="mini-card">
+        <h4>🧱 Compiled</h4>
+        <p>Java code (.java) → compiled to <strong>bytecode</strong> (.class), not machine code directly</p>
+      </div>
+      <div class="mini-card">
+        <h4>🔒 Strongly Typed</h4>
+        <p>Every variable must have a declared type. No implicit type conversions between incompatible types</p>
+      </div>
+      <div class="mini-card">
+        <h4>🌐 Platform Independent</h4>
+        <p>Bytecode runs on JVM. JVM exists for every OS — so your code is OS-agnostic</p>
+      </div>
+      <div class="mini-card">
+        <h4>🧹 Garbage Collected</h4>
+        <p>No manual memory management (unlike C/C++). JVM auto-reclaims unused objects</p>
+      </div>
+      <div class="mini-card">
+        <h4>🔒 Secure</h4>
+        <p>No pointer arithmetic. Class loader, bytecode verifier, and security manager protect runtime</p>
+      </div>
+      <div class="mini-card">
+        <h4>🧵 Multi-threaded</h4>
+        <p>Built-in support for concurrent programming via <span class="ic">Thread</span> and <span class="ic">Runnable</span></p>
+      </div>
+    </div>
+
+    <h3>JVM, JDK, JRE — The Holy Trinity</h3>
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 680 280" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:680px">
+        <defs>
+          <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#1a2236"/>
+            <stop offset="100%" style="stop-color:#0d1117"/>
+          </linearGradient>
+        </defs>
+        <!-- JDK outer -->
+        <rect x="20" y="20" width="640" height="240" rx="14" fill="rgba(124,58,237,0.08)" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="40" y="46" fill="#a78bfa" font-family="Sora,sans-serif" font-size="12" font-weight="700">JDK — Java Development Kit (Full Developer Package)</text>
+        <!-- Compiler, Debugger, Javadoc -->
+        <rect x="40" y="60" width="140" height="50" rx="8" fill="rgba(0,212,255,0.08)" stroke="#00d4ff" stroke-width="1"/>
+        <text x="80" y="82" fill="#00d4ff" font-family="Sora,sans-serif" font-size="11" font-weight="700">javac</text>
+        <text x="58" y="98" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9.5">Java Compiler</text>
+        <rect x="200" y="60" width="140" height="50" rx="8" fill="rgba(0,212,255,0.08)" stroke="#00d4ff" stroke-width="1"/>
+        <text x="238" y="82" fill="#00d4ff" font-family="Sora,sans-serif" font-size="11" font-weight="700">jdb</text>
+        <text x="218" y="98" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9.5">Java Debugger</text>
+        <rect x="360" y="60" width="140" height="50" rx="8" fill="rgba(0,212,255,0.08)" stroke="#00d4ff" stroke-width="1"/>
+        <text x="388" y="82" fill="#00d4ff" font-family="Sora,sans-serif" font-size="11" font-weight="700">javadoc</text>
+        <text x="375" y="98" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9.5">Documentation Generator</text>
+        <!-- JRE -->
+        <rect x="40" y="130" width="600" height="110" rx="10" fill="rgba(16,185,129,0.06)" stroke="#10b981" stroke-width="1.5"/>
+        <text x="60" y="152" fill="#10b981" font-family="Sora,sans-serif" font-size="11" font-weight="700">JRE — Java Runtime Environment</text>
+        <!-- JVM -->
+        <rect x="60" y="162" width="560" height="64" rx="8" fill="rgba(255,107,53,0.08)" stroke="#ff6b35" stroke-width="1.5"/>
+        <text x="80" y="184" fill="#ff6b35" font-family="Sora,sans-serif" font-size="11" font-weight="700">JVM — Java Virtual Machine</text>
+        <!-- JVM internals -->
+        <rect x="80" y="192" width="100" height="26" rx="5" fill="rgba(255,107,53,0.15)"/>
+        <text x="88" y="209" fill="#ff6b35" font-family="Sora,sans-serif" font-size="9">Class Loader</text>
+        <rect x="192" y="192" width="100" height="26" rx="5" fill="rgba(255,107,53,0.15)"/>
+        <text x="198" y="209" fill="#ff6b35" font-family="Sora,sans-serif" font-size="9">Bytecode Verifier</text>
+        <rect x="304" y="192" width="100" height="26" rx="5" fill="rgba(255,107,53,0.15)"/>
+        <text x="315" y="209" fill="#ff6b35" font-family="Sora,sans-serif" font-size="9">JIT Compiler</text>
+        <rect x="416" y="192" width="100" height="26" rx="5" fill="rgba(255,107,53,0.15)"/>
+        <text x="425" y="209" fill="#ff6b35" font-family="Sora,sans-serif" font-size="9">Garbage Collector</text>
+        <!-- Arrow flow -->
+        <text x="520" y="60" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="10">Flow:</text>
+        <text x="520" y="76" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9">.java → javac</text>
+        <text x="520" y="92" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9">→ .class → JVM</text>
+        <text x="520" y="108" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9">→ Machine runs</text>
+      </svg>
+    </div>
+    <div class="diagram-label">JDK contains JRE; JRE contains JVM. Developers need JDK; users only need JRE.</div>
+
+    <h3>Java Program Structure</h3>
+    <pre><code><span class="cmt">// File must be named: HelloCDAC.java</span>
+<span class="kw">package</span> com.cdac.pgdbda;          <span class="cmt">// optional package declaration</span>
+
+<span class="kw">import</span> java.util.Scanner;           <span class="cmt">// import a library class</span>
+
+<span class="kw">public class</span> <span class="cls">HelloCDAC</span> {           <span class="cmt">// class name MUST match file name</span>
+    <span class="kw">public static void</span> <span class="mth">main</span>(String[] args) {
+        <span class="cls">System</span>.out.<span class="mth">println</span>(<span class="str">"Jai Hind! Welcome to PG-DBDA"</span>);
+
+        <span class="cls">Scanner</span> sc = <span class="kw">new</span> <span class="cls">Scanner</span>(<span class="cls">System</span>.in);
+        <span class="cls">System</span>.out.<span class="mth">print</span>(<span class="str">"Enter your name: "</span>);
+        String name = sc.<span class="mth">nextLine</span>();
+        <span class="cls">System</span>.out.<span class="mth">println</span>(<span class="str">"Hello, "</span> + name + <span class="str">"!"</span>);
+    }
+}
+</code></pre>
+    <div class="callout callout-tip">
+      <div class="callout-title">💡 Compile & Run</div>
+      <code>javac HelloCDAC.java</code> → generates <code>HelloCDAC.class</code><br>
+      <code>java com.cdac.pgdbda.HelloCDAC</code> → runs the program
+    </div>
+
+    <h3>Data Types</h3>
+    <div class="analogy">
+      <div class="analogy-icon">📦</div>
+      <h4>Analogy: Data types are like container sizes</h4>
+      <p>Think of dabbas (tiffin boxes). A 100ml dabba for chutney (<span class="ic">byte</span>), a 500ml for sabzi (<span class="ic">int</span>), a 5-litre for biryani (<span class="ic">long</span>). You choose the right size to avoid wastage and overflow!</p>
+    </div>
+
+    <table class="compare-table">
+      <tr><th>Type</th><th>Size</th><th>Range</th><th>Example</th></tr>
+      <tr><td><code>byte</code></td><td>1 byte</td><td>-128 to 127</td><td><code>byte age = 25;</code></td></tr>
+      <tr><td><code>short</code></td><td>2 bytes</td><td>-32768 to 32767</td><td><code>short pincode = 400001;</code></td></tr>
+      <tr><td><code>int</code></td><td>4 bytes</td><td>±2.1 billion</td><td><code>int salary = 75000;</code></td></tr>
+      <tr><td><code>long</code></td><td>8 bytes</td><td>±9.2×10¹⁸</td><td><code>long aadhaar = 123456789012L;</code></td></tr>
+      <tr><td><code>float</code></td><td>4 bytes</td><td>~7 decimal digits</td><td><code>float cgpa = 8.5f;</code></td></tr>
+      <tr><td><code>double</code></td><td>8 bytes</td><td>~15 decimal digits</td><td><code>double pi = 3.14159265;</code></td></tr>
+      <tr><td><code>char</code></td><td>2 bytes</td><td>Unicode 0–65535</td><td><code>char grade = 'A';</code></td></tr>
+      <tr><td><code>boolean</code></td><td>1 bit</td><td>true / false</td><td><code>boolean isPass = true;</code></td></tr>
+    </table>
+
+    <h3>Operators — Quick Reference</h3>
+    <div class="grid-2">
+      <div class="mini-card">
+        <h4>🔢 Arithmetic</h4>
+        <pre><code><span class="num">10</span> + <span class="num">3</span>   <span class="op">=</span> <span class="num">13</span>
+<span class="num">10</span> - <span class="num">3</span>   <span class="op">=</span> <span class="num">7</span>
+<span class="num">10</span> * <span class="num">3</span>   <span class="op">=</span> <span class="num">30</span>
+<span class="num">10</span> / <span class="num">3</span>   <span class="op">=</span> <span class="num">3</span>   <span class="cmt">// int division</span>
+<span class="num">10</span> % <span class="num">3</span>   <span class="op">=</span> <span class="num">1</span>   <span class="cmt">// modulus/remainder</span></code></pre>
+      </div>
+      <div class="mini-card">
+        <h4>↔️ Relational & Logical</h4>
+        <pre><code><span class="num">5</span> > <span class="num">3</span>    <span class="op">=</span> <span class="kw">true</span>
+<span class="num">5</span> >= <span class="num">5</span>   <span class="op">=</span> <span class="kw">true</span>
+<span class="num">5</span> == <span class="num">3</span>   <span class="op">=</span> <span class="kw">false</span>
+<span class="kw">true</span> && <span class="kw">false</span> <span class="op">=</span> <span class="kw">false</span>
+<span class="kw">true</span> || <span class="kw">false</span> <span class="op">=</span> <span class="kw">true</span>
+!<span class="kw">true</span>         <span class="op">=</span> <span class="kw">false</span></code></pre>
+      </div>
+    </div>
+
+    <h3>Control Statements</h3>
+    <pre><code><span class="cmt">// if-else: marks based on CGPA (Indian grading example)</span>
+<span class="kw">double</span> cgpa = <span class="num">7.8</span>;
+<span class="kw">if</span> (cgpa >= <span class="num">9.0</span>)          <span class="cls">System</span>.out.<span class="mth">println</span>(<span class="str">"Outstanding"</span>);
+<span class="kw">else if</span> (cgpa >= <span class="num">7.5</span>)    <span class="cls">System</span>.out.<span class="mth">println</span>(<span class="str">"First Class with Distinction"</span>);
+<span class="kw">else if</span> (cgpa >= <span class="num">6.0</span>)    <span class="cls">System</span>.out.<span class="mth">println</span>(<span class="str">"First Class"</span>);
+<span class="kw">else</span>                       <span class="cls">System</span>.out.<span class="mth">println</span>(<span class="str">"Pass"</span>);
+
+<span class="cmt">// switch — preferred for discrete values</span>
+<span class="kw">int</span> day = <span class="num">2</span>;
+<span class="kw">switch</span> (day) {
+    <span class="kw">case</span> <span class="num">1</span>: <span class="cls">System</span>.out.<span class="mth">println</span>(<span class="str">"Monday"</span>);  <span class="kw">break</span>;
+    <span class="kw">case</span> <span class="num">2</span>: <span class="cls">System</span>.out.<span class="mth">println</span>(<span class="str">"Tuesday"</span>); <span class="kw">break</span>;
+    <span class="kw">default</span>: <span class="cls">System</span>.out.<span class="mth">println</span>(<span class="str">"Other day"</span>);
+}
+
+<span class="cmt">// for loop — print marks table</span>
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i <= <span class="num">5</span>; i++) {
+    <span class="cls">System</span>.out.<span class="mth">println</span>(<span class="str">"Subject "</span> + i + <span class="str">": "</span> + (i * <span class="num">10</span>) + <span class="str">" marks"</span>);
+}
+
+<span class="cmt">// while — keep reading UPI amount till 0</span>
+<span class="kw">int</span> amount = sc.<span class="mth">nextInt</span>();
+<span class="kw">while</span> (amount != <span class="num">0</span>) {
+    <span class="cls">System</span>.out.<span class="mth">println</span>(<span class="str">"Paid ₹"</span> + amount);
+    amount = sc.<span class="mth">nextInt</span>();
+}
+
+<span class="cmt">// do-while — always runs at least once (good for menus)</span>
+<span class="kw">int</span> choice;
+<span class="kw">do</span> {
+    <span class="cls">System</span>.out.<span class="mth">println</span>(<span class="str">"1.Add 2.Remove 3.Exit"</span>);
+    choice = sc.<span class="mth">nextInt</span>();
+} <span class="kw">while</span> (choice != <span class="num">3</span>);
+
+<span class="cmt">// ternary — one-liner condition</span>
+String result = (cgpa >= <span class="num">6.0</span>) ? <span class="str">"PASS"</span> : <span class="str">"FAIL"</span>;
+</code></pre>
+
+    <div class="callout callout-warning">
+      <div class="callout-title">⚠️ Common Mistake</div>
+      In a <span class="ic">switch</span> without <span class="ic">break</span>, execution <strong>falls through</strong> to the next case! Always add <span class="ic">break</span> unless you intentionally want fall-through.
+    </div>
+
+    <div class="quiz-box">
+      <div class="quiz-title">🧠 Quick Check</div>
+      <div class="quiz-q">What is the output of: <code>System.out.println(10 / 3);</code></div>
+      <div class="quiz-answers">
+        <div class="quiz-ans" onclick="checkQ(this, false)">A) 3.33</div>
+        <div class="quiz-ans" onclick="checkQ(this, true)">B) 3</div>
+        <div class="quiz-ans" onclick="checkQ(this, false)">C) 3.0</div>
+        <div class="quiz-ans" onclick="checkQ(this, false)">D) Error</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     SESSION 3: OOP & Arrays
+════════════════════════════════════════ -->
+<section id="s3" class="section-card">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(16,185,129,0.1)">📦</div>
+    <div>
+      <h2>Session 3: Packages, Arrays & Object-Oriented Concepts</h2>
+      <div style="font-size:0.75rem;color:var(--text-muted)">2T + 2L + 2SL hours</div>
+    </div>
+    <span class="session-tag">S3</span>
+  </div>
+  <div class="section-body">
+    <div class="level-strip">
+      <span class="level-badge beginner">🟢 Beginner</span>
+      <span class="level-badge intermediate">🟡 Intermediate</span>
+    </div>
+
+    <h3>Arrays</h3>
+    <div class="analogy">
+      <div class="analogy-icon">🪑</div>
+      <h4>Analogy: Array is a Train Bogie</h4>
+      <p>Imagine a Mumbai Local train. Each bogie has a fixed seat number (index starting 0). You book a seat, it stays fixed. You can't add more seats once the train is decided — that's an array. Fixed size, indexed, same type of passenger (data type).</p>
+    </div>
+    <pre><code><span class="cmt">// Declaration & Initialization</span>
+<span class="kw">int</span>[] marks = <span class="kw">new</span> <span class="kw">int</span>[<span class="num">5</span>];           <span class="cmt">// size 5, default 0</span>
+<span class="kw">int</span>[] scores = {<span class="num">85</span>, <span class="num">92</span>, <span class="num">78</span>, <span class="num">95</span>, <span class="num">88</span>}; <span class="cmt">// literal initialization</span>
+
+<span class="cmt">// Access</span>
+<span class="cls">System</span>.out.<span class="mth">println</span>(scores[<span class="num">0</span>]);      <span class="cmt">// 85 (first element)</span>
+<span class="cls">System</span>.out.<span class="mth">println</span>(scores.<span class="mth">length</span>);  <span class="cmt">// 5</span>
+
+<span class="cmt">// Enhanced for-each loop</span>
+<span class="kw">for</span> (<span class="kw">int</span> s : scores) {
+    <span class="cls">System</span>.out.<span class="mth">print</span>(s + <span class="str">" "</span>);
+}
+
+<span class="cmt">// 2D Array — like a marksheet grid</span>
+<span class="kw">int</span>[][] sheet = <span class="kw">new</span> <span class="kw">int</span>[<span class="num">3</span>][<span class="num">4</span>]; <span class="cmt">// 3 students, 4 subjects</span>
+sheet[<span class="num">0</span>][<span class="num">0</span>] = <span class="num">90</span>; <span class="cmt">// Student 0, Subject 0</span>
+
+<span class="cmt">// Arrays utility class</span>
+<span class="kw">import</span> java.util.Arrays;
+<span class="cls">Arrays</span>.<span class="mth">sort</span>(scores);               <span class="cmt">// sort in place</span>
+<span class="cls">System</span>.out.<span class="mth">println</span>(<span class="cls">Arrays</span>.<span class="mth">toString</span>(scores)); <span class="cmt">// [78, 85, 88, 92, 95]</span>
+</code></pre>
+
+    <h3>OOP — The Four Pillars</h3>
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 660 200" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:660px">
+        <!-- Pillar 1 -->
+        <rect x="20" y="40" width="140" height="130" rx="10" fill="rgba(0,212,255,0.07)" stroke="#00d4ff" stroke-width="1.5"/>
+        <text x="90" y="24" fill="#00d4ff" font-family="Sora,sans-serif" font-size="10" font-weight="700" text-anchor="middle">ENCAPSULATION</text>
+        <text x="90" y="80" font-family="Sora,sans-serif" font-size="28" text-anchor="middle">🔒</text>
+        <text x="90" y="110" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9" text-anchor="middle">Wrap data + methods</text>
+        <text x="90" y="125" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9" text-anchor="middle">Hide internals</text>
+        <text x="90" y="140" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9" text-anchor="middle">Expose via getters</text>
+        <text x="90" y="158" fill="#00d4ff" font-family="Sora,sans-serif" font-size="8.5" text-anchor="middle" font-style="italic">Like ATM Machine</text>
+        <!-- Pillar 2 -->
+        <rect x="175" y="40" width="140" height="130" rx="10" fill="rgba(16,185,129,0.07)" stroke="#10b981" stroke-width="1.5"/>
+        <text x="245" y="24" fill="#10b981" font-family="Sora,sans-serif" font-size="10" font-weight="700" text-anchor="middle">INHERITANCE</text>
+        <text x="245" y="80" font-family="Sora,sans-serif" font-size="28" text-anchor="middle">🧬</text>
+        <text x="245" y="110" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9" text-anchor="middle">Reuse parent code</text>
+        <text x="245" y="125" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9" text-anchor="middle">IS-A relationship</text>
+        <text x="245" y="140" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9" text-anchor="middle">extends keyword</text>
+        <text x="245" y="158" fill="#10b981" font-family="Sora,sans-serif" font-size="8.5" text-anchor="middle" font-style="italic">Like Parent → Child</text>
+        <!-- Pillar 3 -->
+        <rect x="330" y="40" width="140" height="130" rx="10" fill="rgba(255,107,53,0.07)" stroke="#ff6b35" stroke-width="1.5"/>
+        <text x="400" y="24" fill="#ff6b35" font-family="Sora,sans-serif" font-size="10" font-weight="700" text-anchor="middle">POLYMORPHISM</text>
+        <text x="400" y="80" font-family="Sora,sans-serif" font-size="28" text-anchor="middle">🎭</text>
+        <text x="400" y="110" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9" text-anchor="middle">One name, many forms</text>
+        <text x="400" y="125" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9" text-anchor="middle">Overloading (compile)</text>
+        <text x="400" y="140" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9" text-anchor="middle">Overriding (runtime)</text>
+        <text x="400" y="158" fill="#ff6b35" font-family="Sora,sans-serif" font-size="8.5" text-anchor="middle" font-style="italic">Like water → ice/steam</text>
+        <!-- Pillar 4 -->
+        <rect x="485" y="40" width="155" height="130" rx="10" fill="rgba(124,58,237,0.07)" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="562" y="24" fill="#a78bfa" font-family="Sora,sans-serif" font-size="10" font-weight="700" text-anchor="middle">ABSTRACTION</text>
+        <text x="562" y="80" font-family="Sora,sans-serif" font-size="28" text-anchor="middle">🎨</text>
+        <text x="562" y="110" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9" text-anchor="middle">Hide complexity</text>
+        <text x="562" y="125" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9" text-anchor="middle">Abstract class/interface</text>
+        <text x="562" y="140" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9" text-anchor="middle">Show only essentials</text>
+        <text x="562" y="158" fill="#a78bfa" font-family="Sora,sans-serif" font-size="8.5" text-anchor="middle" font-style="italic">Like TV Remote</text>
+      </svg>
+    </div>
+
+    <h3>Classes & Objects — The Blueprint Analogy</h3>
+    <div class="analogy">
+      <div class="analogy-icon">🏠</div>
+      <h4>Analogy: Class = Architect's Blueprint, Object = Actual House</h4>
+      <p>You design one blueprint for a 2BHK flat. But many flats are built from it — each with different colours, furniture. <strong>Class</strong> is the blueprint. Each <strong>Object</strong> is a built flat with its own state (color, furniture) but same structure.</p>
+    </div>
+    <pre><code><span class="kw">public class</span> <span class="cls">Employee</span> {
+    <span class="cmt">// Fields (instance variables = state)</span>
+    <span class="kw">int</span> id;
+    <span class="cls">String</span> name;
+    <span class="kw">double</span> salary;
+    <span class="cls">String</span> department;
+
+    <span class="cmt">// Object lifecycle: Creation → Use → GC</span>
+}
+
+<span class="cmt">// Creating objects (in main)</span>
+<span class="cls">Employee</span> emp1 = <span class="kw">new</span> <span class="cls">Employee</span>();  <span class="cmt">// allocated on HEAP</span>
+emp1.id = <span class="num">101</span>;
+emp1.name = <span class="str">"Priya Sharma"</span>;
+emp1.salary = <span class="num">85000.0</span>;
+
+<span class="cls">Employee</span> emp2 = emp1;   <span class="cmt">// emp2 points to SAME object (reference)</span>
+emp2.salary = <span class="num">90000</span>;   <span class="cmt">// changes BOTH emp1 and emp2's salary!</span>
+
+emp1 = <span class="kw">null</span>;            <span class="cmt">// reference removed; if no other ref → GC eligible</span>
+</code></pre>
+
+    <h3>Wrapper Classes</h3>
+    <div class="callout callout-info">
+      <div class="callout-title">ℹ️ Why Wrapper Classes?</div>
+      Java Collections (like ArrayList) can only store <strong>objects</strong>, not primitives. Wrapper classes (<span class="ic">Integer</span>, <span class="ic">Double</span>, <span class="ic">Boolean</span> etc.) box primitives into objects.
+    </div>
+    <pre><code><span class="cls">Integer</span> i = <span class="cls">Integer</span>.<span class="mth">valueOf</span>(<span class="num">42</span>);     <span class="cmt">// wrap</span>
+<span class="kw">int</span> x = i.<span class="mth">intValue</span>();                <span class="cmt">// unwrap</span>
+<span class="kw">int</span> parsed = <span class="cls">Integer</span>.<span class="mth">parseInt</span>(<span class="str">"123"</span>); <span class="cmt">// String → int</span>
+<span class="cls">String</span> s = <span class="cls">Integer</span>.<span class="mth">toString</span>(<span class="num">99</span>);     <span class="cmt">// int → String</span>
+<span class="cls">System</span>.out.<span class="mth">println</span>(<span class="cls">Integer</span>.MAX_VALUE); <span class="cmt">// 2147483647</span>
+</code></pre>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     SESSION 4: Strings & Encapsulation
+════════════════════════════════════════ -->
+<section id="s4" class="section-card">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(245,158,11,0.1)">🔤</div>
+    <div>
+      <h2>Session 4: Strings, StringBuilder & Encapsulation</h2>
+      <div style="font-size:0.75rem;color:var(--text-muted)">2T + 2L + 2SL hours</div>
+    </div>
+    <span class="session-tag">S4</span>
+  </div>
+  <div class="section-body">
+    <div class="level-strip">
+      <span class="level-badge beginner">🟢 Beginner</span>
+      <span class="level-badge intermediate">🟡 Intermediate</span>
+      <span class="level-badge advanced">🔴 Advanced</span>
+    </div>
+
+    <h3>String Immutability — The Aadhaar Card Analogy</h3>
+    <div class="analogy">
+      <div class="analogy-icon">🪪</div>
+      <h4>Analogy: String is like your Aadhaar Card</h4>
+      <p>Once printed, your Aadhaar card doesn't change. If you need an updated address, UIDAI prints a <strong>new card</strong> — the old one is discarded. Java's <span class="ic">String</span> works the same: every modification creates a new String object. The old one stays in the <strong>String Constant Pool</strong> until garbage collected.</p>
+    </div>
+
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 620 180" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:620px">
+        <!-- String Pool -->
+        <rect x="20" y="20" width="580" height="140" rx="12" fill="rgba(0,212,255,0.05)" stroke="#00d4ff" stroke-width="1"/>
+        <text x="300" y="14" fill="#00d4ff" font-family="Sora,sans-serif" font-size="11" font-weight="700" text-anchor="middle">String Constant Pool (Heap)</text>
+        <!-- String 1 -->
+        <rect x="40" y="40" width="120" height="40" rx="8" fill="rgba(0,212,255,0.12)" stroke="#00d4ff" stroke-width="1"/>
+        <text x="100" y="65" fill="#00d4ff" font-family="Sora,sans-serif" font-size="11" font-weight="600" text-anchor="middle">"Hello"</text>
+        <!-- String 2 -->
+        <rect x="220" y="40" width="120" height="40" rx="8" fill="rgba(16,185,129,0.12)" stroke="#10b981" stroke-width="1"/>
+        <text x="280" y="65" fill="#10b981" font-family="Sora,sans-serif" font-size="11" font-weight="600" text-anchor="middle">"Hello World"</text>
+        <!-- String 3 new -->
+        <rect x="400" y="40" width="160" height="40" rx="8" fill="rgba(255,107,53,0.12)" stroke="#ff6b35" stroke-width="1"/>
+        <text x="480" y="65" fill="#ff6b35" font-family="Sora,sans-serif" font-size="11" font-weight="600" text-anchor="middle">"Hello World!"</text>
+        <!-- Stack -->
+        <rect x="40" y="110" width="100" height="30" rx="6" fill="rgba(124,58,237,0.12)" stroke="#7c3aed" stroke-width="1"/>
+        <text x="90" y="129" fill="#a78bfa" font-family="Sora,sans-serif" font-size="10" text-anchor="middle">s → ref</text>
+        <!-- Arrows -->
+        <line x1="90" y1="110" x2="100" y2="80" stroke="#7c3aed" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+        <defs><marker id="arr" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#7c3aed"/></marker></defs>
+        <text x="160" y="129" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9">String s = "Hello";</text>
+        <text x="160" y="145" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9">s = s + " World";   ← new object created!</text>
+        <text x="160" y="161" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9">s = s + "!";         ← another new object!</text>
+      </svg>
+    </div>
+
+    <h3>String vs StringBuilder vs StringBuffer</h3>
+    <table class="compare-table">
+      <tr><th>Feature</th><th>String</th><th>StringBuilder</th><th>StringBuffer</th></tr>
+      <tr><td>Mutable?</td><td class="no">❌ No</td><td class="yes">✅ Yes</td><td class="yes">✅ Yes</td></tr>
+      <tr><td>Thread-safe?</td><td class="yes">✅ Yes</td><td class="no">❌ No</td><td class="yes">✅ Yes (synchronized)</td></tr>
+      <tr><td>Performance</td><td>Slow (concatenation)</td><td>Fast</td><td>Medium</td></tr>
+      <tr><td>Use when</td><td>Constants, config</td><td>Single-thread loops</td><td>Multi-thread scenarios</td></tr>
+    </table>
+
+    <pre><code><span class="cmt">// DON'T do this in a loop — creates 1000 String objects!</span>
+<span class="cls">String</span> result = <span class="str">""</span>;
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < <span class="num">1000</span>; i++) result += i; <span class="cmt">// SLOW</span>
+
+<span class="cmt">// DO this — one object, just append</span>
+<span class="cls">StringBuilder</span> sb = <span class="kw">new</span> <span class="cls">StringBuilder</span>();
+<span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < <span class="num">1000</span>; i++) sb.<span class="mth">append</span>(i);
+<span class="cls">String</span> fast = sb.<span class="mth">toString</span>(); <span class="cmt">// FAST</span>
+
+<span class="cmt">// Key String methods</span>
+<span class="cls">String</span> s = <span class="str">"  C-DAC Kharghar  "</span>;
+s.<span class="mth">trim</span>()            <span class="cmt">// "C-DAC Kharghar"</span>
+s.<span class="mth">toUpperCase</span>()     <span class="cmt">// "  C-DAC KHARGHAR  "</span>
+s.<span class="mth">contains</span>(<span class="str">"DAC"</span>)   <span class="cmt">// true</span>
+s.<span class="mth">replace</span>(<span class="str">"DAC"</span>, <span class="str">"cdac"</span>) <span class="cmt">// replaces</span>
+s.<span class="mth">split</span>(<span class="str">" "</span>)        <span class="cmt">// splits into array</span>
+s.<span class="mth">substring</span>(<span class="num">2</span>, <span class="num">7</span>)  <span class="cmt">// "C-DAC"</span>
+s.<span class="mth">charAt</span>(<span class="num">2</span>)        <span class="cmt">// 'C'</span>
+s.<span class="mth">indexOf</span>(<span class="str">"K"</span>)     <span class="cmt">// position of K</span>
+<span class="str">"abc"</span>.<span class="mth">equals</span>(<span class="str">"ABC"</span>)          <span class="cmt">// false — case sensitive</span>
+<span class="str">"abc"</span>.<span class="mth">equalsIgnoreCase</span>(<span class="str">"ABC"</span>) <span class="cmt">// true</span>
+</code></pre>
+
+    <div class="callout callout-danger">
+      <div class="callout-title">🚫 Never use == to compare Strings!</div>
+      <code>str1 == str2</code> compares <strong>references</strong> (memory addresses), not content!<br>
+      Always use <code>str1.equals(str2)</code> to compare content.
+    </div>
+
+    <h3>Encapsulation — The Capsule Analogy</h3>
+    <div class="analogy">
+      <div class="analogy-icon">💊</div>
+      <h4>Analogy: Encapsulation is like a Medicine Capsule</h4>
+      <p>Inside a capsule is the actual medicine powder. You don't touch the powder directly — you swallow the capsule. The outer shell (class) controls access. In Java: <strong>private fields</strong> = powder inside; <strong>public getters/setters</strong> = the capsule shell.</p>
+    </div>
+    <pre><code><span class="kw">public class</span> <span class="cls">BankAccount</span> {
+    <span class="kw">private double</span> balance;     <span class="cmt">// hidden — no direct access</span>
+    <span class="kw">private</span> <span class="cls">String</span> accountNo;
+
+    <span class="cmt">// Constructor</span>
+    <span class="kw">public</span> <span class="cls">BankAccount</span>(<span class="cls">String</span> accNo, <span class="kw">double</span> initialBalance) {
+        <span class="kw">this</span>.accountNo = accNo;
+        <span class="kw">this</span>.balance = initialBalance;
+    }
+
+    <span class="cmt">// Getter — read-only controlled access</span>
+    <span class="kw">public double</span> <span class="mth">getBalance</span>() { <span class="kw">return</span> balance; }
+
+    <span class="cmt">// No direct setter for balance! Use controlled methods</span>
+    <span class="kw">public void</span> <span class="mth">deposit</span>(<span class="kw">double</span> amount) {
+        <span class="kw">if</span> (amount > <span class="num">0</span>) balance += amount; <span class="cmt">// validation inside</span>
+    }
+    <span class="kw">public boolean</span> <span class="mth">withdraw</span>(<span class="kw">double</span> amount) {
+        <span class="kw">if</span> (amount > <span class="num">0</span> && amount <= balance) {
+            balance -= amount; <span class="kw">return true</span>;
+        }
+        <span class="kw">return false</span>; <span class="cmt">// insufficient funds</span>
+    }
+}
+
+<span class="cmt">// Usage</span>
+<span class="cls">BankAccount</span> acc = <span class="kw">new</span> <span class="cls">BankAccount</span>(<span class="str">"SBI-9876"</span>, <span class="num">50000</span>);
+acc.<span class="mth">deposit</span>(<span class="num">10000</span>);
+<span class="cls">System</span>.out.<span class="mth">println</span>(acc.<span class="mth">getBalance</span>()); <span class="cmt">// 60000.0</span>
+<span class="cmt">// acc.balance = -999; ← COMPILE ERROR — protected!</span>
+</code></pre>
+
+    <h3>Method Overloading</h3>
+    <div class="analogy">
+      <div class="analogy-icon">🍽️</div>
+      <h4>Analogy: Overloading = Same restaurant, multiple menu items named "Thali"</h4>
+      <p>Small Thali (3 items), Full Thali (6 items), Jain Thali (no onion-garlic). Same name "Thali", different ingredients (parameters). Java decides which one to serve based on what you order (arguments).</p>
+    </div>
+    <pre><code><span class="kw">public class</span> <span class="cls">Calculator</span> {
+    <span class="kw">public int</span>    <span class="mth">add</span>(<span class="kw">int</span> a, <span class="kw">int</span> b)              { <span class="kw">return</span> a + b; }
+    <span class="kw">public double</span> <span class="mth">add</span>(<span class="kw">double</span> a, <span class="kw">double</span> b)      { <span class="kw">return</span> a + b; }
+    <span class="kw">public int</span>    <span class="mth">add</span>(<span class="kw">int</span> a, <span class="kw">int</span> b, <span class="kw">int</span> c)    { <span class="kw">return</span> a + b + c; }
+    <span class="kw">public</span> <span class="cls">String</span> <span class="mth">add</span>(<span class="cls">String</span> a, <span class="cls">String</span> b)     { <span class="kw">return</span> a + b; }
+}
+</code></pre>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     SESSION 5: Inheritance & Polymorphism
+════════════════════════════════════════ -->
+<section id="s5" class="section-card">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(124,58,237,0.1)">🧬</div>
+    <div>
+      <h2>Session 5: Inheritance, Polymorphism, Abstract Classes & Interfaces</h2>
+      <div style="font-size:0.75rem;color:var(--text-muted)">2T + 2L + 2SL hours</div>
+    </div>
+    <span class="session-tag">S5</span>
+  </div>
+  <div class="section-body">
+    <div class="level-strip">
+      <span class="level-badge beginner">🟢 Beginner</span>
+      <span class="level-badge intermediate">🟡 Intermediate</span>
+      <span class="level-badge advanced">🔴 Advanced</span>
+    </div>
+
+    <h3>Inheritance — IS-A Relationship</h3>
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:640px">
+        <!-- Employee (parent) -->
+        <rect x="220" y="20" width="200" height="70" rx="10" fill="rgba(0,212,255,0.08)" stroke="#00d4ff" stroke-width="1.5"/>
+        <text x="320" y="44" fill="#00d4ff" font-family="Sora,sans-serif" font-size="12" font-weight="700" text-anchor="middle">Employee (Parent)</text>
+        <text x="320" y="62" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9.5" text-anchor="middle">id, name, salary</text>
+        <text x="320" y="78" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9.5" text-anchor="middle">work(), getSalary()</text>
+        <!-- Lines down -->
+        <line x1="270" y1="90" x2="130" y2="155" stroke="#7c3aed" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <line x1="320" y1="90" x2="320" y2="155" stroke="#7c3aed" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <line x1="370" y1="90" x2="510" y2="155" stroke="#7c3aed" stroke-width="1.5" stroke-dasharray="5,3"/>
+        <!-- Manager -->
+        <rect x="40" y="155" width="180" height="70" rx="10" fill="rgba(16,185,129,0.08)" stroke="#10b981" stroke-width="1.5"/>
+        <text x="130" y="178" fill="#10b981" font-family="Sora,sans-serif" font-size="11" font-weight="700" text-anchor="middle">Manager (Child)</text>
+        <text x="130" y="196" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9.5" text-anchor="middle">teamSize, bonus</text>
+        <text x="130" y="212" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9.5" text-anchor="middle">conductReview()</text>
+        <!-- Developer -->
+        <rect x="230" y="155" width="180" height="70" rx="10" fill="rgba(255,107,53,0.08)" stroke="#ff6b35" stroke-width="1.5"/>
+        <text x="320" y="178" fill="#ff6b35" font-family="Sora,sans-serif" font-size="11" font-weight="700" text-anchor="middle">Developer (Child)</text>
+        <text x="320" y="196" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9.5" text-anchor="middle">techStack, projects</text>
+        <text x="320" y="212" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9.5" text-anchor="middle">writeCode()</text>
+        <!-- Intern -->
+        <rect x="420" y="155" width="180" height="70" rx="10" fill="rgba(124,58,237,0.08)" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="510" y="178" fill="#a78bfa" font-family="Sora,sans-serif" font-size="11" font-weight="700" text-anchor="middle">Intern (Child)</text>
+        <text x="510" y="196" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9.5" text-anchor="middle">mentor, stipend</text>
+        <text x="510" y="212" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9.5" text-anchor="middle">learnAndHelp()</text>
+        <!-- IS-A label -->
+        <text x="100" y="140" fill="#7c3aed" font-family="Sora,sans-serif" font-size="9" text-anchor="middle">IS-A Employee</text>
+        <text x="320" y="148" fill="#7c3aed" font-family="Sora,sans-serif" font-size="9" text-anchor="middle">IS-A Employee</text>
+        <text x="510" y="140" fill="#7c3aed" font-family="Sora,sans-serif" font-size="9" text-anchor="middle">IS-A Employee</text>
+        <!-- extends -->
+        <text x="320" y="248" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="10" text-anchor="middle">class Manager extends Employee { ... }</text>
+      </svg>
+    </div>
+
+    <pre><code><span class="kw">public class</span> <span class="cls">Employee</span> {
+    <span class="kw">protected int</span> id;
+    <span class="kw">protected</span> <span class="cls">String</span> name;
+    <span class="kw">protected double</span> salary;
+
+    <span class="kw">public</span> <span class="cls">Employee</span>(<span class="kw">int</span> id, <span class="cls">String</span> name, <span class="kw">double</span> salary) {
+        <span class="kw">this</span>.id = id; <span class="kw">this</span>.name = name; <span class="kw">this</span>.salary = salary;
+    }
+    <span class="kw">public void</span> <span class="mth">work</span>() { <span class="cls">System</span>.out.<span class="mth">println</span>(name + <span class="str">" is working"</span>); }
+    <span class="kw">public double</span> <span class="mth">getSalary</span>() { <span class="kw">return</span> salary; }
+}
+
+<span class="kw">public class</span> <span class="cls">Manager</span> <span class="kw">extends</span> <span class="cls">Employee</span> {
+    <span class="kw">private int</span> teamSize;
+
+    <span class="kw">public</span> <span class="cls">Manager</span>(<span class="kw">int</span> id, <span class="cls">String</span> name, <span class="kw">double</span> salary, <span class="kw">int</span> teamSize) {
+        <span class="kw">super</span>(id, name, salary); <span class="cmt">// call parent constructor</span>
+        <span class="kw">this</span>.teamSize = teamSize;
+    }
+
+    <span class="ann">@Override</span>
+    <span class="kw">public void</span> <span class="mth">work</span>() {
+        <span class="kw">super</span>.<span class="mth">work</span>();  <span class="cmt">// parent's work() called first</span>
+        <span class="cls">System</span>.out.<span class="mth">println</span>(name + <span class="str">" also manages "</span> + teamSize + <span class="str">" people"</span>);
+    }
+
+    <span class="ann">@Override</span>
+    <span class="kw">public double</span> <span class="mth">getSalary</span>() {
+        <span class="kw">return</span> salary + (salary * <span class="num">0.20</span>); <span class="cmt">// manager gets 20% bonus</span>
+    }
+}
+</code></pre>
+
+    <h3>Abstract Classes vs Interfaces</h3>
+    <table class="compare-table">
+      <tr><th>Feature</th><th>Abstract Class</th><th>Interface</th></tr>
+      <tr><td>Keyword</td><td><code>abstract class</code></td><td><code>interface</code></td></tr>
+      <tr><td>Can have fields</td><td class="yes">✅ Yes (any modifier)</td><td>Only <code>public static final</code></td></tr>
+      <tr><td>Constructors</td><td class="yes">✅ Yes</td><td class="no">❌ No</td></tr>
+      <tr><td>Multiple inheritance</td><td class="no">❌ Only single</td><td class="yes">✅ Multiple interfaces OK</td></tr>
+      <tr><td>Default methods (Java 8+)</td><td class="yes">✅ Yes</td><td class="yes">✅ Yes (with <code>default</code>)</td></tr>
+      <tr><td>Use when</td><td>Partial implementation, IS-A</td><td>Pure contract/capability</td></tr>
+      <tr><td>Real example</td><td>Vehicle (has engine)</td><td>Drivable, Chargeable</td></tr>
+    </table>
+
+    <pre><code><span class="cmt">// Abstract class — partial blueprint</span>
+<span class="kw">public abstract class</span> <span class="cls">Shape</span> {
+    <span class="cls">String</span> color;
+    <span class="kw">abstract double</span> <span class="mth">area</span>();         <span class="cmt">// must be implemented</span>
+    <span class="kw">void</span> <span class="mth">display</span>() {                  <span class="cmt">// concrete method (optional override)</span>
+        <span class="cls">System</span>.out.<span class="mth">println</span>(<span class="str">"Color: "</span> + color);
+    }
+}
+
+<span class="kw">public class</span> <span class="cls">Circle</span> <span class="kw">extends</span> <span class="cls">Shape</span> {
+    <span class="kw">double</span> radius;
+    <span class="ann">@Override</span>
+    <span class="kw">public double</span> <span class="mth">area</span>() { <span class="kw">return</span> <span class="cls">Math</span>.PI * radius * radius; }
+}
+
+<span class="cmt">// Interface — contract/capability</span>
+<span class="kw">interface</span> <span class="cls">Taxable</span> {
+    <span class="kw">double</span> TAX_RATE = <span class="num">0.18</span>;            <span class="cmt">// implicitly public static final</span>
+    <span class="kw">double</span> <span class="mth">calculateTax</span>();             <span class="cmt">// implicitly public abstract</span>
+    <span class="kw">default void</span> <span class="mth">printTax</span>() {         <span class="cmt">// Java 8 default method</span>
+        <span class="cls">System</span>.out.<span class="mth">println</span>(<span class="str">"Tax = ₹"</span> + <span class="mth">calculateTax</span>());
+    }
+}
+
+<span class="cmt">// Polymorphism — parent ref, child object</span>
+<span class="cls">Employee</span> e = <span class="kw">new</span> <span class="cls">Manager</span>(<span class="num">1</span>, <span class="str">"Rahul"</span>, <span class="num">100000</span>, <span class="num">10</span>);
+e.<span class="mth">work</span>();       <span class="cmt">// calls Manager's work() — RUNTIME POLYMORPHISM</span>
+</code></pre>
+
+    <div class="callout callout-info">
+      <div class="callout-title">ℹ️ Inner Classes</div>
+      <strong>Member Inner Class:</strong> tied to an instance of outer class.<br>
+      <strong>Static Nested Class:</strong> like a static member, no outer instance needed.<br>
+      <strong>Anonymous Inner Class:</strong> implement an interface or extend a class on-the-fly without naming it.
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     SESSION 6: Exception Handling
+════════════════════════════════════════ -->
+<section id="s6" class="section-card">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(239,68,68,0.1)">🚨</div>
+    <div>
+      <h2>Session 6: Exception Handling</h2>
+      <div style="font-size:0.75rem;color:var(--text-muted)">2T + 2L + 2SL hours</div>
+    </div>
+    <span class="session-tag">S6</span>
+  </div>
+  <div class="section-body">
+    <div class="level-strip">
+      <span class="level-badge beginner">🟢 Beginner</span>
+      <span class="level-badge intermediate">🟡 Intermediate</span>
+      <span class="level-badge advanced">🔴 Advanced</span>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-icon">🚦</div>
+      <h4>Analogy: Exception = Traffic Accident on Mumbai-Pune Expressway</h4>
+      <p>You're driving smoothly (program running). Suddenly there's an accident (exception). You have 3 choices: 1) A traffic cop handles it (try-catch), 2) You inform highway authority and they handle it (throws), 3) Regardless of accident, you pay the toll (finally block always runs).</p>
+    </div>
+
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 640 280" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:640px">
+        <!-- Throwable -->
+        <rect x="240" y="10" width="160" height="40" rx="8" fill="rgba(239,68,68,0.1)" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="320" y="35" fill="#ef4444" font-family="Sora,sans-serif" font-size="12" font-weight="700" text-anchor="middle">Throwable</text>
+        <!-- Error branch -->
+        <line x1="260" y1="50" x2="140" y2="90" stroke="#7a8ba0" stroke-width="1.5"/>
+        <rect x="40" y="90" width="200" height="40" rx="8" fill="rgba(100,100,100,0.1)" stroke="#7a8ba0" stroke-width="1"/>
+        <text x="140" y="115" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="11" font-weight="700" text-anchor="middle">Error (don't catch!)</text>
+        <!-- Error children -->
+        <text x="50" y="150" fill="#546e7a" font-family="Sora,sans-serif" font-size="9">OutOfMemoryError</text>
+        <text x="50" y="165" fill="#546e7a" font-family="Sora,sans-serif" font-size="9">StackOverflowError</text>
+        <!-- Exception branch -->
+        <line x1="380" y1="50" x2="500" y2="90" stroke="#ef4444" stroke-width="1.5"/>
+        <rect x="400" y="90" width="200" height="40" rx="8" fill="rgba(239,68,68,0.08)" stroke="#ef4444" stroke-width="1"/>
+        <text x="500" y="115" fill="#ef4444" font-family="Sora,sans-serif" font-size="11" font-weight="700" text-anchor="middle">Exception</text>
+        <!-- Checked -->
+        <line x1="450" y1="130" x2="350" y2="170" stroke="#ff6b35" stroke-width="1.5"/>
+        <rect x="250" y="170" width="200" height="40" rx="8" fill="rgba(255,107,53,0.08)" stroke="#ff6b35" stroke-width="1"/>
+        <text x="350" y="190" fill="#ff6b35" font-family="Sora,sans-serif" font-size="10" font-weight="700" text-anchor="middle">Checked Exception</text>
+        <text x="350" y="205" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9" text-anchor="middle">Must handle at compile time</text>
+        <text x="260" y="235" fill="#546e7a" font-family="Sora,sans-serif" font-size="8.5">IOException, SQLException</text>
+        <text x="260" y="250" fill="#546e7a" font-family="Sora,sans-serif" font-size="8.5">ClassNotFoundException</text>
+        <!-- Unchecked -->
+        <line x1="550" y1="130" x2="580" y2="170" stroke="#f59e0b" stroke-width="1.5"/>
+        <rect x="480" y="170" width="150" height="40" rx="8" fill="rgba(245,158,11,0.08)" stroke="#f59e0b" stroke-width="1"/>
+        <text x="555" y="190" fill="#f59e0b" font-family="Sora,sans-serif" font-size="10" font-weight="700" text-anchor="middle">RuntimeException</text>
+        <text x="555" y="205" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9" text-anchor="middle">Unchecked</text>
+        <text x="486" y="235" fill="#546e7a" font-family="Sora,sans-serif" font-size="8.5">NullPointerException</text>
+        <text x="486" y="250" fill="#546e7a" font-family="Sora,sans-serif" font-size="8.5">ArrayIndexOutOfBounds</text>
+        <text x="486" y="265" fill="#546e7a" font-family="Sora,sans-serif" font-size="8.5">ClassCastException</text>
+      </svg>
+    </div>
+
+    <pre><code><span class="cmt">// try-catch-finally: Bank withdrawal example</span>
+<span class="kw">public void</span> <span class="mth">withdraw</span>(<span class="kw">double</span> amount) {
+    <span class="kw">try</span> {
+        <span class="kw">if</span> (amount <= <span class="num">0</span>) <span class="kw">throw new</span> <span class="cls">IllegalArgumentException</span>(<span class="str">"Amount must be positive"</span>);
+        <span class="kw">if</span> (amount > balance) <span class="kw">throw new</span> <span class="cls">InsufficientFundsException</span>(<span class="str">"Low balance"</span>);
+        balance -= amount;
+        <span class="cls">System</span>.out.<span class="mth">println</span>(<span class="str">"₹"</span> + amount + <span class="str">" withdrawn"</span>);
+    } <span class="kw">catch</span> (<span class="cls">IllegalArgumentException</span> e) {
+        <span class="cls">System</span>.out.<span class="mth">println</span>(<span class="str">"Invalid amount: "</span> + e.<span class="mth">getMessage</span>());
+    } <span class="kw">catch</span> (<span class="cls">InsufficientFundsException</span> e) {
+        <span class="cls">System</span>.out.<span class="mth">println</span>(<span class="str">"Error: "</span> + e.<span class="mth">getMessage</span>());
+    } <span class="kw">finally</span> {
+        <span class="cls">System</span>.out.<span class="mth">println</span>(<span class="str">"Transaction attempt logged."</span>); <span class="cmt">// ALWAYS runs</span>
+    }
+}
+
+<span class="cmt">// Custom Exception class</span>
+<span class="kw">public class</span> <span class="cls">InsufficientFundsException</span> <span class="kw">extends</span> <span class="cls">Exception</span> { <span class="cmt">// checked</span>
+    <span class="kw">public</span> <span class="cls">InsufficientFundsException</span>(<span class="cls">String</span> message) {
+        <span class="kw">super</span>(message);
+    }
+}
+
+<span class="cmt">// throws keyword — delegate exception to caller</span>
+<span class="kw">public void</span> <span class="mth">readFile</span>(<span class="cls">String</span> path) <span class="kw">throws</span> <span class="cls">IOException</span> {
+    <span class="cls">FileReader</span> fr = <span class="kw">new</span> <span class="cls">FileReader</span>(path); <span class="cmt">// let caller handle</span>
+}
+
+<span class="cmt">// try-with-resources (Java 7+) — auto-close resources</span>
+<span class="kw">try</span> (<span class="cls">FileReader</span> fr = <span class="kw">new</span> <span class="cls">FileReader</span>(<span class="str">"data.txt"</span>);
+     <span class="cls">BufferedReader</span> br = <span class="kw">new</span> <span class="cls">BufferedReader</span>(fr)) {
+    <span class="cls">String</span> line;
+    <span class="kw">while</span> ((line = br.<span class="mth">readLine</span>()) != <span class="kw">null</span>) <span class="cls">System</span>.out.<span class="mth">println</span>(line);
+} <span class="cmt">// fr and br auto-closed even if exception occurs!</span>
+</code></pre>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     SESSION 7–8: Generics & Collections
+════════════════════════════════════════ -->
+<section id="s7">
+<div class="card">
+<div class="card-hdr">
+  <div class="card-ico" style="background:rgba(56,189,248,.1)">🗃️</div>
+  <div class="card-hdr-text">
+    <h2>Sessions 7–8 · Generics &amp; Collections Framework</h2>
+    <div class="sub">4T + 4L + 4SL hours</div>
+  </div>
+  <span class="stag">S7–S8</span>
+</div>
+<div class="card-body">
+<div class="lvl"><span class="lbadge inter">🟡 Intermediate</span><span class="lbadge adv">🔴 Advanced</span></div>
+
+<div class="analogy">
+  <div class="ana-ico">🧺</div>
+  <h4>Analogy — Indian Kitchen Storage System</h4>
+  <p><strong>ArrayList</strong> = Dabba row (ordered, duplicates ok, you say "give me 3rd dabba"). <strong>LinkedList</strong> = Train bogies chained (fast to add/remove bogies at ends). <strong>HashSet</strong> = Unique Aadhar numbers (no duplicates, no order). <strong>HashMap</strong> = Phonebook (Contact name → Number). <strong>TreeMap</strong> = Sorted dictionary (alphabetical order always).</p>
+</div>
+
+<div class="dg">
+<svg viewBox="0 0 680 230" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:680px">
+  <!-- Root Collection -->
+  <rect x="260" y="10" width="160" height="36" rx="8" fill="rgba(56,189,248,.1)" stroke="#38bdf8" stroke-width="2"/>
+  <text x="340" y="32" fill="#38bdf8" font-family="Plus Jakarta Sans,sans-serif" font-size="11" font-weight="800" text-anchor="middle">&lt;&lt;interface&gt;&gt; Collection&lt;E&gt;</text>
+  <!-- Lines -->
+  <line x1="280" y1="46" x2="120" y2="95" stroke="#6e85a0" stroke-width="1.5"/>
+  <line x1="340" y1="46" x2="340" y2="95" stroke="#6e85a0" stroke-width="1.5"/>
+  <line x1="400" y1="46" x2="565" y2="95" stroke="#6e85a0" stroke-width="1.5"/>
+  <!-- List -->
+  <rect x="30" y="95" width="180" height="34" rx="8" fill="rgba(52,211,153,.08)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="120" y="117" fill="#34d399" font-family="Plus Jakarta Sans,sans-serif" font-size="10" font-weight="700" text-anchor="middle">&lt;&lt;interface&gt;&gt; List&lt;E&gt;</text>
+  <!-- Set -->
+  <rect x="250" y="95" width="180" height="34" rx="8" fill="rgba(249,115,22,.08)" stroke="#f97316" stroke-width="1.5"/>
+  <text x="340" y="117" fill="#f97316" font-family="Plus Jakarta Sans,sans-serif" font-size="10" font-weight="700" text-anchor="middle">&lt;&lt;interface&gt;&gt; Set&lt;E&gt;</text>
+  <!-- Queue -->
+  <rect x="470" y="95" width="190" height="34" rx="8" fill="rgba(139,92,246,.08)" stroke="#8b5cf6" stroke-width="1.5"/>
+  <text x="565" y="117" fill="#a78bfa" font-family="Plus Jakarta Sans,sans-serif" font-size="10" font-weight="700" text-anchor="middle">&lt;&lt;interface&gt;&gt; Queue&lt;E&gt;</text>
+  <!-- List impls -->
+  <text x="35" y="150" fill="#34d399" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="700">ArrayList</text>
+  <text x="35" y="163" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="8">Fast get(i) — O(1)</text>
+  <text x="35" y="176" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="8">Slow insert middle — O(n)</text>
+  <text x="100" y="150" fill="#34d399" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="700">LinkedList</text>
+  <text x="100" y="163" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="8">Fast add/remove ends</text>
+  <text x="100" y="176" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="8">Slow get(i) — O(n)</text>
+  <!-- Set impls -->
+  <text x="255" y="150" fill="#f97316" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="700">HashSet</text>
+  <text x="255" y="163" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="8">O(1) ops, no order</text>
+  <text x="310" y="150" fill="#f97316" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="700">LinkedHashSet</text>
+  <text x="310" y="163" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="8">Insertion order kept</text>
+  <text x="395" y="150" fill="#f97316" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="700">TreeSet</text>
+  <text x="395" y="163" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="8">Sorted (natural order)</text>
+  <!-- Queue impls -->
+  <text x="475" y="150" fill="#a78bfa" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="700">PriorityQueue</text>
+  <text x="475" y="163" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="8">Min-heap by default</text>
+  <text x="565" y="150" fill="#a78bfa" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="700">ArrayDeque</text>
+  <text x="565" y="163" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="8">Stack + Queue both</text>
+  <!-- Map separate -->
+  <rect x="10" y="195" width="660" height="28" rx="8" fill="rgba(251,191,36,.06)" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="340" y="214" fill="#fbbf24" font-family="Plus Jakarta Sans,sans-serif" font-size="10" font-weight="700" text-anchor="middle">Map&lt;K,V&gt; (separate hierarchy): HashMap | LinkedHashMap | TreeMap | Hashtable | ConcurrentHashMap</text>
+</svg>
+</div>
+
+<pre data-lang="Java"><code><span class="cmt">// ── ArrayList ──</span>
+List&lt;String&gt; batch = <span class="kw">new</span> ArrayList&lt;&gt;();   <span class="cmt">// diamond inference</span>
+batch.add(<span class="str">"Priya"</span>); batch.add(<span class="str">"Rahul"</span>); batch.add(<span class="str">"Anjali"</span>);
+batch.add(<span class="num">1</span>, <span class="str">"Rohan"</span>);   <span class="cmt">// insert at index 1 (shifts others)</span>
+batch.remove(<span class="str">"Rahul"</span>);    <span class="cmt">// by value</span>
+batch.remove(<span class="num">0</span>);          <span class="cmt">// by index</span>
+batch.get(<span class="num">0</span>);              <span class="cmt">// Anjali (O(1) random access)</span>
+batch.contains(<span class="str">"Priya"</span>);  <span class="cmt">// true</span>
+batch.size();               <span class="cmt">// current count</span>
+Collections.sort(batch);    <span class="cmt">// sort in place</span>
+batch.sort(Comparator.reverseOrder());  <span class="cmt">// reverse sort</span>
+
+<span class="cmt">// ── HashMap ── (UPI ID → Account Number like a phonebook)</span>
+Map&lt;String, String&gt; upi = <span class="kw">new</span> HashMap&lt;&gt;();
+upi.put(<span class="str">"priya@sbi"</span>, <span class="str">"ACC-9876-5432"</span>);
+upi.put(<span class="str">"rahul@hdfc"</span>, <span class="str">"ACC-1234-5678"</span>);
+upi.put(<span class="str">"priya@sbi"</span>, <span class="str">"ACC-NEW-9999"</span>);  <span class="cmt">// overwrites existing key</span>
+
+System.out.println(upi.get(<span class="str">"priya@sbi"</span>));          <span class="cmt">// ACC-NEW-9999</span>
+System.out.println(upi.getOrDefault(<span class="str">"x@y"</span>, <span class="str">"NOT FOUND"</span>)); <span class="cmt">// NOT FOUND</span>
+upi.containsKey(<span class="str">"rahul@hdfc"</span>);  <span class="cmt">// true</span>
+upi.containsValue(<span class="str">"ACC-1234"</span>);  <span class="cmt">// false (exact match)</span>
+
+<span class="cmt">// Iterate HashMap — three ways</span>
+<span class="kw">for</span> (String key : upi.keySet()) System.out.println(key);
+<span class="kw">for</span> (Map.Entry&lt;String,String&gt; e : upi.entrySet())
+    System.out.println(e.getKey() + <span class="str">" → "</span> + e.getValue());
+upi.forEach((k,v) -&gt; System.out.println(k + <span class="str">"="</span> + v));  <span class="cmt">// Java 8+</span>
+
+<span class="cmt">// ── HashSet ── (unique PNR numbers like IRCTC)</span>
+Set&lt;String&gt; pnrs = <span class="kw">new</span> HashSet&lt;&gt;();
+pnrs.add(<span class="str">"PNR-6724"</span>); pnrs.add(<span class="str">"PNR-9811"</span>);
+pnrs.add(<span class="str">"PNR-6724"</span>);  <span class="cmt">// DUPLICATE — silently ignored!</span>
+System.out.println(pnrs.size());  <span class="cmt">// 2</span>
+
+<span class="cmt">// ── TreeMap ── (sorted leaderboard)</span>
+Map&lt;String,Integer&gt; leaderboard = <span class="kw">new</span> TreeMap&lt;&gt;();
+leaderboard.put(<span class="str">"Rahul"</span>, <span class="num">1450</span>); leaderboard.put(<span class="str">"Anjali"</span>, <span class="num">1680</span>); leaderboard.put(<span class="str">"Priya"</span>, <span class="num">1540</span>);
+<span class="cmt">// Automatically sorted: Anjali, Priya, Rahul</span></code></pre>
+
+<h3>Generics — Type-Safe Containers</h3>
+<div class="analogy">
+  <div class="ana-ico">📮</div>
+  <h4>Analogy — Government Form with Type Specified</h4>
+  <p>Without generics: a form that accepts ANY document (you might accidentally submit your grocery list as a tax return — caught at runtime). With generics: a form that says "ONLY accept ITR-1 documents" — wrong doc rejected at the counter (compile time). Generics = compile-time type safety.</p>
+</div>
+<pre data-lang="Java"><code><span class="cmt">// Before Generics (old code) — dangerous!</span>
+List rawList = <span class="kw">new</span> ArrayList();
+rawList.add(<span class="str">"Hello"</span>);
+rawList.add(<span class="num">42</span>);  <span class="cmt">// no error at compile — disaster at runtime!</span>
+String s = (String) rawList.get(<span class="num">1</span>);  <span class="cmt">// ClassCastException at runtime!</span>
+
+<span class="cmt">// With Generics — safe!</span>
+List&lt;String&gt; safeList = <span class="kw">new</span> ArrayList&lt;&gt;();
+safeList.add(<span class="str">"Hello"</span>);
+<span class="cmt">// safeList.add(42);  ← COMPILE ERROR! Type-safe</span>
+String safe = safeList.get(<span class="num">0</span>);  <span class="cmt">// no cast needed!</span>
+
+<span class="cmt">// Generic Class</span>
+<span class="kw">public class</span> Repository&lt;T&gt; {
+    <span class="kw">private</span> List&lt;T&gt; store = <span class="kw">new</span> ArrayList&lt;&gt;();
+    <span class="kw">public void</span> save(T item) { store.add(item); }
+    <span class="kw">public</span> T findById(<span class="kw">int</span> idx) { <span class="kw">return</span> store.get(idx); }
+    <span class="kw">public</span> List&lt;T&gt; findAll() { <span class="kw">return</span> Collections.unmodifiableList(store); }
+}
+
+Repository&lt;Employee&gt; empRepo = <span class="kw">new</span> Repository&lt;&gt;();
+empRepo.save(<span class="kw">new</span> Employee(<span class="num">1</span>, <span class="str">"Priya"</span>, <span class="num">80000</span>));
+Employee e = empRepo.findById(<span class="num">0</span>);  <span class="cmt">// no cast! T=Employee</span>
+
+<span class="cmt">// Bounded Wildcards</span>
+<span class="kw">public static double</span> sumSalaries(List&lt;? <span class="kw">extends</span> Employee&gt; list) {
+    <span class="kw">return</span> list.stream().mapToDouble(Employee::getSalary).sum();
+}  <span class="cmt">// accepts List&lt;Employee&gt;, List&lt;Manager&gt;, List&lt;Developer&gt;</span>
+
+<span class="cmt">// &lt;? super Manager&gt; = Manager or any parent type</span></code></pre>
+
+<div class="dg">
+<svg viewBox="0 0 680 155" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:680px">
+  <text x="340" y="18" fill="#e2e8f0" font-family="Plus Jakarta Sans,sans-serif" font-size="12" font-weight="800" text-anchor="middle">Which Collection to Use? — Decision Guide</text>
+  <rect x="10" y="28" width="660" height="28" rx="6" fill="var(--surface2)"/>
+  <text x="165" y="46" fill="#38bdf8" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="700" text-anchor="middle">Need</text>
+  <text x="340" y="46" fill="#38bdf8" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="700" text-anchor="middle">Use</text>
+  <text x="540" y="46" fill="#38bdf8" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="700" text-anchor="middle">Real World Example</text>
+
+  <rect x="10" y="56" width="660" height="20" rx="0" fill="rgba(52,211,153,.04)"/>
+  <text x="165" y="70" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="9" text-anchor="middle">Ordered + index access + duplicates ok</text>
+  <text x="340" y="70" fill="#34d399" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="800" text-anchor="middle">ArrayList</text>
+  <text x="540" y="70" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="9" text-anchor="middle">Student roll list, train seat list</text>
+
+  <rect x="10" y="76" width="660" height="20" rx="0" fill="rgba(249,115,22,.04)"/>
+  <text x="165" y="90" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="9" text-anchor="middle">Unique values only, fast lookup</text>
+  <text x="340" y="90" fill="#f97316" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="800" text-anchor="middle">HashSet</text>
+  <text x="540" y="90" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="9" text-anchor="middle">IRCTC PNR numbers, Jio IMEI pool</text>
+
+  <rect x="10" y="96" width="660" height="20" rx="0" fill="rgba(251,191,36,.04)"/>
+  <text x="165" y="110" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="9" text-anchor="middle">Key-value fast lookup O(1)</text>
+  <text x="340" y="110" fill="#fbbf24" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="800" text-anchor="middle">HashMap</text>
+  <text x="540" y="110" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="9" text-anchor="middle">UPI ID → Account, Employee ID → Object</text>
+
+  <rect x="10" y="116" width="660" height="20" rx="0" fill="rgba(139,92,246,.04)"/>
+  <text x="165" y="130" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="9" text-anchor="middle">Sorted key-value pairs always</text>
+  <text x="340" y="130" fill="#a78bfa" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="800" text-anchor="middle">TreeMap</text>
+  <text x="540" y="130" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="9" text-anchor="middle">Sorted leaderboard, word frequency</text>
+
+  <rect x="10" y="136" width="660" height="18" rx="0" fill="rgba(56,189,248,.04)"/>
+  <text x="165" y="149" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="9" text-anchor="middle">Fast insert/delete at both ends</text>
+  <text x="340" y="149" fill="#38bdf8" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="800" text-anchor="middle">ArrayDeque / LinkedList</text>
+  <text x="540" y="149" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="9" text-anchor="middle">Browser history stack, print queue</text>
+</svg>
+</div>
+
+</div></div></section>
+
+<!-- ════════════════════════════════════════
+     SESSION 9: Enums & Autoboxing
+════════════════════════════════════════ -->
+<section id="s9">
+<div class="card">
+<div class="card-hdr">
+  <div class="card-ico" style="background:rgba(251,191,36,.1)">🏷️</div>
+  <div class="card-hdr-text">
+    <h2>Session 9 · Enumerations, Autoboxing &amp; Annotations</h2>
+    <div class="sub">2T + 2L hours</div>
+  </div>
+  <span class="stag">S9</span>
+</div>
+<div class="card-body">
+<h3>Enums — Smart Named Constants</h3>
+<div class="analogy">
+  <div class="ana-ico">🚦</div>
+  <h4>Analogy — Traffic Signal States</h4>
+  <p>A traffic light can ONLY be RED, YELLOW, or GREEN. You can't have it be PURPLE or 42. <span class="ic">enum</span> restricts a variable to a fixed set of constants — no magic numbers, no invalid states, clean switch statements.</p>
+</div>
+<pre data-lang="Java"><code><span class="cmt">// Basic Enum — type-safe constants</span>
+<span class="kw">public enum</span> <span class="cls">Season</span> { SUMMER, MONSOON, WINTER, SPRING }
+
+<span class="cmt">// Power Enum — with fields, constructors, methods</span>
+<span class="kw">public enum</span> <span class="cls">EmployeeType</span> {
+    PERMANENT(<span class="num">1.0</span>, <span class="str">"Full Benefits"</span>),
+    CONTRACT(<span class="num">0.85</span>, <span class="str">"Limited Benefits"</span>),
+    INTERN(<span class="num">0.5</span>, <span class="str">"Stipend Only"</span>);
+
+    <span class="kw">private final double</span> salaryFactor;
+    <span class="kw">private final</span> String benefits;
+
+    EmployeeType(<span class="kw">double</span> factor, String benefits) {
+        <span class="kw">this</span>.salaryFactor = factor;
+        <span class="kw">this</span>.benefits = benefits;
+    }
+    <span class="kw">public double</span> getSalaryFactor() { <span class="kw">return</span> salaryFactor; }
+    <span class="kw">public</span> String getBenefits() { <span class="kw">return</span> benefits; }
+    <span class="kw">public boolean</span> isFullTime() { <span class="kw">return this</span> == PERMANENT; }
+}
+
+<span class="cmt">// Days enum with logic</span>
+<span class="kw">public enum</span> <span class="cls">Day</span> {
+    MON, TUE, WED, THU, FRI, SAT, SUN;
+    <span class="kw">public boolean</span> isWeekend() { <span class="kw">return this</span> == SAT || <span class="kw">this</span> == SUN; }
+    <span class="kw">public boolean</span> isWeekday() { <span class="kw">return</span> !isWeekend(); }
+}
+
+<span class="cmt">// Usage</span>
+EmployeeType type = EmployeeType.CONTRACT;
+<span class="kw">double</span> ctc = <span class="num">60000</span> * type.getSalaryFactor(); <span class="cmt">// 51000</span>
+System.out.println(type.getBenefits());       <span class="cmt">// Limited Benefits</span>
+System.out.println(type.name());              <span class="cmt">// "CONTRACT"</span>
+System.out.println(type.ordinal());           <span class="cmt">// 1 (0-indexed position)</span>
+
+<span class="cmt">// Switch with Enum (very clean)</span>
+<span class="kw">switch</span> (type) {
+    <span class="kw">case</span> PERMANENT: System.out.println(<span class="str">"PF + Gratuity + Insurance"</span>); <span class="kw">break</span>;
+    <span class="kw">case</span> CONTRACT:  System.out.println(<span class="str">"Basic Insurance"</span>); <span class="kw">break</span>;
+    <span class="kw">case</span> INTERN:    System.out.println(<span class="str">"Stipend: ₹15,000"</span>); <span class="kw">break</span>;
+}
+
+<span class="cmt">// Enum iteration</span>
+<span class="kw">for</span> (EmployeeType t : EmployeeType.values()) {
+    System.out.println(t + <span class="str">": "</span> + t.getSalaryFactor());
+}
+EmployeeType fromStr = EmployeeType.valueOf(<span class="str">"INTERN"</span>); <span class="cmt">// parse from String</span></code></pre>
+
+<h3>Autoboxing &amp; Unboxing — JVM's Auto-Magic</h3>
+<div class="vs-wrap">
+  <div class="vs-side">
+    <h4>📦 Autoboxing (primitive → Object)</h4>
+    <ul>
+      <li>JVM automatically wraps primitives</li>
+      <li>Needed when storing in Collections</li>
+      <li><span class="ic">int → Integer</span>, <span class="ic">double → Double</span></li>
+    </ul>
+    <pre><code>List&lt;Integer&gt; nums = <span class="kw">new</span> ArrayList&lt;&gt;();
+nums.add(<span class="num">10</span>);  <span class="cmt">// int 10 auto-boxed</span>
+<span class="cmt">// internally: nums.add(Integer.valueOf(10))</span></code></pre>
+  </div>
+  <div class="vs-mid">VS</div>
+  <div class="vs-side right">
+    <h4>📤 Unboxing (Object → primitive)</h4>
+    <ul>
+      <li>JVM automatically unwraps</li>
+      <li>Used in arithmetic on Integer objects</li>
+      <li><span class="ic">Integer → int</span>, <span class="ic">Double → double</span></li>
+    </ul>
+    <pre><code>Integer i = <span class="num">42</span>;
+<span class="kw">int</span> val = i;    <span class="cmt">// auto-unboxed</span>
+<span class="cmt">// internally: i.intValue()</span>
+<span class="cmt">// ⚠️ null unboxing → NullPointerException!</span></code></pre>
+  </div>
+</div>
+
+</div></div></section>
+
+<!-- ════════════════════════════════════════
+     SESSION 10: Functional & Lambdas
+════════════════════════════════════════ -->
+<section id="s10">
+<div class="card">
+<div class="card-hdr">
+  <div class="card-ico" style="background:rgba(139,92,246,.1)">λ</div>
+  <div class="card-hdr-text">
+    <h2>Session 10 · Functional Programming &amp; Lambda Expressions</h2>
+    <div class="sub">2T + 2L hours</div>
+  </div>
+  <span class="stag">S10</span>
+</div>
+<div class="card-body">
+<div class="lvl"><span class="lbadge inter">🟡 Intermediate</span><span class="lbadge adv">🔴 Advanced</span></div>
+
+<div class="analogy">
+  <div class="ana-ico">📦</div>
+  <h4>Analogy — Zomato Delivery Instructions Without Naming Delivery Partner</h4>
+  <p>"Deliver this order, ring the bell twice, leave at door." — You describe the <em>behaviour</em>, not the person. Lambda expressions are exactly this: behaviour passed as data. No need to create a whole class — just write what to DO as a compact expression.</p>
+</div>
+
+<div class="dg">
+<svg viewBox="0 0 680 160" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:680px">
+  <text x="340" y="18" fill="#e2e8f0" font-family="Plus Jakarta Sans,sans-serif" font-size="12" font-weight="800" text-anchor="middle">Lambda Syntax Evolution</text>
+  <!-- Old way -->
+  <rect x="10" y="28" width="310" height="120" rx="10" fill="rgba(248,113,113,.05)" stroke="#f87171" stroke-width="1.5"/>
+  <text x="165" y="48" fill="#f87171" font-family="Plus Jakarta Sans,sans-serif" font-size="10" font-weight="700" text-anchor="middle">Old Way: Anonymous Inner Class</text>
+  <text x="20" y="68" fill="#7dd3fc" font-family="Jetbrains Mono,monospace" font-size="9">Comparator&lt;String&gt; c = new Comparator&lt;&gt;() {</text>
+  <text x="20" y="82" fill="#7dd3fc" font-family="Jetbrains Mono,monospace" font-size="9">  @Override</text>
+  <text x="20" y="96" fill="#7dd3fc" font-family="Jetbrains Mono,monospace" font-size="9">  public int compare(String a, String b) {</text>
+  <text x="20" y="110" fill="#7dd3fc" font-family="Jetbrains Mono,monospace" font-size="9">    return a.compareTo(b);</text>
+  <text x="20" y="124" fill="#7dd3fc" font-family="Jetbrains Mono,monospace" font-size="9">  }</text>
+  <text x="20" y="138" fill="#7dd3fc" font-family="Jetbrains Mono,monospace" font-size="9">};</text>
+  <!-- Arrow -->
+  <text x="340" y="95" fill="#a78bfa" font-family="Plus Jakarta Sans,sans-serif" font-size="20" text-anchor="middle">→</text>
+  <!-- Lambda way -->
+  <rect x="360" y="28" width="310" height="120" rx="10" fill="rgba(52,211,153,.05)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="515" y="48" fill="#34d399" font-family="Plus Jakarta Sans,sans-serif" font-size="10" font-weight="700" text-anchor="middle">Lambda Way (Java 8+)</text>
+  <text x="370" y="75" fill="#86efac" font-family="Jetbrains Mono,monospace" font-size="10">Comparator&lt;String&gt; c =</text>
+  <text x="370" y="95" fill="#86efac" font-family="Jetbrains Mono,monospace" font-size="13" font-weight="700">  (a, b) -&gt; a.compareTo(b);</text>
+  <text x="370" y="118" fill="#475569" font-family="Plus Jakarta Sans,sans-serif" font-size="9">↑params  ↑ arrow  ↑ body</text>
+  <text x="370" y="135" fill="#34d399" font-family="Plus Jakarta Sans,sans-serif" font-size="9">Same logic, 90% less code! ✓</text>
+</svg>
+</div>
+
+<pre data-lang="Java"><code><span class="kw">import</span> java.util.function.*;
+
+<span class="cmt">// ── Functional Interfaces from java.util.function ──</span>
+
+<span class="cmt">// Predicate&lt;T&gt; — test a condition → returns boolean</span>
+Predicate&lt;Integer&gt; isSenior = salary -&gt; salary &gt; <span class="num">75000</span>;
+Predicate&lt;String&gt;  isNonEmpty = s -&gt; !s.isBlank();
+Predicate&lt;Integer&gt; isHigh = salary -&gt; salary &gt; <span class="num">100000</span>;
+<span class="cmt">// Compose predicates</span>
+Predicate&lt;Integer&gt; midRange = isSenior.and(isHigh.negate()); <span class="cmt">// 75001-99999</span>
+System.out.println(isSenior.test(<span class="num">80000</span>));    <span class="cmt">// true</span>
+System.out.println(midRange.test(<span class="num">80000</span>));    <span class="cmt">// true</span>
+
+<span class="cmt">// Function&lt;T,R&gt; — transform T to R</span>
+Function&lt;String, Integer&gt; strLen = String::length;   <span class="cmt">// method reference</span>
+Function&lt;Integer, String&gt; rupeeFormat = n -&gt; <span class="str">"₹"</span> + String.format(<span class="str">"%,d"</span>, n);
+Function&lt;String, String&gt; combined = strLen.andThen(rupeeFormat); <span class="cmt">// chain functions</span>
+System.out.println(strLen.apply(<span class="str">"C-DAC"</span>));   <span class="cmt">// 5</span>
+System.out.println(rupeeFormat.apply(<span class="num">85000</span>)); <span class="cmt">// ₹85,000</span>
+
+<span class="cmt">// Consumer&lt;T&gt; — use T, return nothing (side effects)</span>
+Consumer&lt;String&gt; logger = msg -&gt; System.out.println(<span class="str">"[LOG] "</span> + msg);
+Consumer&lt;Employee&gt; raiseHike = emp -&gt; emp.setSalary(emp.getSalary() * <span class="num">1.1</span>);
+logger.accept(<span class="str">"System started"</span>);
+
+<span class="cmt">// Supplier&lt;T&gt; — produce T, takes no input</span>
+Supplier&lt;String&gt; idGen = () -&gt; <span class="str">"EMP-"</span> + (int)(Math.random() * <span class="num">9000</span> + <span class="num">1000</span>);
+Supplier&lt;List&lt;String&gt;&gt; listFactory = ArrayList::new;  <span class="cmt">// constructor ref</span>
+System.out.println(idGen.get());  <span class="cmt">// EMP-4752</span>
+
+<span class="cmt">// BiFunction&lt;T,U,R&gt; — two inputs, one output</span>
+BiFunction&lt;String, Double, String&gt; offerLetter =
+    (name, sal) -&gt; <span class="str">"Dear "</span> + name + <span class="str">", CTC: ₹"</span> + sal;
+System.out.println(offerLetter.apply(<span class="str">"Priya"</span>, <span class="num">85000.0</span>));
+
+<span class="cmt">// UnaryOperator — T → T (same type in and out)</span>
+UnaryOperator&lt;String&gt; trimUpper = s -&gt; s.trim().toUpperCase();
+System.out.println(trimUpper.apply(<span class="str">"  cdac kharghar  "</span>)); <span class="cmt">// C-DAC KHARGHAR</span>
+
+<span class="cmt">// Method References — 4 types</span>
+<span class="kw">static</span> method ref:     Math::sqrt               <span class="cmt">// ClassName::staticMethod</span>
+instance method ref:   String::toUpperCase       <span class="cmt">// ClassName::instanceMethod</span>
+instance on obj ref:   System.out::println       <span class="cmt">// obj::instanceMethod</span>
+constructor ref:       ArrayList::new            <span class="cmt">// ClassName::new</span></code></pre>
+
+</div></div></section>
+
+<!-- ════════════════════════════════════════
+     SESSION 11–12: Streams & Date API
+════════════════════════════════════════ -->
+<section id="s11">
+<div class="card">
+<div class="card-hdr">
+  <div class="card-ico" style="background:rgba(56,189,248,.1)">🌊</div>
+  <div class="card-hdr-text">
+    <h2>Sessions 11–12 · Stream API &amp; Java 8 Date-Time API</h2>
+    <div class="sub">4T + 4L + 2SL hours</div>
+  </div>
+  <span class="stag">S11–S12</span>
+</div>
+<div class="card-body">
+<div class="lvl"><span class="lbadge inter">🟡 Intermediate</span><span class="lbadge adv">🔴 Advanced</span></div>
+
+<div class="analogy">
+  <div class="ana-ico">🏭</div>
+  <h4>Analogy — Amazon Fulfillment Centre Assembly Line</h4>
+  <p>Orders (data) enter the belt. Station 1 filters defective items (filter). Station 2 relabels them (map). Station 3 sorts by delivery zone (sorted). Final packing (collect). The belt is LAZY — it doesn't run until someone says "dispatch!" (terminal operation). Workers don't keep all items in memory — they process one at a time (stream is not storage).</p>
+</div>
+
+<div class="dg">
+<svg viewBox="0 0 680 110" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:680px">
+  <defs><marker id="sa" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#6e85a0"/></marker></defs>
+  <!-- Source -->
+  <rect x="5" y="35" width="100" height="45" rx="8" fill="rgba(56,189,248,.1)" stroke="#38bdf8" stroke-width="1.5"/>
+  <text x="55" y="56" fill="#38bdf8" font-family="Plus Jakarta Sans,sans-serif" font-size="9" font-weight="700" text-anchor="middle">Collection</text>
+  <text x="55" y="69" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="8" text-anchor="middle">Source</text>
+  <text x="55" y="80" fill="#38bdf8" font-family="Plus Jakarta Sans,sans-serif" font-size="8" text-anchor="middle">.stream()</text>
+  <!-- filter -->
+  <line x1="105" y1="57" x2="128" y2="57" stroke="#6e85a0" stroke-width="1.5" marker-end="url(#sa)"/>
+  <rect x="130" y="35" width="90" height="45" rx="8" fill="rgba(52,211,153,.08)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="175" y="58" fill="#34d399" font-family="Plus Jakarta Sans,sans-serif" font-size="10" font-weight="700" text-anchor="middle">filter()</text>
+  <text x="175" y="71" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="8" text-anchor="middle">Predicate</text>
+  <text x="175" y="84" fill="#3d5166" font-family="Plus Jakarta Sans,sans-serif" font-size="7.5" text-anchor="middle">Intermediate</text>
+  <!-- map -->
+  <line x1="220" y1="57" x2="243" y2="57" stroke="#6e85a0" stroke-width="1.5" marker-end="url(#sa)"/>
+  <rect x="245" y="35" width="90" height="45" rx="8" fill="rgba(249,115,22,.08)" stroke="#f97316" stroke-width="1.5"/>
+  <text x="290" y="58" fill="#f97316" font-family="Plus Jakarta Sans,sans-serif" font-size="10" font-weight="700" text-anchor="middle">map()</text>
+  <text x="290" y="71" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="8" text-anchor="middle">Function</text>
+  <text x="290" y="84" fill="#3d5166" font-family="Plus Jakarta Sans,sans-serif" font-size="7.5" text-anchor="middle">Intermediate</text>
+  <!-- sorted -->
+  <line x1="335" y1="57" x2="358" y2="57" stroke="#6e85a0" stroke-width="1.5" marker-end="url(#sa)"/>
+  <rect x="360" y="35" width="90" height="45" rx="8" fill="rgba(139,92,246,.08)" stroke="#8b5cf6" stroke-width="1.5"/>
+  <text x="405" y="58" fill="#a78bfa" font-family="Plus Jakarta Sans,sans-serif" font-size="10" font-weight="700" text-anchor="middle">sorted()</text>
+  <text x="405" y="71" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="8" text-anchor="middle">Comparator</text>
+  <text x="405" y="84" fill="#3d5166" font-family="Plus Jakarta Sans,sans-serif" font-size="7.5" text-anchor="middle">Intermediate</text>
+  <!-- collect -->
+  <line x1="450" y1="57" x2="473" y2="57" stroke="#6e85a0" stroke-width="1.5" marker-end="url(#sa)"/>
+  <rect x="475" y="25" width="110" height="65" rx="8" fill="rgba(251,191,36,.08)" stroke="#fbbf24" stroke-width="2"/>
+  <text x="530" y="52" fill="#fbbf24" font-family="Plus Jakarta Sans,sans-serif" font-size="10" font-weight="700" text-anchor="middle">collect()</text>
+  <text x="530" y="66" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="8" text-anchor="middle">TERMINAL</text>
+  <text x="530" y="80" fill="#fbbf24" font-family="Plus Jakarta Sans,sans-serif" font-size="8" text-anchor="middle">← TRIGGERS ALL</text>
+  <!-- Lazy label -->
+  <text x="275" y="105" fill="#6e85a0" font-family="Plus Jakarta Sans,sans-serif" font-size="9" text-anchor="middle">LAZY: Intermediate ops don't execute until Terminal op is called</text>
+</svg>
+</div>
+
+<pre data-lang="Java"><code><span class="kw">import</span> java.util.stream.*;
+<span class="kw">import</span> java.util.*;
+
+List&lt;Employee&gt; emps = getEmployees();
+
+<span class="cmt">// ── 1. filter + map + collect ──</span>
+List&lt;String&gt; seniorNames = emps.stream()
+    .filter(e -&gt; e.getSalary() &gt; <span class="num">70000</span>)         <span class="cmt">// keep seniors</span>
+    .filter(e -&gt; e.getDepartment().equals(<span class="str">"IT"</span>)) <span class="cmt">// in IT dept</span>
+    .map(Employee::getName)                       <span class="cmt">// extract names</span>
+    .sorted()                                     <span class="cmt">// alphabetical</span>
+    .distinct()                                   <span class="cmt">// no duplicates</span>
+    .limit(<span class="num">10</span>)                                    <span class="cmt">// top 10 only</span>
+    .collect(Collectors.toList());
+
+<span class="cmt">// ── 2. Aggregation operations ──</span>
+<span class="kw">double</span> totalSalary = emps.stream()
+    .mapToDouble(Employee::getSalary)
+    .sum();                               <span class="cmt">// total payroll</span>
+
+OptionalDouble avg = emps.stream()
+    .mapToDouble(Employee::getSalary)
+    .average();                           <span class="cmt">// returns Optional (might be empty stream)</span>
+avg.ifPresent(a -&gt; System.out.printf(<span class="str">"Avg: ₹%.2f%n"</span>, a));
+
+<span class="kw">double</span> maxSalary = emps.stream()
+    .mapToDouble(Employee::getSalary)
+    .max().orElse(<span class="num">0</span>);
+
+<span class="kw">long</span> count = emps.stream()
+    .filter(e -&gt; e.getSalary() &gt; <span class="num">80000</span>)
+    .count();
+
+<span class="cmt">// ── 3. Matching ──</span>
+<span class="kw">boolean</span> anyManager = emps.stream().anyMatch(e -&gt; e <span class="kw">instanceof</span> Manager);
+<span class="kw">boolean</span> allPaid    = emps.stream().allMatch(e -&gt; e.getSalary() &gt; <span class="num">0</span>);
+<span class="kw">boolean</span> noneNeg    = emps.stream().noneMatch(e -&gt; e.getSalary() &lt; <span class="num">0</span>);
+
+<span class="cmt">// ── 4. reduce — custom aggregation ──</span>
+<span class="kw">double</span> total = emps.stream()
+    .mapToDouble(Employee::getSalary)
+    .reduce(<span class="num">0</span>, Double::sum);
+
+<span class="cmt">// ── 5. Collectors — powerful terminal ops ──</span>
+<span class="cmt">// Group employees by department</span>
+Map&lt;String, List&lt;Employee&gt;&gt; byDept = emps.stream()
+    .collect(Collectors.groupingBy(Employee::getDepartment));
+
+<span class="cmt">// Count per department</span>
+Map&lt;String, Long&gt; countPerDept = emps.stream()
+    .collect(Collectors.groupingBy(Employee::getDepartment, Collectors.counting()));
+
+<span class="cmt">// Average salary per department</span>
+Map&lt;String, Double&gt; avgPerDept = emps.stream()
+    .collect(Collectors.groupingBy(Employee::getDepartment,
+             Collectors.averagingDouble(Employee::getSalary)));
+
+<span class="cmt">// Join names as CSV</span>
+String namesCsv = emps.stream()
+    .map(Employee::getName)
+    .collect(Collectors.joining(<span class="str">", "</span>, <span class="str">"["</span>, <span class="str">"]"</span>));  <span class="cmt">// [Priya, Rahul, Anjali]</span>
+
+<span class="cmt">// ── 6. flatMap — flatten nested ──</span>
+List&lt;List&lt;String&gt;&gt; courses = Arrays.asList(
+    Arrays.asList(<span class="str">"Java"</span>,<span class="str">"Python"</span>), Arrays.asList(<span class="str">"Hadoop"</span>,<span class="str">"Spark"</span>));
+List&lt;String&gt; flat = courses.stream()
+    .flatMap(Collection::stream)
+    .collect(Collectors.toList()); <span class="cmt">// [Java,Python,Hadoop,Spark]</span></code></pre>
+
+<h3>Java 8 Date-Time API — New &amp; Correct Way</h3>
+<div class="vs-wrap">
+  <div class="vs-side">
+    <h4>❌ Old Date API (java.util.Date)</h4>
+    <ul>
+      <li>Mutable — not thread-safe</li>
+      <li>Month 0-indexed (Jan=0!) — confusing</li>
+      <li>Year = (actual year - 1900)</li>
+      <li>Date AND time mixed in one class</li>
+      <li>No timezone-awareness</li>
+    </ul>
+  </div>
+  <div class="vs-mid">VS</div>
+  <div class="vs-side right">
+    <h4>✅ New API (java.time) — Java 8+</h4>
+    <ul>
+      <li>Immutable — thread-safe</li>
+      <li>Month 1-indexed (Jan=1)</li>
+      <li>Intuitive API</li>
+      <li>Separate classes for date, time, datetime</li>
+      <li>Full timezone support (ZonedDateTime)</li>
+    </ul>
+  </div>
+</div>
+<pre data-lang="Java"><code><span class="kw">import</span> java.time.*;
+<span class="kw">import</span> java.time.format.*;
+<span class="kw">import</span> java.time.temporal.*;
+
+<span class="cmt">// Core classes</span>
+LocalDate date = LocalDate.now();              <span class="cmt">// 2026-05-14</span>
+LocalTime time = LocalTime.now();              <span class="cmt">// 14:30:45.123456789</span>
+LocalDateTime dt = LocalDateTime.now();       <span class="cmt">// date + time combined</span>
+ZonedDateTime ist = ZonedDateTime.now(ZoneId.of(<span class="str">"Asia/Kolkata"</span>));
+
+<span class="cmt">// Create specific dates</span>
+LocalDate dob    = LocalDate.of(<span class="num">2000</span>, Month.APRIL, <span class="num">15</span>);
+LocalDate exam   = LocalDate.parse(<span class="str">"2026-06-20"</span>);  <span class="cmt">// parse string</span>
+
+<span class="cmt">// Date arithmetic (returns NEW object — immutable!)</span>
+LocalDate nextWeek = date.plusWeeks(<span class="num">1</span>);
+LocalDate lastMonth = date.minusMonths(<span class="num">1</span>);
+LocalDate yearEnd = date.withDayOfYear(<span class="num">365</span>);
+
+<span class="cmt">// Period — date difference (years/months/days)</span>
+Period age = Period.between(dob, date);
+System.out.println(<span class="str">"Age: "</span> + age.getYears() + <span class="str">" years, "</span> + age.getMonths() + <span class="str">" months"</span>);
+
+<span class="cmt">// Duration — time difference (hours/minutes/seconds)</span>
+LocalTime login  = LocalTime.of(<span class="num">9</span>, <span class="num">0</span>);
+LocalTime logout = LocalTime.of(<span class="num">18</span>, <span class="num">30</span>);
+Duration worked = Duration.between(login, logout);
+System.out.println(<span class="str">"Worked: "</span> + worked.toHours() + <span class="str">"h "</span> + worked.toMinutesPart() + <span class="str">"m"</span>);
+
+<span class="cmt">// Days until exam</span>
+<span class="kw">long</span> daysLeft = ChronoUnit.DAYS.between(date, exam);
+System.out.println(<span class="str">"Exam in: "</span> + daysLeft + <span class="str">" days"</span>);
+
+<span class="cmt">// Formatting</span>
+DateTimeFormatter fmt = DateTimeFormatter.ofPattern(<span class="str">"dd-MMM-yyyy"</span>);
+System.out.println(date.format(fmt));        <span class="cmt">// 14-May-2026</span>
+LocalDate parsed = LocalDate.parse(<span class="str">"25-Jan-2026"</span>, fmt);
+
+<span class="cmt">// Comparisons</span>
+date.isAfter(dob);    date.isBefore(exam);    date.isEqual(LocalDate.now());</code></pre>
+
+</div></div></section>
+<!-- ════════════════════════════════════════
+     SESSION 13: Concurrency
+════════════════════════════════════════ -->
+<section id="s13" class="section-card">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(239,68,68,0.1)">🧵</div>
+    <div>
+      <h2>Session 13: Java Concurrency & Threads</h2>
+      <div style="font-size:0.75rem;color:var(--text-muted)">2T + 2L hours</div>
+    </div>
+    <span class="session-tag">S13</span>
+  </div>
+  <div class="section-body">
+    <div class="level-strip">
+      <span class="level-badge intermediate">🟡 Intermediate</span>
+      <span class="level-badge advanced">🔴 Advanced</span>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-icon">🏦</div>
+      <h4>Analogy: Thread = Bank Teller, Synchronization = Queue Token System</h4>
+      <p>10 customers (tasks) arrive at SBI. 3 tellers (threads) serve them simultaneously. But only ONE teller can access the vault (shared resource) at a time. The token queue system ensures orderly access — that's <strong>synchronization</strong>.</p>
+    </div>
+
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 600 160" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:600px">
+        <!-- Thread lifecycle -->
+        <rect x="20" y="60" width="80" height="36" rx="8" fill="rgba(124,58,237,0.1)" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="60" y="83" fill="#a78bfa" font-family="Sora,sans-serif" font-size="10" font-weight="700" text-anchor="middle">NEW</text>
+        <line x1="100" y1="78" x2="130" y2="78" stroke="#7a8ba0" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <text x="115" y="70" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="8">start()</text>
+        <rect x="130" y="60" width="90" height="36" rx="8" fill="rgba(16,185,129,0.1)" stroke="#10b981" stroke-width="1.5"/>
+        <text x="175" y="83" fill="#10b981" font-family="Sora,sans-serif" font-size="10" font-weight="700" text-anchor="middle">RUNNABLE</text>
+        <line x1="220" y1="78" x2="260" y2="78" stroke="#7a8ba0" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <text x="240" y="70" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="8">scheduled</text>
+        <rect x="260" y="60" width="80" height="36" rx="8" fill="rgba(0,212,255,0.1)" stroke="#00d4ff" stroke-width="1.5"/>
+        <text x="300" y="83" fill="#00d4ff" font-family="Sora,sans-serif" font-size="10" font-weight="700" text-anchor="middle">RUNNING</text>
+        <!-- BLOCKED branch -->
+        <line x1="340" y1="78" x2="380" y2="110" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,3"/>
+        <text x="362" y="105" fill="#f59e0b" font-family="Sora,sans-serif" font-size="8">wait/IO</text>
+        <rect x="375" y="95" width="90" height="36" rx="8" fill="rgba(245,158,11,0.1)" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="420" y="118" fill="#f59e0b" font-family="Sora,sans-serif" font-size="10" font-weight="700" text-anchor="middle">BLOCKED</text>
+        <line x1="420" y1="95" x2="300" y2="95" stroke="#7a8ba0" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr2)"/>
+        <!-- DEAD -->
+        <line x1="340" y1="78" x2="490" y2="78" stroke="#7a8ba0" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <text x="420" y="70" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="8">run() ends</text>
+        <rect x="490" y="60" width="90" height="36" rx="8" fill="rgba(239,68,68,0.1)" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="535" y="83" fill="#ef4444" font-family="Sora,sans-serif" font-size="10" font-weight="700" text-anchor="middle">DEAD</text>
+        <text x="300" y="150" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9" text-anchor="middle">Thread Lifecycle: NEW → RUNNABLE → RUNNING → (BLOCKED) → DEAD</text>
+      </svg>
+    </div>
+
+    <pre><code><span class="cmt">// Way 1: Extend Thread class</span>
+<span class="kw">public class</span> <span class="cls">SalaryCalculator</span> <span class="kw">extends</span> <span class="cls">Thread</span> {
+    <span class="kw">private</span> <span class="cls">Employee</span> emp;
+    <span class="kw">public</span> <span class="cls">SalaryCalculator</span>(<span class="cls">Employee</span> e) { <span class="kw">this</span>.emp = e; }
+
+    <span class="ann">@Override</span>
+    <span class="kw">public void</span> <span class="mth">run</span>() {
+        <span class="cls">System</span>.out.<span class="mth">println</span>(<span class="cls">Thread</span>.<span class="mth">currentThread</span>().<span class="mth">getName</span>()
+            + <span class="str">": Processing "</span> + emp.<span class="mth">getName</span>());
+    }
+}
+
+<span class="cmt">// Way 2: Implement Runnable (PREFERRED — allows other inheritance)</span>
+<span class="cls">Runnable</span> task = () -&gt; {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < <span class="num">3</span>; i++) {
+        <span class="cls">System</span>.out.<span class="mth">println</span>(<span class="cls">Thread</span>.<span class="mth">currentThread</span>().<span class="mth">getName</span>() + <span class="str">": "</span> + i);
+    }
+};
+<span class="cls">Thread</span> t1 = <span class="kw">new</span> <span class="cls">Thread</span>(task, <span class="str">"Teller-1"</span>);
+<span class="cls">Thread</span> t2 = <span class="kw">new</span> <span class="cls">Thread</span>(task, <span class="str">"Teller-2"</span>);
+t1.<span class="mth">start</span>(); t2.<span class="mth">start</span>();
+
+<span class="cmt">// Synchronization — prevent race condition on shared bank account</span>
+<span class="kw">public class</span> <span class="cls">SafeAccount</span> {
+    <span class="kw">private double</span> balance = <span class="num">100000</span>;
+
+    <span class="kw">public synchronized void</span> <span class="mth">withdraw</span>(<span class="kw">double</span> amount) {
+        <span class="kw">if</span> (balance >= amount) {
+            <span class="cls">System</span>.out.<span class="mth">println</span>(<span class="cls">Thread</span>.<span class="mth">currentThread</span>().<span class="mth">getName</span>()
+                + <span class="str">" withdrawing ₹"</span> + amount);
+            balance -= amount;
+        }
+    }
+}
+<span class="cmt">// synchronized ensures only ONE thread at a time modifies balance</span>
+</code></pre>
+
+    <div class="callout callout-danger">
+      <div class="callout-title">🚨 Race Condition = Corrupted Data!</div>
+      Without synchronization, two threads reading balance simultaneously, both seeing ₹1000, both withdrawing ₹800 — account goes negative! Always synchronize shared mutable state.
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     SESSION 14: I/O & Serialization
+════════════════════════════════════════ -->
+<section id="s14" class="section-card">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(16,185,129,0.1)">💾</div>
+    <div>
+      <h2>Session 14: Java I/O & Object Serialization</h2>
+      <div style="font-size:0.75rem;color:var(--text-muted)">2T + 2L hours</div>
+    </div>
+    <span class="session-tag">S14</span>
+  </div>
+  <div class="section-body">
+    <div class="analogy">
+      <div class="analogy-icon">📬</div>
+      <h4>Analogy: Java I/O = India Post System</h4>
+      <p><strong>Byte Streams</strong> = Parcel (raw bytes, images, binary). <strong>Character Streams</strong> = Letter (text, readable). <strong>Buffered</strong> = Speed post vs regular — buffer collects data and sends in bulk. <strong>Serialization</strong> = Packing an object into a courier box to ship (save to file/send over network).</p>
+    </div>
+
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 620 140" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:620px">
+        <text x="310" y="18" fill="#e2e8f0" font-family="Sora,sans-serif" font-size="11" font-weight="700" text-anchor="middle">Java I/O Hierarchy</text>
+        <!-- Byte -->
+        <rect x="20" y="28" width="270" height="30" rx="6" fill="rgba(0,212,255,0.08)" stroke="#00d4ff" stroke-width="1"/>
+        <text x="155" y="48" fill="#00d4ff" font-family="Sora,sans-serif" font-size="10" font-weight="700" text-anchor="middle">Byte Streams (InputStream / OutputStream)</text>
+        <text x="30" y="80" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9">FileInputStream/OutputStream</text>
+        <text x="30" y="95" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9">BufferedInputStream/OutputStream</text>
+        <text x="30" y="110" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9">ObjectInputStream/OutputStream ← serialization</text>
+        <!-- Char -->
+        <rect x="310" y="28" width="290" height="30" rx="6" fill="rgba(16,185,129,0.08)" stroke="#10b981" stroke-width="1"/>
+        <text x="455" y="48" fill="#10b981" font-family="Sora,sans-serif" font-size="10" font-weight="700" text-anchor="middle">Character Streams (Reader / Writer)</text>
+        <text x="320" y="80" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9">FileReader/FileWriter</text>
+        <text x="320" y="95" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9">BufferedReader/BufferedWriter</text>
+        <text x="320" y="110" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9">PrintWriter</text>
+        <!-- NIO -->
+        <text x="310" y="135" fill="#f59e0b" font-family="Sora,sans-serif" font-size="9">Modern: java.nio.file.Files (Java 7+) — Files.readAllLines(), Files.write()</text>
+      </svg>
+    </div>
+
+    <pre><code><span class="cmt">// Writing to text file (try-with-resources)</span>
+<span class="kw">try</span> (<span class="cls">BufferedWriter</span> bw = <span class="kw">new</span> <span class="cls">BufferedWriter</span>(<span class="kw">new</span> <span class="cls">FileWriter</span>(<span class="str">"students.txt"</span>))) {
+    bw.<span class="mth">write</span>(<span class="str">"Priya,92,Mumbai"</span>);
+    bw.<span class="mth">newLine</span>();
+    bw.<span class="mth">write</span>(<span class="str">"Rahul,85,Pune"</span>);
+}
+
+<span class="cmt">// Reading from text file</span>
+<span class="kw">try</span> (<span class="cls">BufferedReader</span> br = <span class="kw">new</span> <span class="cls">BufferedReader</span>(<span class="kw">new</span> <span class="cls">FileReader</span>(<span class="str">"students.txt"</span>))) {
+    String line;
+    <span class="kw">while</span> ((line = br.<span class="mth">readLine</span>()) != <span class="kw">null</span>) <span class="cls">System</span>.out.<span class="mth">println</span>(line);
+}
+
+<span class="cmt">// Serialization — save object to file</span>
+<span class="kw">public class</span> <span class="cls">Employee</span> <span class="kw">implements</span> <span class="cls">Serializable</span> { <span class="cmt">// marker interface</span>
+    <span class="kw">private static final long</span> serialVersionUID = <span class="num">1L</span>; <span class="cmt">// version control</span>
+    <span class="kw">private</span> <span class="cls">String</span> name;
+    <span class="kw">private transient</span> <span class="cls">String</span> password; <span class="cmt">// transient = NOT serialized</span>
+}
+
+<span class="cmt">// Serialize (write object)</span>
+<span class="kw">try</span> (<span class="cls">ObjectOutputStream</span> oos = <span class="kw">new</span> <span class="cls">ObjectOutputStream</span>(
+        <span class="kw">new</span> <span class="cls">FileOutputStream</span>(<span class="str">"emp.ser"</span>))) {
+    oos.<span class="mth">writeObject</span>(emp);
+}
+
+<span class="cmt">// Deserialize (read object)</span>
+<span class="kw">try</span> (<span class="cls">ObjectInputStream</span> ois = <span class="kw">new</span> <span class="cls">ObjectInputStream</span>(
+        <span class="kw">new</span> <span class="cls">FileInputStream</span>(<span class="str">"emp.ser"</span>))) {
+    <span class="cls">Employee</span> restored = (<span class="cls">Employee</span>) ois.<span class="mth">readObject</span>();
+}
+
+<span class="cmt">// Modern NIO (Java 7+) — simpler!</span>
+<span class="kw">import</span> java.nio.file.*;
+<span class="cls">List</span>&lt;<span class="cls">String</span>&gt; lines = <span class="cls">Files</span>.<span class="mth">readAllLines</span>(<span class="cls">Path</span>.<span class="mth">of</span>(<span class="str">"students.txt"</span>));
+<span class="cls">Files</span>.<span class="mth">write</span>(<span class="cls">Path</span>.<span class="mth">of</span>(<span class="str">"out.txt"</span>), lines);
+</code></pre>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     SESSION 15: JVM & Reflection
+════════════════════════════════════════ -->
+<section id="s15" class="section-card">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(245,158,11,0.1)">🔍</div>
+    <div>
+      <h2>Session 15: JVM Architecture & Java Reflection</h2>
+      <div style="font-size:0.75rem;color:var(--text-muted)">2T + 2L hours</div>
+    </div>
+    <span class="session-tag">S15</span>
+  </div>
+  <div class="section-body">
+    <div class="level-strip">
+      <span class="level-badge advanced">🔴 Advanced</span>
+    </div>
+
+    <h3>JVM Memory Architecture</h3>
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 640 220" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:640px">
+        <text x="320" y="18" fill="#e2e8f0" font-family="Sora,sans-serif" font-size="12" font-weight="700" text-anchor="middle">JVM Memory Model</text>
+        <!-- Method Area -->
+        <rect x="20" y="30" width="180" height="80" rx="8" fill="rgba(124,58,237,0.08)" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="110" y="52" fill="#a78bfa" font-family="Sora,sans-serif" font-size="10" font-weight="700" text-anchor="middle">Method Area</text>
+        <text x="30" y="70" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9">Class metadata</text>
+        <text x="30" y="84" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9">Static fields &amp; methods</text>
+        <text x="30" y="98" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9">String Constant Pool</text>
+        <!-- Heap -->
+        <rect x="215" y="30" width="200" height="80" rx="8" fill="rgba(16,185,129,0.08)" stroke="#10b981" stroke-width="1.5"/>
+        <text x="315" y="52" fill="#10b981" font-family="Sora,sans-serif" font-size="10" font-weight="700" text-anchor="middle">Heap</text>
+        <text x="225" y="70" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9">All objects (new Emp())</text>
+        <text x="225" y="84" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9">Young Gen (Eden + Survivor)</text>
+        <text x="225" y="98" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9">Old Gen (long-lived objects)</text>
+        <!-- Stack -->
+        <rect x="430" y="30" width="190" height="80" rx="8" fill="rgba(0,212,255,0.08)" stroke="#00d4ff" stroke-width="1.5"/>
+        <text x="525" y="52" fill="#00d4ff" font-family="Sora,sans-serif" font-size="10" font-weight="700" text-anchor="middle">Stack (per thread)</text>
+        <text x="440" y="70" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9">Method stack frames</text>
+        <text x="440" y="84" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9">Local variables</text>
+        <text x="440" y="98" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9">References to heap objects</text>
+        <!-- PC Registers + Native -->
+        <rect x="20" y="130" width="180" height="50" rx="8" fill="rgba(255,107,53,0.06)" stroke="#ff6b35" stroke-width="1"/>
+        <text x="110" y="158" fill="#ff6b35" font-family="Sora,sans-serif" font-size="9" font-weight="700" text-anchor="middle">PC Registers (per thread)</text>
+        <rect x="215" y="130" width="405" height="50" rx="8" fill="rgba(245,158,11,0.06)" stroke="#f59e0b" stroke-width="1"/>
+        <text x="417" y="158" fill="#f59e0b" font-family="Sora,sans-serif" font-size="9" font-weight="700" text-anchor="middle">Native Method Stack</text>
+        <!-- Class Loader -->
+        <rect x="20" y="195" width="600" height="20" rx="6" fill="rgba(0,212,255,0.05)" stroke="#00d4ff" stroke-width="1"/>
+        <text x="320" y="210" fill="#00d4ff" font-family="Sora,sans-serif" font-size="9" font-weight="700" text-anchor="middle">Class Loader Subsystem: Bootstrap → Extension → Application</text>
+      </svg>
+    </div>
+
+    <h3>Reflection API</h3>
+    <div class="analogy">
+      <div class="analogy-icon">🪞</div>
+      <h4>Analogy: Reflection = X-Ray of a Class</h4>
+      <p>Just like an X-Ray shows bones inside a body without surgery, Reflection lets you inspect a class's fields, methods, constructors at runtime — without knowing the class at compile time. Used in Frameworks like Spring, Hibernate, JUnit.</p>
+    </div>
+    <pre><code><span class="kw">import</span> java.lang.reflect.*;
+
+<span class="cmt">// Get Class object — 3 ways</span>
+<span class="cls">Class</span>&lt;?&gt; clazz = <span class="cls">Employee</span>.<span class="kw">class</span>;
+<span class="cls">Class</span>&lt;?&gt; clazz2 = emp.<span class="mth">getClass</span>();
+<span class="cls">Class</span>&lt;?&gt; clazz3 = <span class="cls">Class</span>.<span class="mth">forName</span>(<span class="str">"com.cdac.Employee"</span>);
+
+<span class="cmt">// Inspect class info</span>
+<span class="cls">System</span>.out.<span class="mth">println</span>(clazz.<span class="mth">getName</span>());          <span class="cmt">// full class name</span>
+<span class="cls">System</span>.out.<span class="mth">println</span>(clazz.<span class="mth">getSuperclass</span>());    <span class="cmt">// parent class</span>
+<span class="cls">System</span>.out.<span class="mth">println</span>(<span class="cls">Arrays</span>.<span class="mth">toString</span>(clazz.<span class="mth">getInterfaces</span>())); <span class="cmt">// interfaces</span>
+
+<span class="cmt">// Fields</span>
+<span class="cls">Field</span>[] fields = clazz.<span class="mth">getDeclaredFields</span>();
+<span class="kw">for</span> (<span class="cls">Field</span> f : fields) {
+    <span class="cls">System</span>.out.<span class="mth">println</span>(f.<span class="mth">getType</span>() + <span class="str">" "</span> + f.<span class="mth">getName</span>());
+}
+
+<span class="cmt">// Methods</span>
+<span class="cls">Method</span>[] methods = clazz.<span class="mth">getDeclaredMethods</span>();
+<span class="kw">for</span> (<span class="cls">Method</span> m : methods) {
+    <span class="cls">System</span>.out.<span class="mth">println</span>(m.<span class="mth">getReturnType</span>() + <span class="str">" "</span> + m.<span class="mth">getName</span>());
+}
+
+<span class="cmt">// Invoke method dynamically (even private!)</span>
+<span class="cls">Method</span> getSalary = clazz.<span class="mth">getDeclaredMethod</span>(<span class="str">"getSalary"</span>);
+getSalary.<span class="mth">setAccessible</span>(<span class="kw">true</span>); <span class="cmt">// bypass private</span>
+<span class="cls">Object</span> result = getSalary.<span class="mth">invoke</span>(emp);
+<span class="cls">System</span>.out.<span class="mth">println</span>(<span class="str">"Salary: "</span> + result);
+
+<span class="cmt">// Create instance dynamically (used in frameworks!)</span>
+<span class="cls">Constructor</span>&lt;?&gt; ctor = clazz.<span class="mth">getConstructor</span>(<span class="kw">int</span>.<span class="kw">class</span>, <span class="cls">String</span>.<span class="kw">class</span>, <span class="kw">double</span>.<span class="kw">class</span>);
+<span class="cls">Employee</span> newEmp = (<span class="cls">Employee</span>) ctor.<span class="mth">newInstance</span>(<span class="num">201</span>, <span class="str">"Anjali"</span>, <span class="num">95000</span>);
+</code></pre>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     SESSION 16–17: JDBC
+════════════════════════════════════════ -->
+<section id="s16" class="section-card">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(0,212,255,0.1)">🗄️</div>
+    <div>
+      <h2>Sessions 16–17: JDBC — Java Database Connectivity</h2>
+      <div style="font-size:0.75rem;color:var(--text-muted)">4T + 6L + 2SL hours</div>
+    </div>
+    <span class="session-tag">S16–S17</span>
+  </div>
+  <div class="section-body">
+    <div class="level-strip">
+      <span class="level-badge intermediate">🟡 Intermediate</span>
+      <span class="level-badge advanced">🔴 Advanced</span>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-icon">🔌</div>
+      <h4>Analogy: JDBC = Power Adapter between Java App and Database</h4>
+      <p>Your laptop (Java App) needs power (data). The wall socket (Database — MySQL/PostgreSQL) has a different interface. JDBC Driver = the adapter that lets them talk. JDBC API = the standard plug interface — same code, switch the driver for different databases (MySQL → Oracle → PostgreSQL).</p>
+    </div>
+
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 660 160" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:660px">
+        <!-- Java App -->
+        <rect x="20" y="50" width="120" height="60" rx="8" fill="rgba(0,212,255,0.1)" stroke="#00d4ff" stroke-width="1.5"/>
+        <text x="80" y="75" fill="#00d4ff" font-family="Sora,sans-serif" font-size="11" font-weight="700" text-anchor="middle">Java App</text>
+        <text x="80" y="92" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9" text-anchor="middle">DAO Layer</text>
+        <!-- JDBC API -->
+        <rect x="160" y="35" width="130" height="90" rx="8" fill="rgba(124,58,237,0.1)" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="225" y="68" fill="#a78bfa" font-family="Sora,sans-serif" font-size="10" font-weight="700" text-anchor="middle">JDBC API</text>
+        <text x="225" y="85" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="8.5" text-anchor="middle">DriverManager</text>
+        <text x="225" y="99" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="8.5" text-anchor="middle">Connection</text>
+        <text x="225" y="113" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="8.5" text-anchor="middle">Statement</text>
+        <!-- Driver -->
+        <rect x="310" y="50" width="140" height="60" rx="8" fill="rgba(245,158,11,0.1)" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="380" y="75" fill="#f59e0b" font-family="Sora,sans-serif" font-size="10" font-weight="700" text-anchor="middle">JDBC Driver</text>
+        <text x="380" y="92" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9" text-anchor="middle">mysql-connector-j.jar</text>
+        <!-- DB -->
+        <rect x="470" y="40" width="170" height="80" rx="8" fill="rgba(16,185,129,0.1)" stroke="#10b981" stroke-width="1.5"/>
+        <text x="555" y="75" fill="#10b981" font-family="Sora,sans-serif" font-size="10" font-weight="700" text-anchor="middle">Database</text>
+        <text x="555" y="93" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9" text-anchor="middle">MySQL / PostgreSQL</text>
+        <!-- Arrows -->
+        <line x1="140" y1="80" x2="158" y2="80" stroke="#7a8ba0" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <line x1="290" y1="80" x2="308" y2="80" stroke="#7a8ba0" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <line x1="450" y1="80" x2="468" y2="80" stroke="#7a8ba0" stroke-width="1.5" marker-end="url(#arr2)"/>
+        <text x="330" y="148" fill="#7a8ba0" font-family="Sora,sans-serif" font-size="9.5" text-anchor="middle">Java App → JDBC API → JDBC Driver → Database</text>
+      </svg>
+    </div>
+
+    <h3>Complete CRUD Example</h3>
+    <pre><code><span class="kw">import</span> java.sql.*;
+
+<span class="kw">public class</span> <span class="cls">EmployeeDAO</span> {
+    <span class="kw">private static final</span> <span class="cls">String</span> URL = <span class="str">"jdbc:mysql://localhost:3306/cdac_db"</span>;
+    <span class="kw">private static final</span> <span class="cls">String</span> USER = <span class="str">"root"</span>;
+    <span class="kw">private static final</span> <span class="cls">String</span> PASS = <span class="str">"cdac@123"</span>;
+
+    <span class="cmt">// Establish connection</span>
+    <span class="kw">private</span> <span class="cls">Connection</span> <span class="mth">getConnection</span>() <span class="kw">throws</span> <span class="cls">SQLException</span> {
+        <span class="kw">return</span> <span class="cls">DriverManager</span>.<span class="mth">getConnection</span>(URL, USER, PASS);
+    }
+
+    <span class="cmt">// CREATE — PreparedStatement prevents SQL Injection</span>
+    <span class="kw">public void</span> <span class="mth">insertEmployee</span>(<span class="cls">Employee</span> emp) {
+        <span class="cls">String</span> sql = <span class="str">"INSERT INTO employees(name, salary, dept) VALUES(?,?,?)"</span>;
+        <span class="kw">try</span> (<span class="cls">Connection</span> conn = <span class="mth">getConnection</span>();
+             <span class="cls">PreparedStatement</span> ps = conn.<span class="mth">prepareStatement</span>(sql)) {
+            ps.<span class="mth">setString</span>(<span class="num">1</span>, emp.<span class="mth">getName</span>());
+            ps.<span class="mth">setDouble</span>(<span class="num">2</span>, emp.<span class="mth">getSalary</span>());
+            ps.<span class="mth">setString</span>(<span class="num">3</span>, emp.<span class="mth">getDepartment</span>());
+            <span class="kw">int</span> rows = ps.<span class="mth">executeUpdate</span>();
+            <span class="cls">System</span>.out.<span class="mth">println</span>(rows + <span class="str">" row(s) inserted"</span>);
+        } <span class="kw">catch</span> (<span class="cls">SQLException</span> e) { e.<span class="mth">printStackTrace</span>(); }
+    }
+
+    <span class="cmt">// READ — SELECT with ResultSet</span>
+    <span class="kw">public</span> <span class="cls">List</span>&lt;<span class="cls">Employee</span>&gt; <span class="mth">getAllEmployees</span>() {
+        <span class="cls">List</span>&lt;<span class="cls">Employee</span>&gt; list = <span class="kw">new</span> <span class="cls">ArrayList</span>&lt;&gt;();
+        <span class="cls">String</span> sql = <span class="str">"SELECT * FROM employees"</span>;
+        <span class="kw">try</span> (<span class="cls">Connection</span> conn = <span class="mth">getConnection</span>();
+             <span class="cls">Statement</span> stmt = conn.<span class="mth">createStatement</span>();
+             <span class="cls">ResultSet</span> rs = stmt.<span class="mth">executeQuery</span>(sql)) {
+            <span class="kw">while</span> (rs.<span class="mth">next</span>()) {
+                <span class="cls">Employee</span> e = <span class="kw">new</span> <span class="cls">Employee</span>(
+                    rs.<span class="mth">getInt</span>(<span class="str">"id"</span>),
+                    rs.<span class="mth">getString</span>(<span class="str">"name"</span>),
+                    rs.<span class="mth">getDouble</span>(<span class="str">"salary"</span>)
+                );
+                list.<span class="mth">add</span>(e);
+            }
+        } <span class="kw">catch</span> (<span class="cls">SQLException</span> e) { e.<span class="mth">printStackTrace</span>(); }
+        <span class="kw">return</span> list;
+    }
+
+    <span class="cmt">// UPDATE</span>
+    <span class="kw">public void</span> <span class="mth">updateSalary</span>(<span class="kw">int</span> id, <span class="kw">double</span> newSalary) {
+        <span class="cls">String</span> sql = <span class="str">"UPDATE employees SET salary=? WHERE id=?"</span>;
+        <span class="kw">try</span> (<span class="cls">Connection</span> conn = <span class="mth">getConnection</span>();
+             <span class="cls">PreparedStatement</span> ps = conn.<span class="mth">prepareStatement</span>(sql)) {
+            ps.<span class="mth">setDouble</span>(<span class="num">1</span>, newSalary);
+            ps.<span class="mth">setInt</span>(<span class="num">2</span>, id);
+            ps.<span class="mth">executeUpdate</span>();
+        } <span class="kw">catch</span> (<span class="cls">SQLException</span> e) { e.<span class="mth">printStackTrace</span>(); }
+    }
+
+    <span class="cmt">// DELETE</span>
+    <span class="kw">public void</span> <span class="mth">deleteEmployee</span>(<span class="kw">int</span> id) {
+        <span class="cls">String</span> sql = <span class="str">"DELETE FROM employees WHERE id=?"</span>;
+        <span class="kw">try</span> (<span class="cls">Connection</span> conn = <span class="mth">getConnection</span>();
+             <span class="cls">PreparedStatement</span> ps = conn.<span class="mth">prepareStatement</span>(sql)) {
+            ps.<span class="mth">setInt</span>(<span class="num">1</span>, id);
+            ps.<span class="mth">executeUpdate</span>();
+        } <span class="kw">catch</span> (<span class="cls">SQLException</span> e) { e.<span class="mth">printStackTrace</span>(); }
+    }
+}
+</code></pre>
+
+    <h3>Statement vs PreparedStatement vs CallableStatement</h3>
+    <table class="compare-table">
+      <tr><th>Feature</th><th>Statement</th><th>PreparedStatement</th><th>CallableStatement</th></tr>
+      <tr><td>SQL Injection Safe</td><td class="no">❌ No</td><td class="yes">✅ Yes</td><td class="yes">✅ Yes</td></tr>
+      <tr><td>Pre-compiled</td><td class="no">❌ No</td><td class="yes">✅ Yes (faster)</td><td class="yes">✅ Yes</td></tr>
+      <tr><td>Parameters</td><td>None (hardcoded)</td><td>? placeholders</td><td>IN/OUT params</td></tr>
+      <tr><td>Use for</td><td>Dynamic DDL (rare)</td><td>DML (INSERT/UPDATE/SELECT)</td><td>Stored Procedures</td></tr>
+      <tr><td>Performance</td><td>Compile each time</td><td>Compile once, reuse</td><td>SP executed in DB</td></tr>
+    </table>
+
+    <div class="callout callout-danger">
+      <div class="callout-title">🚫 NEVER use Statement for user inputs — SQL Injection!</div>
+      <code>"SELECT * FROM users WHERE name='" + userInput + "'"</code><br>
+      If userInput = <code>' OR '1'='1</code> → entire table exposed!<br>
+      <strong>Always use PreparedStatement with ? parameters.</strong>
+    </div>
+
+    <h3>Transaction Management</h3>
+    <pre><code><span class="cmt">// ACID: transfer ₹10,000 from Priya to Rahul</span>
+<span class="cls">Connection</span> conn = <span class="mth">getConnection</span>();
+<span class="kw">try</span> {
+    conn.<span class="mth">setAutoCommit</span>(<span class="kw">false</span>);  <span class="cmt">// BEGIN TRANSACTION</span>
+
+    <span class="cls">PreparedStatement</span> debit = conn.<span class="mth">prepareStatement</span>(
+        <span class="str">"UPDATE accounts SET balance=balance-? WHERE id=?"</span>);
+    debit.<span class="mth">setDouble</span>(<span class="num">1</span>, <span class="num">10000</span>); debit.<span class="mth">setInt</span>(<span class="num">2</span>, priyaId);
+    debit.<span class="mth">executeUpdate</span>();
+
+    <span class="cls">PreparedStatement</span> credit = conn.<span class="mth">prepareStatement</span>(
+        <span class="str">"UPDATE accounts SET balance=balance+? WHERE id=?"</span>);
+    credit.<span class="mth">setDouble</span>(<span class="num">1</span>, <span class="num">10000</span>); credit.<span class="mth">setInt</span>(<span class="num">2</span>, rahulId);
+    credit.<span class="mth">executeUpdate</span>();
+
+    conn.<span class="mth">commit</span>();  <span class="cmt">// BOTH succeed → commit</span>
+    <span class="cls">System</span>.out.<span class="mth">println</span>(<span class="str">"Transfer successful!"</span>);
+} <span class="kw">catch</span> (<span class="cls">SQLException</span> e) {
+    conn.<span class="mth">rollback</span>(); <span class="cmt">// ANY failure → undo both</span>
+    <span class="cls">System</span>.out.<span class="mth">println</span>(<span class="str">"Transfer failed — rolled back"</span>);
+} <span class="kw">finally</span> {
+    conn.<span class="mth">setAutoCommit</span>(<span class="kw">true</span>);
+    conn.<span class="mth">close</span>();
+}
+</code></pre>
+  </div>
+</section>
+
+<!-- QUICK REFERENCE SUMMARY -->
+<section class="section-card">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(255,107,53,0.1)">📋</div>
+    <div>
+      <h2>Exam Quick Reference — Key Concepts Summary</h2>
+    </div>
+  </div>
+  <div class="section-body">
+    <div class="grid-2">
+      <div class="mini-card">
+        <h4>🔑 Important Keywords</h4>
+        <div class="tags">
+          <span class="tag tag-blue">static</span>
+          <span class="tag tag-blue">final</span>
+          <span class="tag tag-blue">abstract</span>
+          <span class="tag tag-blue">synchronized</span>
+          <span class="tag tag-green">extends</span>
+          <span class="tag tag-green">implements</span>
+          <span class="tag tag-green">interface</span>
+          <span class="tag tag-orange">throws</span>
+          <span class="tag tag-orange">throw</span>
+          <span class="tag tag-orange">try/catch/finally</span>
+          <span class="tag tag-purple">transient</span>
+          <span class="tag tag-purple">volatile</span>
+        </div>
+      </div>
+      <div class="mini-card">
+        <h4>⚡ Access Modifiers (Widest → Narrowest)</h4>
+        <p><strong>public</strong> → everyone<br>
+        <strong>protected</strong> → package + subclasses<br>
+        <strong>(default)</strong> → same package only<br>
+        <strong>private</strong> → same class only</p>
+      </div>
+      <div class="mini-card">
+        <h4>🧠 "this" vs "super"</h4>
+        <p><span class="ic">this</span> → refers to current object's members; <span class="ic">this()</span> calls another constructor in same class.<br>
+        <span class="ic">super</span> → refers to parent class members; <span class="ic">super()</span> calls parent constructor — must be first line!</p>
+      </div>
+      <div class="mini-card">
+        <h4>🔒 final keyword (3 uses)</h4>
+        <p><strong>final variable</strong> = constant (can't reassign)<br>
+        <strong>final method</strong> = can't override in child<br>
+        <strong>final class</strong> = can't extend (e.g., String is final!)</p>
+      </div>
+      <div class="mini-card">
+        <h4>🗑️ static keyword (3 uses)</h4>
+        <p><strong>static variable</strong> = shared by all objects (class variable)<br>
+        <strong>static method</strong> = called without object (e.g., Math.sqrt())<br>
+        <strong>static block</strong> = runs once when class loaded</p>
+      </div>
+      <div class="mini-card">
+        <h4>💡 Common Tricky Questions</h4>
+        <p>• Can constructors be private? → Yes (Singleton pattern)<br>
+        • Can abstract class have constructor? → Yes<br>
+        • Interface can extend multiple interfaces? → Yes<br>
+        • Can we override static methods? → No (method hiding)<br>
+        • What if main() throws exception? → JVM terminates</p>
+      </div>
+    </div>
+
+    <div class="callout callout-tip">
+      <div class="callout-title">🎯 Exam Strategy</div>
+      <strong>Theory (40%)</strong>: Focus on differences — String vs StringBuilder, Checked vs Unchecked, Abstract class vs Interface, ArrayList vs LinkedList, Statement vs PreparedStatement.<br>
+      <strong>Lab (40%)</strong>: Practice CRUD with JDBC, Stream API pipelines, Exception custom classes, and Collections usage.<br>
+      <strong>Internal (20%)</strong>: Attend all sessions, submit assignments, and demo your mini-projects confidently.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- BACK TO TOP -->
+<button class="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+// Progress bar
+window.addEventListener('scroll', () => {
+  const d = document.documentElement;
+  const prog = (d.scrollTop / (d.scrollHeight - d.clientHeight)) * 100;
+  document.getElementById('prog').style.width = prog + '%';
+});
+
+// Active nav on scroll
+const sections = document.querySelectorAll('section[id]');
+const navItems = document.querySelectorAll('.nav-item');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navItems.forEach(n => n.classList.remove('active'));
+      const active = document.querySelector('.nav-item[href="#'+e.target.id+'"]');
+      if (active) active.classList.add('active');
+    }
+  });
+}, { threshold: 0.3 });
+sections.forEach(s => observer.observe(s));
+
+// Hamburger
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+// Quiz
+function checkQ(el, correct) {
+  const parent = el.closest('.quiz-answers');
+  parent.querySelectorAll('.quiz-ans').forEach(a => {
+    a.classList.remove('correct', 'wrong');
+    a.style.pointerEvents = 'none';
+  });
+  el.classList.add(correct ? 'correct' : 'wrong');
+}
+
+// Search (simple highlight)
+function searchTopics(val) {
+  if (!val) return;
+  const text = val.toLowerCase();
+  const all = document.querySelectorAll('.section-card');
+  all.forEach(c => {
+    const content = c.textContent.toLowerCase();
+    c.style.opacity = content.includes(text) ? '1' : '0.35';
+  });
+  if (!val) all.forEach(c => c.style.opacity = '1');
+}
+document.getElementById('searchInput').addEventListener('input', e => {
+  if (!e.target.value) document.querySelectorAll('.section-card').forEach(c => c.style.opacity = '1');
+});
+</script>
+</body>
+</html>
