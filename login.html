@@ -994,7 +994,7 @@ table tbody tr:hover{background:rgba(30,94,255,0.06)!important}
    The theme tokens are redefined here, so inline var(--…) styles
    inside the test markup re-colour themselves automatically.
    ════════════════════════════════════════════════════════════ */
-#testPage{
+#testPage, #examPage{
   /* — core tokens, overridden for this page only — */
   --bg:#070b16; --bg2:#0a1122; --bg3:#0f1730;
   --card:rgba(20,29,54,0.82); --card2:rgba(26,38,68,0.90);
@@ -1020,125 +1020,125 @@ table tbody tr:hover{background:rgba(30,94,255,0.06)!important}
 }
 
 /* ── top bar ── */
-#testPage .topnav{
+#testPage, #examPage .topnav{
   background:linear-gradient(90deg,rgba(9,14,28,0.92),rgba(13,20,40,0.92));
   border-bottom:1px solid var(--border);
   backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
   box-shadow:0 1px 0 rgba(255,255,255,0.03),0 8px 30px rgba(0,0,0,0.45)
 }
-#testPage .nav-brand{
+#testPage, #examPage .nav-brand{
   background:var(--tp-grad);-webkit-background-clip:text;background-clip:text;
   -webkit-text-fill-color:transparent;
   filter:drop-shadow(0 0 18px rgba(91,140,255,0.35))
 }
-#testPage .btn-danger{background:rgba(255,77,109,0.10);border-color:rgba(255,77,109,0.32);color:#ff8098;border-radius:9px}
-#testPage .btn-danger:hover{background:rgba(255,77,109,0.18);border-color:rgba(255,77,109,0.55);color:#ffb3c2;box-shadow:0 6px 22px rgba(255,77,109,0.28);transform:translateY(-1px)}
+#testPage, #examPage .btn-danger{background:rgba(255,77,109,0.10);border-color:rgba(255,77,109,0.32);color:#ff8098;border-radius:9px}
+#testPage, #examPage .btn-danger:hover{background:rgba(255,77,109,0.18);border-color:rgba(255,77,109,0.55);color:#ffb3c2;box-shadow:0 6px 22px rgba(255,77,109,0.28);transform:translateY(-1px)}
 
 /* ── timer / progress strip ── */
-#testPage .test-topbar{
+#testPage, #examPage .test-topbar{
   background:linear-gradient(90deg,rgba(10,17,34,0.88),rgba(14,22,44,0.88));
   border-bottom:1px solid var(--border);padding:14px 26px;
   backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)
 }
-#testPage .test-topbar>span:first-child{color:var(--cyan);filter:drop-shadow(0 0 8px rgba(34,211,238,0.5))}
-#testPage .test-timer{
+#testPage, #examPage .test-topbar>span:first-child{color:var(--cyan);filter:drop-shadow(0 0 8px rgba(34,211,238,0.5))}
+#testPage, #examPage .test-timer{
   font-size:23px;font-weight:700;letter-spacing:-0.5px;
   background:linear-gradient(135deg,#34e5b0,#22d3ee);
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
   filter:drop-shadow(0 0 14px rgba(52,229,176,0.35))
 }
-#testPage .test-timer.warning{background:linear-gradient(135deg,#fbbf24,#fb923c);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 14px rgba(251,191,36,0.4))}
-#testPage .test-timer.critical{background:linear-gradient(135deg,#ff4d6d,#f472b6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 16px rgba(255,77,109,0.5))}
-#testPage .test-progress-bar{height:5px;border-radius:99px;background:rgba(126,158,255,0.09);box-shadow:inset 0 0 0 1px rgba(126,158,255,0.06)}
-#testPage .test-progress-fill{background:var(--tp-grad);border-radius:99px;box-shadow:0 0 16px rgba(91,140,255,0.55);transition:width 0.45s cubic-bezier(0.22,1,0.36,1)}
-#testPage .test-qnum{color:var(--text2);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.4px}
+#testPage, #examPage .test-timer.warning{background:linear-gradient(135deg,#fbbf24,#fb923c);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 14px rgba(251,191,36,0.4))}
+#testPage, #examPage .test-timer.critical{background:linear-gradient(135deg,#ff4d6d,#f472b6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 16px rgba(255,77,109,0.5))}
+#testPage, #examPage .test-progress-bar{height:5px;border-radius:99px;background:rgba(126,158,255,0.09);box-shadow:inset 0 0 0 1px rgba(126,158,255,0.06)}
+#testPage, #examPage .test-progress-fill{background:var(--tp-grad);border-radius:99px;box-shadow:0 0 16px rgba(91,140,255,0.55);transition:width 0.45s cubic-bezier(0.22,1,0.36,1)}
+#testPage, #examPage .test-qnum{color:var(--text2);font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.4px}
 
 /* ── question card ── */
-#testPage .test-content{padding:32px 24px}
-#testPage .q-card{
+#testPage, #examPage .test-content{padding:32px 24px}
+#testPage, #examPage .q-card{
   position:relative;overflow:hidden;max-width:820px;padding:28px 30px;border-radius:18px;
   background:linear-gradient(160deg,rgba(20,29,54,0.82),rgba(12,18,36,0.86));
   border:1px solid var(--border);
   backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
   box-shadow:0 26px 70px rgba(0,0,0,0.5),0 0 0 1px rgba(255,255,255,0.02),0 0 60px rgba(91,140,255,0.05)
 }
-#testPage .q-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(91,140,255,0.7),rgba(34,211,238,0.55),transparent)}
-#testPage .q-card:hover{border-color:var(--border2)}
-#testPage .q-num-badge{background:var(--tp-grad);color:var(--tp-ink);width:34px;height:34px;border-radius:10px;box-shadow:0 6px 20px rgba(91,140,255,0.40)}
-#testPage .q-text{color:var(--text);font-size:15.5px;line-height:1.65}
-#testPage .q-meta .badge{border-radius:7px;font-size:10.5px;padding:4px 10px;letter-spacing:0.4px}
-#testPage .badge-green{background:rgba(52,229,176,0.12);color:#5ef2c6;border-color:rgba(52,229,176,0.30)}
-#testPage .badge-yellow{background:rgba(251,191,36,0.12);color:#fcd34d;border-color:rgba(251,191,36,0.30)}
-#testPage .badge-red{background:rgba(255,77,109,0.12);color:#ff8098;border-color:rgba(255,77,109,0.30)}
-#testPage .badge-blue,#testPage .badge-purple{background:rgba(91,140,255,0.12);color:#8fb0ff;border-color:rgba(91,140,255,0.30)}
-#testPage .badge-cyan{background:rgba(34,211,238,0.12);color:#67e8f9;border-color:rgba(34,211,238,0.30)}
-#testPage .badge-gray{background:rgba(126,158,255,0.07);color:var(--text2);border-color:var(--border)}
+#testPage, #examPage .q-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(91,140,255,0.7),rgba(34,211,238,0.55),transparent)}
+#testPage, #examPage .q-card:hover{border-color:var(--border2)}
+#testPage, #examPage .q-num-badge{background:var(--tp-grad);color:var(--tp-ink);width:34px;height:34px;border-radius:10px;box-shadow:0 6px 20px rgba(91,140,255,0.40)}
+#testPage, #examPage .q-text{color:var(--text);font-size:15.5px;line-height:1.65}
+#testPage, #examPage .q-meta .badge{border-radius:7px;font-size:10.5px;padding:4px 10px;letter-spacing:0.4px}
+#testPage, #examPage .badge-green{background:rgba(52,229,176,0.12);color:#5ef2c6;border-color:rgba(52,229,176,0.30)}
+#testPage, #examPage .badge-yellow{background:rgba(251,191,36,0.12);color:#fcd34d;border-color:rgba(251,191,36,0.30)}
+#testPage, #examPage .badge-red{background:rgba(255,77,109,0.12);color:#ff8098;border-color:rgba(255,77,109,0.30)}
+#testPage .badge-blue,#testPage .badge-purple,#examPage .badge-blue,#examPage .badge-purple{background:rgba(91,140,255,0.12);color:#8fb0ff;border-color:rgba(91,140,255,0.30)}
+#testPage, #examPage .badge-cyan{background:rgba(34,211,238,0.12);color:#67e8f9;border-color:rgba(34,211,238,0.30)}
+#testPage, #examPage .badge-gray{background:rgba(126,158,255,0.07);color:var(--text2);border-color:var(--border)}
 
 /* ── options ── */
-#testPage .opt-item{
+#testPage, #examPage .opt-item{
   position:relative;overflow:hidden;padding:14px 18px;border-radius:13px;
   background:rgba(126,158,255,0.035);border:1px solid var(--border);
   transition:all 0.2s cubic-bezier(0.22,1,0.36,1)
 }
-#testPage .opt-item::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:2px;height:0;background:var(--tp-grad);border-radius:0 3px 3px 0;transition:height 0.22s ease}
-#testPage .opt-item:hover{background:rgba(91,140,255,0.07);border-color:var(--border2);transform:translateX(3px)}
-#testPage .opt-item:hover::before{height:56%}
-#testPage .opt-item.selected{background:linear-gradient(90deg,rgba(91,140,255,0.16),rgba(34,211,238,0.07));border-color:rgba(91,140,255,0.55);box-shadow:0 0 0 1px rgba(91,140,255,0.25),0 8px 30px rgba(91,140,255,0.18);transform:none}
-#testPage .opt-item.selected::before{height:100%;width:3px}
-#testPage .opt-item.correct{background:linear-gradient(90deg,rgba(52,229,176,0.15),rgba(52,229,176,0.04));border-color:rgba(52,229,176,0.55);box-shadow:0 0 0 1px rgba(52,229,176,0.2),0 8px 28px rgba(52,229,176,0.15)}
-#testPage .opt-item.wrong{background:linear-gradient(90deg,rgba(255,77,109,0.15),rgba(255,77,109,0.04));border-color:rgba(255,77,109,0.55);box-shadow:0 0 0 1px rgba(255,77,109,0.2),0 8px 28px rgba(255,77,109,0.15)}
-#testPage .opt-letter{width:30px;height:30px;border-radius:8px;background:rgba(126,158,255,0.10);color:var(--text2);font-family:'JetBrains Mono',monospace}
-#testPage .opt-item:hover .opt-letter{background:rgba(126,158,255,0.18);color:var(--text)}
-#testPage .opt-item.selected .opt-letter{background:var(--tp-grad);color:var(--tp-ink);box-shadow:0 4px 14px rgba(91,140,255,0.45)}
-#testPage .opt-item.correct .opt-letter{background:linear-gradient(135deg,#34e5b0,#22d3ee);color:#04231b}
-#testPage .opt-item.wrong .opt-letter{background:linear-gradient(135deg,#ff4d6d,#f472b6);color:#2a0510}
-#testPage .opt-text{color:var(--text);font-size:14.5px}
+#testPage, #examPage .opt-item::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:2px;height:0;background:var(--tp-grad);border-radius:0 3px 3px 0;transition:height 0.22s ease}
+#testPage, #examPage .opt-item:hover{background:rgba(91,140,255,0.07);border-color:var(--border2);transform:translateX(3px)}
+#testPage, #examPage .opt-item:hover::before{height:56%}
+#testPage, #examPage .opt-item.selected{background:linear-gradient(90deg,rgba(91,140,255,0.16),rgba(34,211,238,0.07));border-color:rgba(91,140,255,0.55);box-shadow:0 0 0 1px rgba(91,140,255,0.25),0 8px 30px rgba(91,140,255,0.18);transform:none}
+#testPage, #examPage .opt-item.selected::before{height:100%;width:3px}
+#testPage, #examPage .opt-item.correct{background:linear-gradient(90deg,rgba(52,229,176,0.15),rgba(52,229,176,0.04));border-color:rgba(52,229,176,0.55);box-shadow:0 0 0 1px rgba(52,229,176,0.2),0 8px 28px rgba(52,229,176,0.15)}
+#testPage, #examPage .opt-item.wrong{background:linear-gradient(90deg,rgba(255,77,109,0.15),rgba(255,77,109,0.04));border-color:rgba(255,77,109,0.55);box-shadow:0 0 0 1px rgba(255,77,109,0.2),0 8px 28px rgba(255,77,109,0.15)}
+#testPage, #examPage .opt-letter{width:30px;height:30px;border-radius:8px;background:rgba(126,158,255,0.10);color:var(--text2);font-family:'JetBrains Mono',monospace}
+#testPage, #examPage .opt-item:hover .opt-letter{background:rgba(126,158,255,0.18);color:var(--text)}
+#testPage, #examPage .opt-item.selected .opt-letter{background:var(--tp-grad);color:var(--tp-ink);box-shadow:0 4px 14px rgba(91,140,255,0.45)}
+#testPage, #examPage .opt-item.correct .opt-letter{background:linear-gradient(135deg,#34e5b0,#22d3ee);color:#04231b}
+#testPage, #examPage .opt-item.wrong .opt-letter{background:linear-gradient(135deg,#ff4d6d,#f472b6);color:#2a0510}
+#testPage, #examPage .opt-text{color:var(--text);font-size:14.5px}
 
 /* ── bottom nav ── */
-#testPage .test-nav{
+#testPage, #examPage .test-nav{
   background:linear-gradient(90deg,rgba(10,17,34,0.90),rgba(14,22,44,0.90));
   border-top:1px solid var(--border);padding:16px 26px;
   backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)
 }
-#testPage .btn-outline{background:rgba(126,158,255,0.05);border-color:var(--border);color:var(--text2);border-radius:10px}
-#testPage .btn-outline:hover{background:rgba(126,158,255,0.10);border-color:var(--border2);color:var(--text)}
-#testPage .btn-yellow{background:rgba(251,191,36,0.10);border-color:rgba(251,191,36,0.30);color:#fcd34d;border-radius:99px;padding:7px 18px}
-#testPage .btn-yellow:hover{background:rgba(251,191,36,0.18);border-color:rgba(251,191,36,0.55);box-shadow:0 6px 20px rgba(251,191,36,0.22);transform:translateY(-1px)}
-#testPage .btn-accent{background:var(--tp-grad);border:none;color:var(--tp-ink);font-weight:700;border-radius:10px;padding:9px 22px;box-shadow:0 6px 24px rgba(91,140,255,0.38)}
-#testPage .btn-accent:hover{transform:translateY(-2px);box-shadow:0 12px 34px rgba(91,140,255,0.55);filter:brightness(1.07)}
+#testPage, #examPage .btn-outline{background:rgba(126,158,255,0.05);border-color:var(--border);color:var(--text2);border-radius:10px}
+#testPage, #examPage .btn-outline:hover{background:rgba(126,158,255,0.10);border-color:var(--border2);color:var(--text)}
+#testPage, #examPage .btn-yellow{background:rgba(251,191,36,0.10);border-color:rgba(251,191,36,0.30);color:#fcd34d;border-radius:99px;padding:7px 18px}
+#testPage, #examPage .btn-yellow:hover{background:rgba(251,191,36,0.18);border-color:rgba(251,191,36,0.55);box-shadow:0 6px 20px rgba(251,191,36,0.22);transform:translateY(-1px)}
+#testPage, #examPage .btn-accent{background:var(--tp-grad);border:none;color:var(--tp-ink);font-weight:700;border-radius:10px;padding:9px 22px;box-shadow:0 6px 24px rgba(91,140,255,0.38)}
+#testPage, #examPage .btn-accent:hover{transform:translateY(-2px);box-shadow:0 12px 34px rgba(91,140,255,0.55);filter:brightness(1.07)}
 
 /* ── question navigator ── */
-#testPage .test-sidebar{
+#testPage, #examPage .test-sidebar{
   width:272px;border-left:1px solid var(--border);
   background:linear-gradient(180deg,rgba(11,18,36,0.92),rgba(8,13,27,0.95));
   backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)
 }
-#testPage .test-sidebar h4{display:flex;align-items:center;gap:9px;color:var(--text3);font-size:10.5px;letter-spacing:1.4px}
-#testPage .test-sidebar h4::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent)}
-#testPage .q-grid{gap:7px}
-#testPage .q-dot{
+#testPage, #examPage .test-sidebar h4{display:flex;align-items:center;gap:9px;color:var(--text3);font-size:10.5px;letter-spacing:1.4px}
+#testPage, #examPage .test-sidebar h4::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent)}
+#testPage, #examPage .q-grid{gap:7px}
+#testPage, #examPage .q-dot{
   border-radius:9px;border:1px solid var(--border);background:rgba(126,158,255,0.04);
   color:var(--text2);font-family:'JetBrains Mono',monospace;font-size:11px;
   transition:all 0.18s cubic-bezier(0.22,1,0.36,1)
 }
-#testPage .q-dot:hover{border-color:var(--border2);background:rgba(126,158,255,0.10);color:var(--text);transform:translateY(-2px)}
-#testPage .q-dot.answered{background:var(--tp-grad);border-color:transparent;color:var(--tp-ink);font-weight:700;box-shadow:0 3px 12px rgba(91,140,255,0.35)}
-#testPage .q-dot.marked{background:linear-gradient(135deg,#fbbf24,#f59e0b);border-color:transparent;color:#1a1204;font-weight:700;box-shadow:0 3px 12px rgba(251,191,36,0.35)}
-#testPage .q-dot.answered.marked{background:linear-gradient(135deg,#5b8cff,#fbbf24);border-color:transparent;color:#0d1020}
-#testPage .q-dot.current{border-color:var(--cyan);color:var(--cyan);animation:tpDotPulse 2.1s ease-in-out infinite}
-#testPage .q-dot.current:not(.answered):not(.marked){background:rgba(34,211,238,0.10)}
+#testPage, #examPage .q-dot:hover{border-color:var(--border2);background:rgba(126,158,255,0.10);color:var(--text);transform:translateY(-2px)}
+#testPage, #examPage .q-dot.answered{background:var(--tp-grad);border-color:transparent;color:var(--tp-ink);font-weight:700;box-shadow:0 3px 12px rgba(91,140,255,0.35)}
+#testPage, #examPage .q-dot.marked{background:linear-gradient(135deg,#fbbf24,#f59e0b);border-color:transparent;color:#1a1204;font-weight:700;box-shadow:0 3px 12px rgba(251,191,36,0.35)}
+#testPage, #examPage .q-dot.answered.marked{background:linear-gradient(135deg,#5b8cff,#fbbf24);border-color:transparent;color:#0d1020}
+#testPage, #examPage .q-dot.current{border-color:var(--cyan);color:var(--cyan);animation:tpDotPulse 2.1s ease-in-out infinite}
+#testPage, #examPage .q-dot.current:not(.answered):not(.marked){background:rgba(34,211,238,0.10)}
 @keyframes tpDotPulse{
   0%,100%{box-shadow:0 0 0 2px rgba(34,211,238,0.16),0 0 14px rgba(34,211,238,0.28)}
   50%    {box-shadow:0 0 0 3px rgba(34,211,238,0.30),0 0 24px rgba(34,211,238,0.50)}
 }
-#testPage .q-legend{gap:8px;font-size:11.5px;color:var(--text2)}
-#testPage .q-legend-dot{width:13px;height:13px;border-radius:4px}
+#testPage, #examPage .q-legend{gap:8px;font-size:11.5px;color:var(--text2)}
+#testPage, #examPage .q-legend-dot{width:13px;height:13px;border-radius:4px}
 
 /* ── scrollbars ── */
-#testPage ::-webkit-scrollbar{width:9px;height:9px}
-#testPage ::-webkit-scrollbar-track{background:transparent}
-#testPage ::-webkit-scrollbar-thumb{background:linear-gradient(to bottom,rgba(91,140,255,0.45),rgba(34,211,238,0.35));border-radius:99px;border:2px solid transparent;background-clip:content-box}
-#testPage ::-webkit-scrollbar-thumb:hover{background:linear-gradient(to bottom,rgba(91,140,255,0.7),rgba(34,211,238,0.6));background-clip:content-box}
+#testPage, #examPage ::-webkit-scrollbar{width:9px;height:9px}
+#testPage, #examPage ::-webkit-scrollbar-track{background:transparent}
+#testPage, #examPage ::-webkit-scrollbar-thumb{background:linear-gradient(to bottom,rgba(91,140,255,0.45),rgba(34,211,238,0.35));border-radius:99px;border:2px solid transparent;background-clip:content-box}
+#testPage, #examPage ::-webkit-scrollbar-thumb:hover{background:linear-gradient(to bottom,rgba(91,140,255,0.7),rgba(34,211,238,0.6));background-clip:content-box}
 
 @media (prefers-reduced-motion:reduce){
   #testPage .q-dot.current{animation:none}
@@ -1409,6 +1409,9 @@ table tbody tr:hover{background:rgba(30,94,255,0.06)!important}
             <input type="password" id="loginPass" autocomplete="current-password"
               onkeydown="if(event.key==='Enter')doLogin()">
           </div>
+          <div style="text-align:right;margin-top:-4px">
+            <a href="javascript:void(0)" onclick="openForgotPassword()" style="font-size:12px;color:var(--accent,#6c8cff);text-decoration:none">Forgot password?</a>
+          </div>
         </div>
         <div id="adminLoginForm" style="display:none">
           <div class="form-group">
@@ -1534,6 +1537,7 @@ table tbody tr:hover{background:rgba(30,94,255,0.06)!important}
   <div class="topnav">
     <div class="nav-brand"><svg width="26" height="26" viewBox="0 0 120 120" style="vertical-align:middle;margin-right:7px"><defs><linearGradient id="s360b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1e5eff"/><stop offset="1" stop-color="#22c9f5"/></linearGradient></defs><path d="M60 16 a46 46 0 1 1 -32.5 13.5" fill="none" stroke="url(#s360b)" stroke-width="6" stroke-linecap="round"/><path d="M60 8 l8 10 -10 4 z" fill="#22c9f5"/><rect x="34" y="40" width="52" height="46" rx="15" fill="#eef1ff"/><rect x="41" y="49" width="38" height="26" rx="11" fill="#0d1024"/><circle cx="53" cy="62" r="4.4" fill="#3ee0ff"/><circle cx="67" cy="62" r="4.4" fill="#3ee0ff"/><path d="M54 69 q6 5 12 0" fill="none" stroke="#3ee0ff" stroke-width="2.6" stroke-linecap="round"/><path d="M60 22 L84 31 60 40 36 31 Z" fill="#1e2350"/></svg>Saarthi<span style="color:#22c9f5"> 360</span></div>
     <div class="nav-spacer"></div>
+    <button class="nav-btn" onclick="openChangePassword()" style="font-family:'Inter',sans-serif;font-size:12px">🔑 Password</button>
     <button class="nav-btn" onclick="doLogout()" style="font-family:'Inter',sans-serif;font-size:12px">Sign Out</button>
     <div class="nav-user">
       <div class="nav-avatar" id="studentAvatar">S</div>
@@ -1776,11 +1780,58 @@ table tbody tr:hover{background:rgba(30,94,255,0.06)!important}
         <div class="fgroup"><label>Full Name *</label><input type="text" id="coordFormName" placeholder="Dr. A. Sharma"></div>
       </div>
       <div class="fgroup"><label id="coordPassLabel">Password *</label><input type="text" id="coordFormPass" placeholder="Set a login password"></div>
-      <div class="fgroup"><label>Batches managed</label><div id="coordBatchList" style="display:grid;gap:6px;max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:10px"></div></div>
+      <div class="fgroup"><label>Program managed (BDA / AI / AC) *</label><div id="coordCourseList" style="display:grid;gap:8px;border:1px solid var(--border);border-radius:8px;padding:12px"></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">The coordinator will see only the students, leaderboards, certificates and modules of the selected program(s) — nothing from other programs.</div></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modalCoord')">Cancel</button>
       <button class="btn btn-accent" onclick="saveCoord()">💾 Save Coordinator</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reset Student Password Modal (admin / coordinator) -->
+<div class="modal-overlay" id="modalResetStudentPass">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <span style="font-size:22px">🔑</span>
+      <h3>Reset Student Password</h3>
+      <div class="modal-close" onclick="closeModal('modalResetStudentPass')">✕</div>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text3);margin-bottom:12px">Setting a new password for <b id="rspName" style="color:var(--text)"></b>. Share it with the student — they can change it later from their dashboard.</p>
+      <div class="fgroup"><label>New password *</label>
+        <input type="text" id="rspNewPass" placeholder="e.g. their enrollment ID">
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-top:6px">Tip: a simple reset is the student's enrollment ID or first name — ask them to change it after logging in.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalResetStudentPass')">Cancel</button>
+      <button class="btn btn-accent" onclick="confirmResetStudentPassword()">🔑 Set Password</button>
+    </div>
+  </div>
+</div>
+
+<!-- Forgot Password Modal (student self-service) -->
+<div class="modal-overlay" id="modalForgotPass">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <span style="font-size:22px">🔒</span>
+      <h3>Reset your password</h3>
+      <div class="modal-close" onclick="closeModal('modalForgotPass')">✕</div>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text3);margin-bottom:12px">Enter your PRN and your full name exactly as enrolled to verify it's you, then set a new password.</p>
+      <div class="fgroup"><label>PRN Number *</label><input type="text" id="fpId" placeholder="e.g. 260240325001"></div>
+      <div class="fgroup" style="margin-top:10px"><label>Full Name (as enrolled) *</label><input type="text" id="fpName" placeholder="Your full name"></div>
+      <div class="fgroup" style="margin-top:10px"><label>New Password *</label><input type="password" id="fpNew" placeholder="At least 4 characters"></div>
+      <div class="fgroup" style="margin-top:10px"><label>Confirm New Password *</label><input type="password" id="fpConfirm" placeholder="Re-enter new password" onkeydown="if(event.key==='Enter')submitForgotPassword()"></div>
+      <div id="fpError" style="display:none;color:var(--red,#e05);font-size:12px;margin-top:10px"></div>
+      <div style="font-size:12px;color:var(--text3);margin-top:10px">Can't remember your enrolled name or it doesn't match? Contact your course coordinator to reset it for you.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalForgotPass')">Cancel</button>
+      <button class="btn btn-accent" onclick="submitForgotPassword()">Reset Password</button>
     </div>
   </div>
 </div>
@@ -2688,12 +2739,16 @@ async function doLogin() {
       const ok = coord.passHash ? (enteredHash === coord.passHash) : (pass === (coord.pass || ''));
       if (ok) {
         if (!coord.passHash) SB.from('coordinators').update({ passHash: enteredHash }).eq('id', id).then(() => {});
-        let batches = [];
+        let batches = [], courses = [];
         try {
           const { data: cb } = await SB.from('coordinator_batches').select('batch_id').eq('coordinator_id', id);
           batches = (cb || []).map(r => r.batch_id);
         } catch(e) {}
-        currentUser = { id: coord.id, name: coord.name, role: 'coordinator', batches };
+        try {
+          const { data: cc } = await SB.from('coordinator_courses').select('course_id').eq('coordinator_id', id);
+          courses = (cc || []).map(r => r.course_id);
+        } catch(e) {}
+        currentUser = { id: coord.id, name: coord.name, role: 'coordinator', batches, courses };
         localStorage.setItem('pgcp_user', JSON.stringify(currentUser));
         launchAdmin();
         return;
@@ -2735,6 +2790,40 @@ async function doLogin() {
   launchStudent();
 }
 
+// ── Student self-service password recovery ──
+// No email/OTP on file, so identity is verified by PRN + enrolled full name.
+function openForgotPassword(){
+  ['fpId','fpName','fpNew','fpConfirm'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  const pre = document.getElementById('loginId'); const fp = document.getElementById('fpId');
+  if (pre && fp && pre.value.trim()) fp.value = pre.value.trim();
+  const err = document.getElementById('fpError'); if (err) err.style.display='none';
+  openModal('modalForgotPass');
+}
+async function submitForgotPassword(){
+  const err = document.getElementById('fpError');
+  const showErr = m => { if(err){ err.textContent=m; err.style.display='block'; } };
+  const id = document.getElementById('fpId').value.trim();
+  const nm = document.getElementById('fpName').value.trim();
+  const np = document.getElementById('fpNew').value.trim();
+  const cf = document.getElementById('fpConfirm').value.trim();
+  if (!id || !nm || !np) return showErr('Please fill in every field.');
+  if (np.length < 4) return showErr('New password must be at least 4 characters.');
+  if (np !== cf) return showErr('The two passwords do not match.');
+  const norm = s => String(s||'').trim().replace(/\s+/g,' ').toLowerCase();
+  let student;
+  try { const { data } = await SB.from('students').select('id,name,status').eq('id', id).single(); student = data; } catch(e) {}
+  // Generic message so we don't reveal whether a PRN exists.
+  if (!student || norm(student.name) !== norm(nm)) return showErr("Those details don't match our records. Please contact your course coordinator.");
+  if (student.status === 'inactive') return showErr('This account is inactive. Please contact your coordinator.');
+  const hash = await sha256(np);
+  const { error } = await SB.from('students').update({ passHash: hash, pass: null }).eq('id', id);
+  if (error) return showErr('Could not reset right now: ' + error.message);
+  closeModal('modalForgotPass');
+  toast('Password reset! You can now log in with your new password.', 'success');
+  const li = document.getElementById('loginId'); if (li) li.value = id;
+  const lp = document.getElementById('loginPass'); if (lp) { lp.value=''; lp.focus(); }
+}
+
 function doLogout() {
   localStorage.removeItem('pgcp_user');
   currentUser = null;
@@ -2746,7 +2835,7 @@ function doLogout() {
 // LAUNCH
 // ════════════════════════════════════════════════════════════════
 // Sections a Course Coordinator may see (everything else is admin-only)
-const COORD_SECTIONS = ['dashboard','leaderboard','students','certs'];
+const COORD_SECTIONS = ['dashboard','leaderboard','students','certs','modules'];
 function applyRoleUI(){
   const isCoord = currentUser?.role === 'coordinator';
   document.querySelectorAll('#adminPage .sidebar-item').forEach(el => {
@@ -2767,13 +2856,32 @@ function applyRoleUI(){
   if (av) av.textContent = (isCoord ? (currentUser.name||'C') : 'A')[0].toUpperCase();
 }
 function coordBatchSet(){
-  return (currentUser?.role === 'coordinator' && Array.isArray(currentUser.batches))
+  return (currentUser?.role === 'coordinator' && Array.isArray(currentUser.batches) && currentUser.batches.length)
     ? new Set(currentUser.batches.map(String)) : null;
+}
+// Program (course) scope for a coordinator — the BDA/AI/AC isolation.
+function coordCourseSet(){
+  return (currentUser?.role === 'coordinator' && Array.isArray(currentUser.courses) && currentUser.courses.length)
+    ? new Set(currentUser.courses.map(String)) : null;
+}
+// True when the current coordinator is allowed to see this student. Admin: always.
+// Coordinator: student must be in one of their programs AND (if batches are also
+// assigned) one of those batches. A coordinator with no scope at all sees no one.
+function coordCanSeeStudent(s){
+  if (currentUser?.role !== 'coordinator') return true;
+  const csC = coordCourseSet(), csB = coordBatchSet();
+  if (!csC && !csB) return false;
+  if (csC){ const cid = (typeof studentCourseId==='function') ? studentCourseId(s) : (s?.course_id); if (!csC.has(String(cid))) return false; }
+  if (csB){ if (!csB.has(String(s?.batch_id))) return false; }
+  return true;
 }
 
 async function launchAdmin() {
   showPage('adminPage');
   applyRoleUI();
+  await loadCoursesCache();
+  await loadBatchesCache();
+  await loadModuleCoursesCache();
   await loadModulesCache();
   adminNav('dashboard');
 }
@@ -2794,6 +2902,7 @@ async function launchStudent() {
   } catch(e) { /* non-fatal */ }
   await loadCoursesCache();
   await loadBatchesCache();
+  await loadModuleCoursesCache();
   await loadModulesCache();
   await loadSetsCache();   // needed for checkSavedTest to show set name + resumeSavedTest
   studentNav('modules');
@@ -2810,12 +2919,47 @@ async function loadModulesCache() {
     cache.modules = data || [];
   } catch(e) { console.warn('loadModulesCache exception:', e); cache.modules = []; }
 }
+// module → program(course) mappings. No rows for a module = visible to all programs.
+async function loadModuleCoursesCache() {
+  try {
+    const { data, error } = await SB.from('module_courses').select('*');
+    if (error) { console.warn('loadModuleCoursesCache error:', error.message); cache.moduleCourses = []; return; }
+    cache.moduleCourses = data || [];
+  } catch(e) { console.warn('loadModuleCoursesCache exception:', e); cache.moduleCourses = []; }
+}
+// Set of course_ids a module is mapped to (empty set = global / all programs).
+function moduleCourseSet(moduleId){
+  const s = new Set();
+  (cache.moduleCourses||[]).forEach(r => { if (String(r.module_id)===String(moduleId)) s.add(String(r.course_id)); });
+  return s;
+}
+// Is a module visible for a given course? Unmapped modules are visible everywhere.
+function moduleVisibleForCourse(moduleId, courseId){
+  const s = moduleCourseSet(moduleId);
+  if (s.size === 0) return true;               // global/legacy module
+  return courseId != null && s.has(String(courseId));
+}
+// Modules the current viewer should see. Admin: all. Coordinator: those mapped to
+// any of their programs (plus global). Student: those mapped to their program.
+function visibleModules(){
+  const all = cache.modules || [];
+  if (currentUser?.role === 'coordinator'){
+    const cs = coordCourseSet();
+    if (!cs) return all;                        // no program scope set → show all
+    return all.filter(m => { const s = moduleCourseSet(m.id); return s.size===0 || [...s].some(cid=>cs.has(String(cid))); });
+  }
+  if (currentUser?.role === 'student'){
+    const cid = currentUser.course_id != null ? currentUser.course_id : (typeof batchCourseId==='function'?batchCourseId(currentUser.batch_id):null);
+    if (cid == null) return all;                // program not set yet → don't hide anything
+    return all.filter(m => moduleVisibleForCourse(m.id, cid));
+  }
+  return all;
+}
 async function loadStudentsCache() {
   const { data } = await SB.from('students').select('*').order('name');
   let list = data || [];
-  // Course Coordinators only ever see students in the batches they manage
-  const cs = coordBatchSet();
-  if (cs) list = list.filter(s => cs.has(String(s.batch_id)));
+  // Course Coordinators only ever see students within their assigned program(s)/batches
+  if (currentUser?.role === 'coordinator') list = list.filter(coordCanSeeStudent);
   cache.students = list;
 }
 // ── Batches & Courses (admin-managed grouping) ──
@@ -3051,42 +3195,54 @@ async function renderAdminDashboard() {
 // ════════════════════════════════════════════════════════════════
 async function loadCoordinatorsCache(){
   try {
-    const [{ data: coords }, { data: cb }] = await Promise.all([
+    const [{ data: coords }, { data: cb }, { data: cc }] = await Promise.all([
       SB.from('coordinators').select('*').order('name'),
-      SB.from('coordinator_batches').select('*')
+      SB.from('coordinator_batches').select('*'),
+      SB.from('coordinator_courses').select('*')
     ]);
     cache.coordinators = coords || [];
     cache.coordinatorBatches = cb || [];
-  } catch(e){ cache.coordinators = []; cache.coordinatorBatches = []; }
+    cache.coordinatorCourses = cc || [];
+  } catch(e){ cache.coordinators = []; cache.coordinatorBatches = []; cache.coordinatorCourses = []; }
 }
 function coordBatchesOf(cid){
   return (cache.coordinatorBatches||[]).filter(r => r.coordinator_id === cid).map(r => r.batch_id);
+}
+function coordCoursesOf(cid){
+  return (cache.coordinatorCourses||[]).filter(r => r.coordinator_id === cid).map(r => r.course_id);
+}
+// Program (course) checkboxes for the coordinator modal.
+function _coordCourseCheckboxes(selectedIds){
+  const sel = new Set((selectedIds||[]).map(String));
+  return (cache.courses||[]).map(c =>
+    `<label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" class="coord-course" value="${c.id}" ${sel.has(String(c.id))?'checked':''}> ${escHtml((c.code?c.code+' — ':'')+(c.name||('#'+c.id)))}</label>`
+  ).join('') || '<div style="color:var(--text3);font-size:12px">No programs found.</div>';
 }
 async function renderAdminCoordinators(){
   await Promise.all([loadCoordinatorsCache(), loadCoursesCache(), loadBatchesCache()]);
   const el = document.getElementById('adminContent');
   el.innerHTML = `
     <div class="section-header">
-      <div><h2>🧑‍🏫 Coordinators</h2><p>Course Coordinator accounts. Each manages one or more batches and reviews/approves those students.</p></div>
+      <div><h2>🧑‍🏫 Coordinators</h2><p>Course Coordinator accounts. Each manages one or more programs (BDA/AI/AC) and sees only that program's students &amp; data.</p></div>
       <div class="hd-right"><button class="btn btn-accent" onclick="openAddCoord()">+ Add Coordinator</button></div>
     </div>
     <div class="card"><div class="tbl-wrap"><table>
-      <thead><tr><th>ID</th><th>Name</th><th>Status</th><th>Batches managed</th><th>Actions</th></tr></thead>
+      <thead><tr><th>ID</th><th>Name</th><th>Status</th><th>Program(s)</th><th>Actions</th></tr></thead>
       <tbody>
         ${(cache.coordinators||[]).map(c => {
-          const bids = coordBatchesOf(c.id);
-          const chips = bids.length ? bids.map(bid => `<span class="badge badge-blue">${escHtml((courseCode(batchCourseId(bid))?courseCode(batchCourseId(bid))+' · ':'')+ (batchName(bid)||('#'+bid)))}</span>`).join(' ') : '<span style="color:var(--text3);font-size:12px">none</span>';
+          const cids = coordCoursesOf(c.id);
+          const progChips = cids.length ? cids.map(cid => `<span class="badge badge-green">${escHtml(courseCode(cid)||courseName(cid)||('#'+cid))}</span>`).join(' ') : '<span style="color:var(--danger,#e05);font-size:12px">none — sees nothing</span>';
           return `<tr>
             <td><code style="color:var(--cyan);font-size:12px">${escHtml(c.id)}</code></td>
             <td style="font-weight:600">${escHtml(c.name)}</td>
             <td><span class="badge ${c.status==='active'?'badge-green':'badge-red'}">${c.status||'active'}</span></td>
-            <td style="max-width:320px"><div style="display:flex;flex-wrap:wrap;gap:4px">${chips}</div></td>
+            <td style="max-width:260px"><div style="display:flex;flex-wrap:wrap;gap:4px">${progChips}</div></td>
             <td><div style="display:flex;gap:6px">
               <button class="btn btn-outline btn-sm" onclick="editCoord('${escHtml(c.id)}')">✏️</button>
               <button class="btn btn-danger btn-sm" onclick="deleteCoord('${escHtml(c.id)}','${escHtml((c.name||'').replace(/'/g,''))}')">🗑</button>
             </div></td>
           </tr>`;
-        }).join('') || '<tr><td colspan="5"><div class="empty-state"><div class="icon">🧑‍🏫</div><h3>No coordinators yet</h3><p>Add a coordinator and assign them batches.</p></div></td></tr>'}
+        }).join('') || '<tr><td colspan="5"><div class="empty-state"><div class="icon">🧑‍🏫</div><h3>No coordinators yet</h3><p>Add a coordinator and assign them one or more programs.</p></div></td></tr>'}
       </tbody>
     </table></div></div>`;
 }
@@ -3109,7 +3265,7 @@ function openAddCoord(){
   document.getElementById('coordFormName').value = '';
   document.getElementById('coordFormPass').value = '';
   document.getElementById('coordPassLabel').textContent = 'Password *';
-  document.getElementById('coordBatchList').innerHTML = _coordBatchCheckboxes([]);
+  document.getElementById('coordCourseList').innerHTML = _coordCourseCheckboxes([]);
   openModal('modalCoord');
 }
 function editCoord(cid){
@@ -3121,7 +3277,7 @@ function editCoord(cid){
   document.getElementById('coordFormName').value = c.name || '';
   document.getElementById('coordFormPass').value = '';
   document.getElementById('coordPassLabel').textContent = 'Password (leave blank to keep)';
-  document.getElementById('coordBatchList').innerHTML = _coordBatchCheckboxes(coordBatchesOf(cid));
+  document.getElementById('coordCourseList').innerHTML = _coordCourseCheckboxes(coordCoursesOf(cid));
   openModal('modalCoord');
 }
 async function saveCoord(){
@@ -3130,20 +3286,23 @@ async function saveCoord(){
   const pass = document.getElementById('coordFormPass').value.trim();
   if (!id || !name) return toast('ID and Name are required', 'error');
   if (!coordEditId && !pass) return toast('Set a password for the new coordinator', 'error');
+  const chosenCourses = Array.from(document.querySelectorAll('.coord-course:checked')).map(c => Number(c.value));
+  if (!chosenCourses.length) return toast('Select at least one program (BDA / AI / AC)', 'error');
   const rec = { id, name, status: 'active' };
   if (pass) rec.passHash = await sha256(pass);
   const { error } = coordEditId
     ? await SB.from('coordinators').update(rec).eq('id', id)
     : await SB.from('coordinators').insert(rec);
   if (error) return toast('Error: ' + error.message, 'error');
-  // sync batch assignments
-  const chosen = Array.from(document.querySelectorAll('.coord-batch:checked')).map(c => Number(c.value));
-  await SB.from('coordinator_batches').delete().eq('coordinator_id', id);
-  if (chosen.length) {
-    const rows = chosen.map(bid => ({ coordinator_id: id, batch_id: bid }));
-    const { error: e2 } = await SB.from('coordinator_batches').insert(rows);
-    if (e2) return toast('Saved, but batch link error: ' + e2.message, 'error');
+  // sync program (course) assignments — the BDA/AI/AC scope
+  await SB.from('coordinator_courses').delete().eq('coordinator_id', id);
+  {
+    const rows = chosenCourses.map(cid => ({ coordinator_id: id, course_id: cid }));
+    const { error: e0 } = await SB.from('coordinator_courses').insert(rows);
+    if (e0) return toast('Saved, but program link error: ' + e0.message, 'error');
   }
+  // Coordinators are scoped by program only — clear any legacy batch links.
+  await SB.from('coordinator_batches').delete().eq('coordinator_id', id);
   toast(coordEditId ? 'Coordinator updated!' : 'Coordinator added!', 'success');
   closeModal('modalCoord');
   renderAdminCoordinators();
@@ -3175,13 +3334,22 @@ async function saveNewPassword(){
     if (!ok) return toast('Current password is incorrect', 'error');
     const { error } = await SB.from('config').update({ value: newHash }).eq('key','adminPass');
     if (error) return toast('Error: ' + error.message, 'error');
+  } else if (currentUser.role === 'student') {
+    const { data: s } = await SB.from('students').select('*').eq('id', currentUser.id).single();
+    if (!s) return toast('Account not found', 'error');
+    const legacy = s.pass || (s.name ? s.name.split(' ')[0].toLowerCase() : '');
+    const ok = s.passHash ? (curHash === s.passHash) : (cur === legacy);
+    if (!ok) return toast('Current password is incorrect', 'error');
+    const { error } = await SB.from('students').update({ passHash: newHash, pass: null }).eq('id', currentUser.id);
+    if (error) return toast('Error: ' + error.message, 'error');
   } else { return toast('Password change not available for this account', 'error'); }
   toast('Password updated!', 'success');
   closeModal('modalChangePass');
 }
 
 function deleteCoord(cid, name){
-  showConfirm(`Delete coordinator "${name}" (${cid})? Their account and batch links are removed (students unaffected).`, async () => {
+  showConfirm(`Delete coordinator "${name}" (${cid})? Their account, program and batch links are removed (students unaffected).`, async () => {
+    await SB.from('coordinator_courses').delete().eq('coordinator_id', cid);
     await SB.from('coordinator_batches').delete().eq('coordinator_id', cid);
     const { error } = await SB.from('coordinators').delete().eq('id', cid);
     if (error) return toast('Error: ' + error.message, 'error');
@@ -4015,8 +4183,9 @@ function filterStudents() {
         <td>${avg !== '-' ? `<span class="badge ${avg>=60?'badge-green':'badge-red'}">${avg}%</span>` : '<span class="badge badge-gray">-</span>'}</td>
         <td>
           <div style="display:flex;gap:6px">
-            <button class="btn btn-outline btn-sm" onclick="editStudent('${s.id}')">✏️</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.id}','${s.name}')">🗑</button>
+            <button class="btn btn-outline btn-sm" onclick="editStudent('${s.id}')" title="Edit">✏️</button>
+            <button class="btn btn-outline btn-sm" onclick="resetStudentPassword('${s.id}','${(s.name||'').replace(/'/g,'')}')" title="Reset password">🔑</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.id}','${(s.name||'').replace(/'/g,'')}')">🗑</button>
           </div>
         </td>
       </tr>`;
@@ -4217,6 +4386,32 @@ async function deleteStudent(id, name) {
   });
 }
 
+// ── Reset a student's password (admin / coordinator) ──
+let _rspStudentId = null;
+function resetStudentPassword(id, name){
+  // Coordinators may only reset their own scoped students.
+  if (currentUser?.role === 'coordinator'){
+    const s = (cache.students||[]).find(x => String(x.id)===String(id));
+    if (!s || !coordCanSeeStudent(s)) return toast('You can only reset passwords for students in your program.', 'error');
+  }
+  _rspStudentId = id;
+  document.getElementById('rspName').textContent = (name||'') + ' (' + id + ')';
+  document.getElementById('rspNewPass').value = id;   // sensible default = enrollment ID
+  openModal('modalResetStudentPass');
+  setTimeout(()=>{ const el=document.getElementById('rspNewPass'); if(el){el.focus(); el.select();} }, 60);
+}
+async function confirmResetStudentPassword(){
+  const id = _rspStudentId; if (!id) return;
+  const np = document.getElementById('rspNewPass').value.trim();
+  if (!np || np.length < 3) return toast('Password must be at least 3 characters', 'error');
+  const hash = await sha256(np);
+  const { error } = await SB.from('students').update({ passHash: hash, pass: null }).eq('id', id);
+  if (error) return toast('Error: ' + error.message, 'error');
+  closeModal('modalResetStudentPass');
+  _rspStudentId = null;
+  toast('Password reset. New password: ' + np, 'success');
+}
+
 async function exportStudents() {
   const csv = ['id,name,pass,status,course,batch',
     ...cache.students.map(s => {
@@ -4246,7 +4441,7 @@ async function renderAdminModules() {
       </div>
     </div>
     <div class="module-grid" id="adminModuleGrid">
-      ${cache.modules.map((m,i) => {
+      ${visibleModules().map((m,i) => {
         const [c1,c2] = MODULE_COLORS[i%MODULE_COLORS.length];
         const topics = typeof m.topics === 'string' ? JSON.parse(m.topics||'[]') : (m.topics||[]);
         return `
@@ -4305,17 +4500,31 @@ async function saveModule() {
   const topics = topicsRaw.split(',').map(t=>t.trim()).filter(Boolean);
 
   if (!name) return toast('Module name required', 'error');
-  if (!id || isNaN(id)) return toast('Module ID is required — enter a number', 'error');
-  const rec = { id, name, desc, icon: icon||'📚', topics };
+  // Auto-assign an id for new modules (the column has no default). Manual id still honoured if given.
+  let newId = id;
+  if (!modEditId && (!newId || isNaN(newId))) {
+    newId = (cache.modules||[]).reduce((mx,m)=>Math.max(mx, Number(m.id)||0), 0) + 1;
+  }
+  const rec = { id: newId, name, desc, icon: icon||'📚', topics };
 
   const { error } = modEditId
     ? await SB.from('modules').update({ name, desc, icon, topics }).eq('id', modEditId)
     : await SB.from('modules').insert(rec);
   if (error) return toast('Error: ' + error.message, 'error');
+
+  // A coordinator's new module is scoped to their program(s) automatically so it
+  // only appears for that program (BDA/AI/AC isolation).
+  if (!modEditId && currentUser?.role === 'coordinator' && Array.isArray(currentUser.courses) && currentUser.courses.length) {
+    try {
+      const rows = currentUser.courses.map(cid => ({ module_id: newId, course_id: cid }));
+      await SB.from('module_courses').insert(rows);
+    } catch(e) { console.warn('module_courses tag failed', e); }
+  }
   toast(modEditId ? 'Module updated!' : 'Module added!', 'success');
   modEditId = null;
   document.getElementById('modId').disabled = false;
   closeModal('modalAddModule');
+  await loadModuleCoursesCache();
   await loadModulesCache();
   renderAdminModules();
 }
@@ -5659,7 +5868,23 @@ async function approveSubmission(table, id, btn) {
 // TESTS — placement-style, two timed rounds (MCQ + Coding)
 // Admin builds & assigns; students take once; marks are admin-only.
 // ════════════════════════════════════════════════════════════════
-function _pj(v, fb) { try { return typeof v === 'string' ? JSON.parse(v) : (v ?? fb); } catch(e) { return fb; } }
+// Robust JSON parse: tolerates plain objects/arrays, single-encoded strings,
+// AND double-encoded strings (a JSON string that itself contains JSON — the
+// cause of the "correct code, no test passed" bug where a string was iterated
+// character-by-character instead of as an array of test cases).
+function _pj(v, fb) {
+  try {
+    let x = v, guard = 0;
+    while (typeof x === 'string' && guard++ < 4) {
+      const t = x.trim();
+      if (!(t[0] === '[' || t[0] === '{' || t[0] === '"')) break;
+      x = JSON.parse(x);
+    }
+    return (x === null || x === undefined) ? fb : x;
+  } catch (e) { return fb; }
+}
+// Always returns a proper array of test cases, whatever shape came from the DB.
+function _parseTestCases(v) { const r = _pj(v, []); return Array.isArray(r) ? r : []; }
 
 let _testBuilder = null;   // { id, mcqQuestions:[], codingQuestions:[] }
 let _tbBank = { mcq: [], coding: [] };
@@ -5725,11 +5950,29 @@ async function deleteTest(id) {
   renderAdminTests();
 }
 
+function _tbFilterStudents(){
+  const bf = document.getElementById('tbBatchFilter') ? document.getElementById('tbBatchFilter').value : '';
+  let shown = 0;
+  document.querySelectorAll('.tbStuLabel').forEach(l => {
+    const vis = !bf || l.dataset.batch === bf;
+    l.style.display = vis ? 'flex' : 'none';
+    if (vis) shown++;
+  });
+  const c = document.getElementById('tbStuCount');
+  if (c) c.textContent = shown + ' student' + (shown!==1?'s':'') + ' shown' + (bf?' in this batch':'');
+}
+function _tbSelectVisible(val){
+  document.querySelectorAll('.tbStuLabel').forEach(l => {
+    if (l.style.display !== 'none') { const cb = l.querySelector('.tbStu'); if (cb) cb.checked = val; }
+  });
+}
 async function openTestBuilder(editId) {
   const el = document.getElementById('adminContent');
   el.innerHTML = '<div class="spinner"></div>';
   await loadStudentsCache();
   await loadModulesCache();
+  await loadBatchesCache();
+  await loadCoursesCache();
   // Load banks for the pickers
   try { const { data } = await SB.from('mcq_bank').select('id,q,opts,ans,topic,diff,moduleId').limit(2000); _tbBank.mcq = data || []; } catch(e) { _tbBank.mcq = []; }
   try { const { data } = await SB.from('coding_questions').select('*'); _tbBank.coding = data || []; } catch(e) { _tbBank.coding = []; }
@@ -5743,6 +5986,7 @@ async function openTestBuilder(editId) {
   }
   _testBuilder = { id: t.id, mcqQuestions: t.mcqQuestions, codingQuestions: t.codingQuestions };
   const asg = new Set((t.assignedTo||[]).map(String));
+  const _tbBatchOpts = (cache.batches||[]).map(b => `<option value="${b.id}">${escHtml(courseCode(b.course_id)?courseCode(b.course_id)+' · ':'')}${escHtml(b.name)}</option>`).join('');
 
   el.innerHTML = `
     <div class="section-header">
@@ -5769,18 +6013,18 @@ async function openTestBuilder(editId) {
     <div class="card" style="padding:16px 18px;margin-bottom:16px">
       <div style="font-weight:700;margin-bottom:10px">📝 MCQ questions</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+        <select id="tbMcqModuleFilter" class="filter-select" style="min-width:220px" onchange="_tbRefreshMcqBankSel()">
+          <option value="">All modules</option>
+          ${(cache.modules||[]).map(m=>`<option value="${m.id}">${m.icon||'📚'} ${escHtml(m.name)}  ·  MOD${m.id}</option>`).join('')}
+        </select>
         <select id="tbMcqBankSel" class="filter-select" style="min-width:320px;max-width:460px">
           <option value="">— pick from MCQ bank —</option>
-          ${(() => {
-            const mods = {}; (cache.modules||[]).forEach(m => mods[m.id] = `${m.icon||'📚'} ${m.name}`);
-            const groups = {};
-            (_tbBank.mcq||[]).forEach(q => { const key = mods[q.moduleId] || 'Other'; (groups[key]=groups[key]||[]).push(q); });
-            return Object.keys(groups).sort().map(g => `<optgroup label="${escHtml(g)}  (${groups[g].length})">${groups[g].map(q=>`<option value="${q.id}">${escHtml(String(q.q||'').slice(0,70))}</option>`).join('')}</optgroup>`).join('');
-          })()}
+          ${_tbMcqBankOptions()}
         </select>
         <input type="number" id="tbMcqBankMarks" class="filter-select" style="width:80px" value="1" min="0" title="marks">
         <button class="btn btn-outline btn-sm" onclick="tbAddBankMcq()">➕ Add from bank</button>
-        <button class="btn btn-outline btn-sm" onclick="document.getElementById('tbMcqNew').style.display='block'">✍️ New question</button>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('tbMcqNew').style.display='block';document.getElementById('tbMcqJson').style.display='none'">✍️ New question</button>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('tbMcqJson').style.display='block';document.getElementById('tbMcqNew').style.display='none'">📋 Paste JSON</button>
       </div>
       <div id="tbMcqNew" style="display:none;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px">
         <textarea id="tbMcqQ" class="filter-select" style="width:100%;margin-bottom:6px" rows="2" placeholder="Question text"></textarea>
@@ -5798,6 +6042,16 @@ async function openTestBuilder(editId) {
           <button class="btn btn-accent btn-sm" onclick="tbAddInlineMcq()">Add</button>
         </div>
       </div>
+      <div id="tbMcqJson" style="display:none;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Paste a JSON array — each object needs <b>q</b>, <b>opts</b> (array of 4), <b>ans</b> (0–3), <b>topic</b>, <b>diff</b> (easy/medium/hard), <b>explain</b> (optional). Same format as Sets → Add Questions.</div>
+        <textarea id="tbMcqJsonInput" class="filter-select" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:12px" rows="6" placeholder='[{"q":"What is...","opts":["A","B","C","D"],"ans":0,"topic":"Basics","diff":"easy"}]'></textarea>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+          <label style="font-size:12px;color:var(--text2)">Marks (applied to each)</label>
+          <input type="number" id="tbMcqJsonMarks" class="filter-select" style="width:80px" value="1" min="0">
+          <button class="btn btn-accent btn-sm" onclick="tbParseMcqJson()">Parse &amp; stage all</button>
+          <span id="tbMcqJsonMsg" style="font-size:12px"></span>
+        </div>
+      </div>
       <div id="tbMcqList"></div>
     </div>
 
@@ -5805,18 +6059,30 @@ async function openTestBuilder(editId) {
     <div class="card" style="padding:16px 18px;margin-bottom:16px">
       <div style="font-weight:700;margin-bottom:10px">💻 Coding questions</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+        <select id="tbCodeLangFilter" class="filter-select" style="min-width:180px" onchange="_tbRefreshCodeBankSel()">
+          <option value="">All languages</option>
+          <option value="python">🐍 Python  ·  LANG-PY</option>
+          <option value="sql">🗄️ SQL  ·  LANG-SQL</option>
+          <option value="java">☕ Java  ·  LANG-JV</option>
+        </select>
         <select id="tbCodeBankSel" class="filter-select" style="min-width:320px;max-width:460px">
           <option value="">— pick from coding bank —</option>
-          ${['python','sql','java'].map(lang => {
-            const items = (_tbBank.coding||[]).filter(q => (q.language||'sql')===lang).sort((a,b)=>String(a.title||'').localeCompare(String(b.title||'')));
-            if (!items.length) return '';
-            const label = lang==='python'?'🐍 Python':lang==='sql'?'🗄️ SQL':'☕ Java';
-            return `<optgroup label="${label}  (${items.length})">${items.map(q=>`<option value="${q.id}">${escHtml(String(q.title||'').slice(0,70))}</option>`).join('')}</optgroup>`;
-          }).join('')}
+          ${_tbCodeBankOptions()}
         </select>
         <input type="number" id="tbCodeBankMarks" class="filter-select" style="width:80px" value="10" min="0" title="marks">
         <button class="btn btn-outline btn-sm" onclick="tbAddBankCode()">➕ Add from bank</button>
         <button class="btn btn-outline btn-sm" onclick="tbShowNewCode()">✍️ New question</button>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('tbCodeJson').style.display='block';document.getElementById('tbCodeNew').style.display='none'">📋 Paste JSON</button>
+      </div>
+      <div id="tbCodeJson" style="display:none;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Paste a JSON array of coding questions — each object needs <b>title</b>, <b>language</b> (python/sql/java), <b>description</b>, <b>testCases</b> (array); SQL also needs <b>schema</b> and optional <b>seedData</b>.</div>
+        <textarea id="tbCodeJsonInput" class="filter-select" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:12px" rows="6" placeholder='[{"title":"Sum two numbers","language":"python","description":"...","testCases":[{"stdin":"2 3","expected":"5"}]}]'></textarea>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+          <label style="font-size:12px;color:var(--text2)">Marks (applied to each)</label>
+          <input type="number" id="tbCodeJsonMarks" class="filter-select" style="width:80px" value="10" min="0">
+          <button class="btn btn-accent btn-sm" onclick="tbParseCodeJson()">Parse &amp; stage all</button>
+          <span id="tbCodeJsonMsg" style="font-size:12px"></span>
+        </div>
       </div>
       <div id="tbCodeNew" style="display:none;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px">
         <div style="display:flex;gap:6px;margin-bottom:6px">
@@ -5851,13 +6117,21 @@ async function openTestBuilder(editId) {
 
     <!-- Assign -->
     <div class="card" style="padding:16px 18px;margin-bottom:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px;flex-wrap:wrap">
         <div style="font-weight:700">🎓 Assign to students</div>
-        <div><button class="btn btn-outline btn-sm" onclick="document.querySelectorAll('.tbStu').forEach(c=>c.checked=true)">Select all</button>
-        <button class="btn btn-outline btn-sm" onclick="document.querySelectorAll('.tbStu').forEach(c=>c.checked=false)">Clear</button></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <select class="filter-select" id="tbBatchFilter" onchange="_tbFilterStudents()" style="font-size:12px">
+            <option value="">All batches</option>
+            <option value="__none__">— Unassigned —</option>
+            ${_tbBatchOpts}
+          </select>
+          <button class="btn btn-outline btn-sm" onclick="_tbSelectVisible(true)">Select all</button>
+          <button class="btn btn-outline btn-sm" onclick="_tbSelectVisible(false)">Clear</button>
+        </div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;max-height:220px;overflow:auto">
-        ${(cache.students||[]).map(s => `<label style="display:flex;align-items:center;gap:8px;padding:5px 9px;border:1px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer">
+      <div id="tbStuCount" style="font-size:11px;color:var(--text3);margin-bottom:8px"></div>
+      <div id="tbStuGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;max-height:220px;overflow:auto">
+        ${(cache.students||[]).map(s => `<label class="tbStuLabel" data-batch="${s.batch_id==null?'__none__':escHtml(String(s.batch_id))}" style="display:flex;align-items:center;gap:8px;padding:5px 9px;border:1px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer">
           <input type="checkbox" class="tbStu" value="${s.id}" ${asg.has(String(s.id))?'checked':''}> ${escHtml(s.name||s.id)}</label>`).join('') || '<div style="color:var(--text3)">No students</div>'}
       </div>
     </div>
@@ -5868,7 +6142,7 @@ async function openTestBuilder(editId) {
       <button class="btn btn-accent" onclick="saveTest(true)">🚀 Save &amp; Publish</button>
     </div>`;
 
-  _tbRenderMcqList(); _tbRenderCodeList();
+  _tbRenderMcqList(); _tbRenderCodeList(); _tbFilterStudents();
 }
 
 function _tbUpdateTotal() {
@@ -5900,6 +6174,23 @@ function _tbRenderCodeList() {
   _tbUpdateTotal();
 }
 
+// Builds the <optgroup>-grouped option list for the MCQ bank picker,
+// optionally restricted to one module (used by the module filter dropdown).
+function _tbMcqBankOptions(filterModuleId) {
+  const mods = {}; (cache.modules||[]).forEach(m => mods[m.id] = `${m.icon||'📚'} ${m.name}  ·  MOD${m.id}`);
+  const groups = {};
+  (_tbBank.mcq||[]).forEach(q => {
+    if (filterModuleId && String(q.moduleId) !== String(filterModuleId)) return;
+    const key = mods[q.moduleId] || 'Other';
+    (groups[key]=groups[key]||[]).push(q);
+  });
+  return Object.keys(groups).sort().map(g => `<optgroup label="${escHtml(g)}  (${groups[g].length})">${groups[g].map(q=>`<option value="${q.id}">${escHtml(String(q.q||'').slice(0,70))}</option>`).join('')}</optgroup>`).join('');
+}
+function _tbRefreshMcqBankSel() {
+  const modId = document.getElementById('tbMcqModuleFilter').value;
+  const sel = document.getElementById('tbMcqBankSel');
+  sel.innerHTML = `<option value="">— pick from MCQ bank —</option>${_tbMcqBankOptions(modId)}`;
+}
 function tbAddBankMcq() {
   const id = document.getElementById('tbMcqBankSel').value;
   const marks = +document.getElementById('tbMcqBankMarks').value || 1;
@@ -5907,6 +6198,28 @@ function tbAddBankMcq() {
   const q = _tbBank.mcq.find(x => String(x.id) === String(id)); if (!q) return;
   const opts = _pj(q.opts, Array.isArray(q.opts)?q.opts:[]);
   _testBuilder.mcqQuestions.push({ source:'bank', refId:q.id, marks, q:q.q, opts, ans:q.ans, topic:q.topic, diff:q.diff });
+  _tbRenderMcqList();
+}
+// Bulk-import MCQ questions pasted as JSON — same schema/validation as the
+// Sets → Add Questions → Paste JSON tab (parseWQJson), but stages straight
+// into the test's MCQ list instead of a set.
+function tbParseMcqJson() {
+  const raw = document.getElementById('tbMcqJsonInput').value.trim();
+  const msg = document.getElementById('tbMcqJsonMsg');
+  const marks = +document.getElementById('tbMcqJsonMarks').value || 1;
+  if (!raw) { msg.textContent = '⚠️ Paste JSON first'; msg.style.color = 'var(--yellow)'; return; }
+  let arr;
+  try { arr = JSON.parse(raw); } catch(e) { msg.textContent = '❌ Invalid JSON: ' + e.message; msg.style.color = 'var(--red)'; return; }
+  if (!Array.isArray(arr)) { msg.textContent = '❌ Must be a JSON array [...]'; msg.style.color = 'var(--red)'; return; }
+  const valid = arr.filter(item => item && item.q && Array.isArray(item.opts) && item.opts.length === 4 && typeof item.ans === 'number');
+  const bad = arr.length - valid.length;
+  if (!valid.length) { msg.textContent = '❌ No valid questions found (need q, opts[4], ans)'; msg.style.color = 'var(--red)'; return; }
+  valid.forEach(item => {
+    _testBuilder.mcqQuestions.push({ source:'inline', refId:null, marks, q:item.q, opts:item.opts, ans:item.ans, topic:item.topic||'General', diff:item.diff||'easy', explain:item.explain||'' });
+  });
+  msg.textContent = `✅ ${valid.length} staged${bad?' | ❌ '+bad+' skipped (invalid)':''}`;
+  msg.style.color = bad ? 'var(--yellow)' : 'var(--green)';
+  document.getElementById('tbMcqJsonInput').value = '';
   _tbRenderMcqList();
 }
 function tbAddInlineMcq() {
@@ -5919,12 +6232,59 @@ function tbAddInlineMcq() {
 }
 function tbRemoveMcq(i){ _testBuilder.mcqQuestions.splice(i,1); _tbRenderMcqList(); }
 
+// Builds the <optgroup>-grouped option list for the coding bank picker,
+// optionally restricted to one language (used by the language filter dropdown).
+function _tbCodeBankOptions(filterLang) {
+  return ['python','sql','java'].map(lang => {
+    if (filterLang && lang !== filterLang) return '';
+    const items = (_tbBank.coding||[]).filter(q => (q.language||'sql')===lang).sort((a,b)=>String(a.title||'').localeCompare(String(b.title||'')));
+    if (!items.length) return '';
+    const label = lang==='python'?'🐍 Python':lang==='sql'?'🗄️ SQL':'☕ Java';
+    return `<optgroup label="${label}  (${items.length})">${items.map(q=>`<option value="${q.id}">${escHtml(String(q.title||'').slice(0,70))}</option>`).join('')}</optgroup>`;
+  }).join('');
+}
+function _tbRefreshCodeBankSel() {
+  const lang = document.getElementById('tbCodeLangFilter').value;
+  const sel = document.getElementById('tbCodeBankSel');
+  sel.innerHTML = `<option value="">— pick from coding bank —</option>${_tbCodeBankOptions(lang)}`;
+}
 function tbAddBankCode() {
   const id = document.getElementById('tbCodeBankSel').value;
   const marks = +document.getElementById('tbCodeBankMarks').value || 10;
   if (!id) { toast('Pick a problem', 'error'); return; }
   const q = _tbBank.coding.find(x => String(x.id) === String(id)); if (!q) return;
-  _testBuilder.codingQuestions.push({ source:'bank', refId:q.id, marks, title:q.title, language:q.language, description:q.description, testCases:_pj(q.testCases,[]), schema:q.schema||'', seedData:q.seedData||'', starterCode:q.starterCode||'' });
+  _testBuilder.codingQuestions.push({ source:'bank', refId:q.id, marks, title:q.title, language:q.language, description:q.description, testCases:_parseTestCases(q.testCases), schema:q.schema||'', seedData:q.seedData||'', starterCode:q.starterCode||'' });
+  _tbRenderCodeList();
+}
+// Bulk-import coding questions pasted as JSON, mirroring the MCQ Paste-JSON
+// flow. Minimal validation: needs title + language; SQL additionally needs
+// a schema so the grader has tables to run against.
+function tbParseCodeJson() {
+  const raw = document.getElementById('tbCodeJsonInput').value.trim();
+  const msg = document.getElementById('tbCodeJsonMsg');
+  const marks = +document.getElementById('tbCodeJsonMarks').value || 10;
+  if (!raw) { msg.textContent = '⚠️ Paste JSON first'; msg.style.color = 'var(--yellow)'; return; }
+  let arr;
+  try { arr = JSON.parse(raw); } catch(e) { msg.textContent = '❌ Invalid JSON: ' + e.message; msg.style.color = 'var(--red)'; return; }
+  if (!Array.isArray(arr)) { msg.textContent = '❌ Must be a JSON array [...]'; msg.style.color = 'var(--red)'; return; }
+  const results = arr.map(item => {
+    if (!item || !item.title || !item.language) return null;
+    if (item.language === 'sql' && !item.schema) return null;
+    return item;
+  });
+  const valid = results.filter(Boolean);
+  const bad = arr.length - valid.length;
+  if (!valid.length) { msg.textContent = '❌ No valid questions found (need title, language; SQL also needs schema)'; msg.style.color = 'var(--red)'; return; }
+  valid.forEach(item => {
+    _testBuilder.codingQuestions.push({
+      source:'inline', refId:null, marks, title:item.title, language:item.language,
+      description:item.description||'', testCases:_parseTestCases(item.testCases||[]),
+      schema:item.schema||'', seedData:item.seedData||'', starterCode:item.starterCode||''
+    });
+  });
+  msg.textContent = `✅ ${valid.length} staged${bad?' | ❌ '+bad+' skipped (invalid)':''}`;
+  msg.style.color = bad ? 'var(--yellow)' : 'var(--green)';
+  document.getElementById('tbCodeJsonInput').value = '';
   _tbRenderCodeList();
 }
 // Show the inline "New question" form and initialise it for the current language.
@@ -6132,6 +6492,10 @@ async function exportTestResultsXLSX(testId) {
 // STUDENT: MY TESTS + EXAM RUNNER (two timed rounds, one attempt)
 // ════════════════════════════════════════════════════════════════
 let examState = null;
+// Guards against a double-click (or slow network + impatient click) firing
+// the grading/submit pipeline twice — important once many students are
+// submitting concurrently near a timer deadline.
+let _examFinishing = false;
 
 async function renderStudentTests() {
   const el = document.getElementById('studentContent');
@@ -6277,6 +6641,7 @@ function _examInstructions() {
 }
 
 async function _examBegin() {
+  _examFinishing = false;
   requestTestFullscreen();
   setupExamAntiCheat();
   // Create the in_progress attempt row (best-effort) — only for a brand-new attempt
@@ -6293,7 +6658,7 @@ async function _examBegin() {
   else _examStartCoding();
 }
 
-function _examAbort() { _examStopAutosave(); teardownExamAntiCheat(); examState = null; showPage('studentPage'); studentNav('tests'); }
+function _examAbort() { _examFinishing = false; _examStopAutosave(); teardownExamAntiCheat(); examState = null; showPage('studentPage'); studentNav('tests'); }
 
 // ── Exam anti-cheat (document-level) ────────────────────────────
 let _exClip=null,_exKey=null,_exCtx=null,_exVis=null,_exFs=null;
@@ -6357,35 +6722,84 @@ function _examStartMcq() {
   _examRenderMcqQ();
   examState.mcq.timer = _startRoundTimer(examState.mcq.endAt, 'examMcqTimer', () => { clearInterval(examState.mcq.timer); toast('⏱ MCQ time up — submitting','error'); _examSubmitMcq(true); });
 }
+// Renders the exam's MCQ round using the exact same q-card / opt-item
+// markup and classes as the Sets practice-set runner (renderTestQuestion),
+// so a student sees a visually identical MCQ screen whether they're
+// practicing a Set or sitting a proctored Test. See #testPage, #examPage
+// shared CSS block for the shared theme this relies on.
 function _examRenderMcqQ() {
   const m = examState.mcq; const q = m.questions[m.current];
   const opts = Array.isArray(q.opts)?q.opts:_pj(q.opts,[]);
+  const letters = ['A','B','C','D'];
+  const total = m.questions.length;
   document.getElementById('examPage').innerHTML = `
-    <div style="display:flex;flex-direction:column;height:100vh">
-      <div class="coding-topbar" style="justify-content:space-between">
-        <b>📝 ${escHtml(examState.test.name)} — MCQ · Q ${m.current+1}/${m.questions.length}</b>
-        <div style="display:flex;align-items:center;gap:12px">⏱ ${_examTimerHTML('examMcqTimer')}</div>
+    <div class="topnav">
+      <div class="nav-brand">📝 ${escHtml(examState.test.name)}</div>
+      <div class="nav-spacer"></div>
+      <div style="font-size:13px;color:var(--text2)">MCQ round · ${m.submitted.filter(Boolean).length}/${total} submitted</div>
+      <div class="nav-spacer"></div>
+      <button class="btn btn-danger btn-sm" onclick="examConfirmFinishMcq()">🏁 ${examState.test.hasCoding?'Finish MCQ round':'Submit whole test'}</button>
+    </div>
+    <div class="test-layout">
+      <div class="test-main">
+        <div class="test-topbar">
+          <span>⏱</span>
+          <div class="test-timer" id="examMcqTimer">--:--</div>
+          <div class="test-progress-bar"><div class="test-progress-fill" style="width:${((m.current+1)/total*100).toFixed(1)}%"></div></div>
+          <div class="test-qnum">Q ${m.current+1} / ${total}</div>
+        </div>
+        <div class="test-content">
+          <div class="q-card">
+            <div class="q-header">
+              <div class="q-num-badge">${m.current+1}</div>
+              <div>
+                <div class="q-meta">
+                  <span class="badge badge-${q.diff==='easy'?'green':q.diff==='hard'?'red':'yellow'}">${q.diff||'medium'}</span>
+                  <span class="badge badge-gray">${escHtml(q.topic||'General')}</span>
+                  <span class="badge badge-blue">${q.marks} mark${q.marks==1?'':'s'}</span>
+                  ${m.submitted[m.current]?'<span class="badge badge-green">✓ Submitted</span>':''}
+                </div>
+                <div class="q-text">${renderQuestion(q.q)}</div>
+              </div>
+            </div>
+            <div class="options-list">
+              ${opts.map((opt,i) => `
+                <div class="opt-item ${m.answers[m.current]===i?'selected':''}" onclick="examMcqSelect(${i})">
+                  <div class="opt-letter">${letters[i]||i+1}</div>
+                  <div class="opt-text">${escHtml(opt)}</div>
+                </div>`).join('')}
+            </div>
+          </div>
+        </div>
+        <div class="test-nav">
+          <button class="btn btn-outline" onclick="examMcqNav(-1)" ${m.current===0?'disabled':''}>← Previous</button>
+          <div style="flex:1"></div>
+          <button class="btn btn-accent" onclick="examMcqSubmit()">✓ Submit this answer</button>
+          <div style="flex:1"></div>
+          ${m.current < total-1
+            ? `<button class="btn btn-outline" onclick="examMcqNav(1)">Next →</button>`
+            : `<button class="btn btn-accent" onclick="examConfirmFinishMcq()">🏁 ${examState.test.hasCoding?'Finish MCQ round':'Submit whole test'}</button>`}
+        </div>
       </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:7px 16px;background:var(--bg2);border-bottom:1px solid var(--border)">
-        ${m.questions.map((qq,i)=>`<button onclick="examMcqGoto(${i})" title="${m.submitted[i]?'Submitted':(m.answers[i]!==null?'Selected':'Not answered')}" style="width:30px;height:30px;border-radius:7px;border:1px solid ${i===m.current?'var(--accent2)':'var(--border)'};background:${i===m.current?'var(--accent2)':(m.submitted[i]?'rgba(16,185,129,0.35)':(m.answers[i]!==null?'rgba(59,130,246,0.25)':'var(--bg3)'))};color:${i===m.current?'#fff':'var(--text2)'};font-size:12px;font-weight:700;cursor:pointer">${i+1}${m.submitted[i]?' ✓':''}</button>`).join('')}
-        <span style="margin-left:auto;font-size:11px;color:var(--text3)">${m.submitted.filter(Boolean).length}/${m.questions.length} submitted</span>
-      </div>
-      <div style="flex:1;overflow:auto;padding:26px;max-width:820px;margin:0 auto;width:100%">
-        <div style="font-size:12px;color:var(--text3);margin-bottom:8px">Marks: ${q.marks} ${m.submitted[m.current]?'· <span style="color:var(--green)">✓ submitted (you can still change it)</span>':''}</div>
-        <div style="font-size:17px;font-weight:600;line-height:1.6;margin-bottom:20px">${escHtml(q.q)}</div>
-        ${opts.map((o,i) => `
-          <div onclick="examMcqSelect(${i})" style="padding:13px 16px;border:1px solid ${m.answers[m.current]===i?'var(--accent2)':'var(--border)'};background:${m.answers[m.current]===i?'rgba(30,94,255,0.12)':'transparent'};border-radius:10px;margin-bottom:9px;cursor:pointer;display:flex;gap:10px;align-items:center">
-            <span style="width:26px;height:26px;border-radius:50%;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">${'ABCD'[i]}</span>
-            <span>${escHtml(o)}</span></div>`).join('')}
-      </div>
-      <div style="display:flex;gap:10px;align-items:center;padding:14px 20px;border-top:1px solid var(--border)">
-        <button class="btn btn-outline" onclick="examMcqNav(-1)" ${m.current===0?'disabled':''}>← Prev</button>
-        <button class="btn btn-accent" onclick="examMcqSubmit()">✓ Submit this answer</button>
-        <div style="flex:1"></div>
-        ${m.current < m.questions.length-1
-          ? `<button class="btn btn-outline" onclick="examMcqNav(1)">Next →</button>`
-          : ''}
-        <button class="coding-submit-btn" onclick="examConfirmFinishMcq()">🏁 ${examState.test.hasCoding?'Finish MCQ round':'Submit whole test'}</button>
+      <div class="test-sidebar">
+        <div class="test-sidebar-inner">
+          <h4>Question Navigator</h4>
+          <div class="q-grid">
+            ${m.questions.map((qq,i)=>`<div class="q-dot ${m.answers[i]!==null?'answered':''} ${m.submitted[i]?'marked':''} ${i===m.current?'current':''}" title="${m.submitted[i]?'Submitted':(m.answers[i]!==null?'Selected':'Not answered')}" onclick="examMcqGoto(${i})">${i+1}</div>`).join('')}
+          </div>
+          <div class="q-legend" style="margin-top:16px">
+            <div class="q-legend-item"><div class="q-legend-dot" style="background:var(--accent)"></div> Selected</div>
+            <div class="q-legend-item"><div class="q-legend-dot" style="background:var(--bg3);border:1px solid var(--border)"></div> Not answered</div>
+            <div class="q-legend-item"><div class="q-legend-dot" style="background:var(--yellow)"></div> Submitted</div>
+          </div>
+          <div style="margin-top:20px">
+            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Progress</div>
+            <div style="font-size:12px;color:var(--text2);display:flex;flex-direction:column;gap:4px">
+              <div>✅ Answered: <strong>${m.answers.filter(a=>a!==null).length}/${total}</strong></div>
+              <div>🏁 Submitted: <strong>${m.submitted.filter(Boolean).length}/${total}</strong></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>`;
 }
@@ -6401,7 +6815,11 @@ function _examSubmitMcq(auto) {
   m.score = score;
   examState.mcqSubmittedAt = new Date().toISOString();
   if (examState.test.hasCoding && examState.coding.questions.length) _examStartCoding();
-  else _examFinish();
+  else {
+    if (_examFinishing) return;   // already finishing (e.g. double-click) — ignore
+    _examFinishing = true;
+    _examFinish();
+  }
 }
 
 // ── Coding round ────────────────────────────────────────────────
@@ -6526,10 +6944,22 @@ async function examRunCode() {
   examCodeTab('results');
   const q = examState.coding.questions[examState.coding.index];
   const code = _examCm?_examCm.getValue():'';
-  const tc = Array.isArray(q.testCases)?q.testCases:_pj(q.testCases,[]);
+  const tc = _parseTestCases(q.testCases);
   const rp = document.getElementById('examCodeResults'); if(rp){ rp.style.paddingTop='30px'; rp.textContent='⏳ Running…'; }
-  let results=[];
-  try { results = q.language==='python' ? await runPythonTests(code, tc) : await runSQLTests(q.schema||'', q.seedData||'', code, tc); } catch(e){ results=[]; }
+  let results=[], runErr=null;
+  try {
+    results = q.language==='python' ? await runPythonTests(code, tc)
+            : q.language==='java'   ? await runJavaTests(code, tc)
+            : await runSQLTests(q.schema||'', q.seedData||'', code, tc);
+  } catch(e){
+    results=[];
+    runErr = (e && e.javaDisabled) ? 'Java auto-run is turned off — your code is saved and will be reviewed by the instructor.' : ((e && e.message) || String(e));
+  }
+  if (runErr && rp) {
+    rp.style.paddingTop='0';
+    rp.innerHTML = `<div style="background:rgba(255,85,85,0.08);border:1px solid rgba(255,85,85,0.3);border-radius:8px;padding:12px;color:#ff8080;font-size:12px;white-space:pre-wrap">⚠ Could not run: ${escHtml(String(runErr))}<div style="color:#6272a4;margin-top:8px">Your code is saved. Try Run again — if this keeps happening it is usually the network blocking the code runtime, not your code.</div></div>`;
+    return;
+  }
   const passed = results.filter(r=>r.passed).length;
   const gained = results.reduce((a,r)=>a+(typeof r.partial==='number'?r.partial:(r.passed?1:0)),0);
   const matchPct = tc.length ? Math.round(gained/tc.length*100) : 0;
@@ -6546,18 +6976,33 @@ async function examRunCode() {
 // Grade EVERY coding question at the end (students navigate freely; nothing is
 // graded until they submit the whole test), then finish.
 async function _examSubmitAll() {
+  if (_examFinishing) { toast('Already submitting — please wait…', 'info'); return; }   // guard against double-click / repeat timer-expiry calls
+  _examFinishing = true;
   const c = examState.coding;
   _examSaveCurrentCode();
   toast('Grading your answers… please wait', 'info');
   for (let i=0;i<c.questions.length;i++){
     const q=c.questions[i]; const code=c.answers[i]||'';
-    const tc = Array.isArray(q.testCases)?q.testCases:_pj(q.testCases,[]);
-    let results=[]; try{ results = q.language==='python'?await runPythonTests(code,tc):await runSQLTests(q.schema||'',q.seedData||'',code,tc); }catch(e){ results=[]; }
+    const tc = _parseTestCases(q.testCases);
+    let results=[], runError=null;
+    const _grade = () => q.language==='python' ? runPythonTests(code,tc)
+                       : q.language==='java'   ? runJavaTests(code,tc)
+                       : runSQLTests(q.schema||'',q.seedData||'',code,tc);
+    try{ results = await _grade(); }
+    catch(e){
+      if (e && e.javaDisabled) { results=[]; runError=null; }   // Java off → instructor review, not an error
+      else {
+        // One retry — a transient runtime/CDN failure should not silently zero a
+        // student who actually wrote code. Flag it if it still fails.
+        try { await new Promise(r=>setTimeout(r,800)); results = await _grade(); }
+        catch(e2){ results=[]; runError = (e2 && e2.message) || String(e2); }
+      }
+    }
     const passed=results.filter(r=>r.passed).length;
     // Step / partial marks: sum of per-test-case fractions (SQL uses row-overlap)
     const gained=results.reduce((a,r)=>a+(typeof r.partial==='number'?r.partial:(r.passed?1:0)),0);
     const score=tc.length?Math.round(gained/tc.length*(+q.marks||0)):0;
-    c.results[i]={ title:q.title, language:q.language, score, passed, total:tc.length, marks:q.marks };
+    c.results[i]={ title:q.title, language:q.language, score, passed, total:tc.length, marks:q.marks, runError:(runError&&(code||'').trim())?runError:null };
   }
   c.score = c.results.reduce((a,r)=>a+(r?.score||0),0);
   _examFinish();
@@ -6844,9 +7289,10 @@ function renderLeaderboard(containerId, isAdmin=false) {
     if (_adminLbCourse) return String(courseOf[sid]) === String(_adminLbCourse);
     return true;
   };
-  // Coordinators are hard-limited to the batches they manage
-  const cs = coordBatchSet();
-  const managed = sid => !cs || cs.has(String(batchOf[sid]));
+  // Coordinators are hard-limited to their scoped students (program + optional batch).
+  // cache.students is already filtered by coordCanSeeStudent, so restrict to that set.
+  const cs = (currentUser?.role === 'coordinator') ? new Set((cache.students||[]).map(s=>String(s.id))) : null;
+  const managed = sid => !cs || cs.has(String(sid));
   const scopedScores = (cache.scores||[]).filter(s => (!isAdmin || inScope(s.studentId)) && managed(s.studentId));
   // scope the coding map too
   let codingMap = _adminLbCoding.map || {};
@@ -6953,10 +7399,18 @@ let _sqljsLib = null;
 // ── Web Worker source for Pyodide (runs in background thread) ──
 // Written as array-join to avoid nested template-literal conflicts.
 const _PY_WORKER_SRC = [
-  "importScripts('https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js');",
+  // Multiple CDN mirrors: some campus/office networks block cdn.jsdelivr.net,
+  // which previously caused Python to silently never load (students saw 0 passed).
+  "var _PYCDNS=['https://cdn.jsdelivr.net/pyodide/v0.24.1/full/','https://fastly.jsdelivr.net/pyodide/v0.24.1/full/','https://gcore.jsdelivr.net/pyodide/v0.24.1/full/'];",
   "let _py=null,_initP=null;",
-  "function _init(){return _initP||(_initP=loadPyodide({indexURL:'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/'}).then(p=>{_py=p;self.postMessage({type:'ready'});return p;}));}",
-  "_init();",
+  // Try each mirror in turn for BOTH the loader script and the runtime index.
+  "function _loadFrom(i){",
+  "  if(i>=_PYCDNS.length) return Promise.reject(new Error('Python runtime could not be loaded from any CDN. Check your internet/firewall (cdn.jsdelivr.net) and retry.'));",
+  "  try{ importScripts(_PYCDNS[i]+'pyodide.js'); }catch(e){ return _loadFrom(i+1); }",
+  "  return loadPyodide({indexURL:_PYCDNS[i]}).then(function(p){_py=p;self.postMessage({type:'ready'});return p;}).catch(function(e){ return _loadFrom(i+1); });",
+  "}",
+  "function _init(){return _initP||(_initP=_loadFrom(0).catch(function(e){_initP=null;throw e;}));}",
+  "_init().catch(function(e){ self.postMessage({type:'initerror',error:String(e&&e.message||e)}); });",
 
   "self.onmessage=async function(e){",
   "  const {id,code,testCases}=e.data;",
@@ -7020,6 +7474,14 @@ function _getPyWorker() {
   _pyWorker = new Worker(URL.createObjectURL(blob));
   _pyWorker.onmessage = ({ data }) => {
     if (data.type === 'ready') { _pyWorkerReady = true; return; }
+    if (data.type === 'initerror') {
+      // Runtime failed to load from every CDN — reject all waiters clearly and
+      // rebuild the worker next time so a later retry (better network) can work.
+      Object.values(_pyWorkerPending).forEach(p => { clearTimeout(p.timer); p.reject(new Error(data.error || 'Python runtime failed to load')); });
+      Object.keys(_pyWorkerPending).forEach(k => delete _pyWorkerPending[k]);
+      _pyWorker = null; _pyWorkerReady = false;
+      return;
+    }
     if (data.type === 'progress') {
       const pending = _pyWorkerPending[data.id];
       if (pending?.onProgress) pending.onProgress(data.current, data.total);
@@ -7213,6 +7675,97 @@ async function _sqlGraderEnabled() {
 }
 function _resetSqlGraderCfg() { _sqlGraderCfg = null; }
 
+// ── Java execution / grader (optional; OFF by default) ───────────
+// Java cannot compile+run+capture I/O in-browser (CheerpJ has no stdout/stdin
+// capture API), so grading uses a code-execution endpoint. Default endpoint is
+// the public Piston service; set config 'javaGraderUrl' to a self-hosted
+// Piston/Judge0-compatible URL to keep student code on your own infrastructure.
+// Nothing is sent anywhere until an admin turns config 'javaExec' = 'on'.
+const PISTON_DEFAULT_URL = 'https://emkc.org/api/v2/piston/execute';
+let _javaCfg = null;
+async function _loadJavaCfg() {
+  if (_javaCfg !== null) return _javaCfg;
+  let on = false, url = '';
+  try {
+    const { data } = await SB.from('config').select('key,value').in('key', ['javaExec','javaGraderUrl']);
+    (data || []).forEach(r => {
+      if (r.key === 'javaExec') on = String(r.value||'').toLowerCase() === 'on';
+      if (r.key === 'javaGraderUrl') url = String(r.value||'').trim();
+    });
+  } catch(e) {}
+  _javaCfg = { on, url: url || PISTON_DEFAULT_URL, custom: !!url };
+  return _javaCfg;
+}
+async function _javaExecEnabled() { return (await _loadJavaCfg()).on; }
+function _resetJavaCfg() { _javaCfg = null; }
+
+// Best-effort: name the source file after the student's public class so the
+// compiler is happy; default to Main.
+function _javaMainFileName(code) {
+  const m = /public\s+(?:final\s+|abstract\s+)*class\s+([A-Za-z_$][\w$]*)/.exec(code || '');
+  return (m ? m[1] : 'Main') + '.java';
+}
+
+// Runs one Java program against one stdin via a Piston-compatible endpoint.
+// Returns { ok, stdout, stderr, compileError, message }.
+async function _javaRunOnce(url, code, stdin) {
+  const body = {
+    language: 'java', version: '*',
+    files: [{ name: _javaMainFileName(code), content: code }],
+    stdin: stdin == null ? '' : String(stdin).replace(/\\n/g, '\n'),
+    compile_timeout: 12000, run_timeout: 8000
+  };
+  const resp = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  if (!resp.ok) throw new Error('Java runner HTTP ' + resp.status);
+  const data = await resp.json();
+  const comp = data.compile || {};
+  const run  = data.run || {};
+  const compileError = (comp.code && comp.code !== 0) ? (comp.stderr || comp.output || 'Compilation failed') : '';
+  return {
+    ok: !compileError && (run.code === 0),
+    stdout: (run.stdout != null ? run.stdout : (run.output || '')),
+    stderr: run.stderr || '',
+    compileError,
+    message: compileError || run.stderr || ''
+  };
+}
+
+// Grades Java against all test cases (stdin/expected), mirroring runPythonTests' shape.
+async function runJavaTests(code, testCases, onProgress) {
+  const cfg = await _loadJavaCfg();
+  if (!cfg.on) { const e = new Error('__JAVA_DISABLED__'); e.javaDisabled = true; throw e; }
+  const url = cfg.url;
+  const cases = Array.isArray(testCases) && testCases.length ? testCases : [{ stdin:'', expected:'__none__', description:'run' }];
+  const results = [];
+  // Compile once to catch syntax errors fast (first case doubles as compile check).
+  for (let i = 0; i < cases.length; i++) {
+    const tc = cases[i];
+    if (onProgress) onProgress(i + 1, cases.length);
+    try {
+      const r = await _javaRunOnce(url, code, tc.stdin);
+      if (r.compileError) {
+        results.push({ description: tc.description, passed:false, error:true,
+          output: 'Compilation error:\n' + r.compileError,
+          expected: String(tc.expected).replace(/\\n/g,'\n').trim() });
+      } else {
+        const out = String(r.stdout).replace(/\r/g,'').trim();
+        const exp = String(tc.expected).replace(/\\n/g,'\n').trim();
+        const tok = s => s.split(/[\s\n]+/).map(x=>x.trim()).filter(Boolean).join('\n');
+        const passed = out === exp || tok(out) === tok(exp);
+        results.push({ description: tc.description, passed,
+          output: r.stderr && !out ? r.stderr : out, expected: exp, error: !!(r.stderr && !out) });
+      }
+    } catch (e) {
+      results.push({ description: tc.description, passed:false, error:true,
+        output: 'Could not reach the Java runner: ' + ((e && e.message) || e),
+        expected: String(tc.expected).replace(/\\n/g,'\n').trim() });
+    }
+    // Gentle pacing for public Piston rate limits (~5 req/s).
+    if (i < cases.length - 1) await new Promise(r => setTimeout(r, 250));
+  }
+  return results;
+}
+
 // ── Step / partial marking for SQL ──────────────────────────────
 // Returns a fraction 0..1 based on how many rows of the student's output
 // match the expected output. Extra/missing rows reduce the score, so a
@@ -7290,6 +7843,54 @@ async function runSQLViaGrader(schema, seedData, studentQuery, testCases) {
   } catch(e) { console.warn('sql grader call failed:', e); return null; }
 }
 
+// Replace a named SQL function call (with balanced-paren args) using `transform`.
+// Used by the MySQL→SQLite shim below. Returns original string on any trouble.
+function _sqlReplaceFunc(sql, fnName, transform) {
+  try {
+    const re = new RegExp('\\b' + fnName + '\\s*\\(', 'gi');
+    let out = '', idx = 0, m;
+    while ((m = re.exec(sql))) {
+      const start = m.index;
+      let depth = 0, cur = '', args = [], j, done = false;
+      for (j = re.lastIndex - 1; j < sql.length; j++) {
+        const ch = sql[j];
+        if (ch === '(') { depth++; if (depth === 1) continue; }
+        else if (ch === ')') { depth--; if (depth === 0) { done = true; break; } }
+        if (ch === ',' && depth === 1) { args.push(cur); cur = ''; continue; }
+        cur += ch;
+      }
+      if (!done) break;                 // unbalanced — leave the rest untouched
+      args.push(cur);
+      out += sql.slice(idx, start) + transform(args.map(a => a.trim()));
+      idx = j + 1; re.lastIndex = idx;
+    }
+    return out + sql.slice(idx);
+  } catch (e) { return sql; }
+}
+
+// Light MySQL→SQLite compatibility so common MySQL syntax students type does not
+// error out in the in-browser (SQLite) engine. Best-effort; the server-side
+// MySQL grader (when enabled) is still the exact path.
+function _mysqlToSqlite(sql) {
+  if (!sql || typeof sql !== 'string') return sql;
+  try {
+    let s = sql
+      .replace(/\bNOW\s*\(\s*\)/gi, "datetime('now')")
+      .replace(/\bCURRENT_TIMESTAMP\s*\(\s*\)/gi, "datetime('now')")
+      .replace(/\bSYSDATE\s*\(\s*\)/gi, "datetime('now')")
+      .replace(/\bCURDATE\s*\(\s*\)/gi, "date('now')")
+      .replace(/\bCURTIME\s*\(\s*\)/gi, "time('now')");
+    for (let k = 0; k < 5 && /\bCONCAT_WS\s*\(/i.test(s); k++)
+      s = _sqlReplaceFunc(s, 'CONCAT_WS', a => a.length > 1 ? '(' + a.slice(1).join(' || ' + a[0] + ' || ') + ')' : "''");
+    for (let k = 0; k < 5 && /\bCONCAT\s*\(/i.test(s); k++)
+      s = _sqlReplaceFunc(s, 'CONCAT', a => '(' + a.join(' || ') + ')');
+    s = _sqlReplaceFunc(s, 'YEAR',  a => "CAST(strftime('%Y'," + a[0] + ") AS INTEGER)");
+    s = _sqlReplaceFunc(s, 'MONTH', a => "CAST(strftime('%m'," + a[0] + ") AS INTEGER)");
+    s = _sqlReplaceFunc(s, 'DAY',   a => "CAST(strftime('%d'," + a[0] + ") AS INTEGER)");
+    return s;
+  } catch (e) { return sql; }
+}
+
 async function runSQLTests(schema, seedData, studentQuery, testCases) {
   // ── Pre-flight checks ──────────────────────────────────────
   if (!studentQuery || !studentQuery.trim()) {
@@ -7356,12 +7957,13 @@ async function runSQLTests(schema, seedData, studentQuery, testCases) {
       // Compute expected result. If not pre-captured, run the reference
       // query (refQuery) on a fresh copy of schema+seed to get it.
       let expCols = tc.expectedCols || [], expRows = tc.expectedRows;
-      if (expRows == null && tc.refQuery && !(tc.probe && String(tc.probe).trim())) {
+      const refSql = tc.refQuery || tc.referenceSql;   // support both authoring shapes
+      if (expRows == null && refSql && !(tc.probe && String(tc.probe).trim())) {
         try {
           const rdb = new SQL.Database();
           if (schema)   rdb.run(schema);
           if (seedData) rdb.run(seedData);
-          const rr = rdb.exec(tc.refQuery);
+          const rr = rdb.exec(_mysqlToSqlite(refSql));
           const rsel = rr.filter(s => s.columns?.length > 0).pop();
           if (rsel) { expCols = rsel.columns; expRows = rsel.values; }
           rdb.close();
@@ -7369,7 +7971,7 @@ async function runSQLTests(schema, seedData, studentQuery, testCases) {
       }
 
       // Run student query — take last SELECT result if multiple stmts
-      const stmts = db.exec(studentQuery);
+      const stmts = db.exec(_mysqlToSqlite(studentQuery));
       const lastSelect = stmts.filter(s => s.columns?.length > 0).pop();
 
       const actualCols = lastSelect ? lastSelect.columns : [];
@@ -7461,7 +8063,7 @@ async function openCodingQuestion(qId) {
   if (!q) { toast('Question not found', 'error'); return; }
   _activeCodeQuestion = q;
 
-  const testCases = typeof q.testCases === 'string' ? JSON.parse(q.testCases) : (q.testCases || []);
+  const testCases = _parseTestCases(q.testCases);
   const visibleTests = testCases.slice(0, 2);
   const hiddenCount = Math.max(0, testCases.length - 2);
   const isSQL = q.language === 'sql';
@@ -7625,10 +8227,24 @@ async function runCustomInput(){
       if (r.error){ outEl.innerHTML = '<span style="color:#ff6b6b;white-space:pre-wrap">'+escHtml(String(r.error))+'</span>'; }
       else if (r.actualResult){ outEl.innerHTML = renderSQLTable(r.actualResult.columns, r.actualResult.rows, null, 30); if(metaEl) metaEl.innerHTML = '<span style="color:#22c55e">'+(r.actualResult.rows?r.actualResult.rows.length:0)+' rows</span>'; }
       else { outEl.innerHTML = '<span style="color:#9089bd">No result.</span>'; }
+    } else if (q.language === 'java'){
+      if (!(await _javaExecEnabled())){
+        outEl.innerHTML = '<span style="color:#fbbf24">☕ Java auto-run is turned off. Ask your coordinator to enable Java execution in Settings, or your submission will be reviewed by the instructor.</span>';
+      } else {
+        const inEl = document.getElementById('saCustomIn');
+        const stdin = inEl ? inEl.value : '';
+        const t0 = performance.now();
+        const res = await runJavaTests(code, [{ stdin: stdin, expected: '__none__', description: 'custom' }], null);
+        const r = res[0] || {};
+        const ms = Math.round(performance.now()-t0);
+        if (r.error){ outEl.innerHTML = '<span style="color:#ff6b6b;white-space:pre-wrap">'+escHtml(String(r.output))+'</span>'; if(metaEl) metaEl.innerHTML = '<span style="color:#ff6b6b">error</span>'; }
+        else { outEl.innerHTML = '<span style="color:#7ee787;white-space:pre-wrap">'+(escHtml(String(r.output))||'<span style="color:#9089bd">(no output)</span>')+'</span>'; if(metaEl) metaEl.innerHTML = '<span style="color:#22c55e">✓ '+ms+' ms · exit 0</span>'; }
+      }
     } else {
-      outEl.innerHTML = '<span style="color:#fbbf24">☕ Java runs on Submit (instructor-reviewed) — custom run is not available in-browser.</span>';
+      outEl.innerHTML = '<span style="color:#fbbf24">Run is not available for this language.</span>';
     }
   } catch(e){
+    if (e && e.javaDisabled){ outEl.innerHTML = '<span style="color:#fbbf24">☕ Java auto-run is turned off (instructor review).</span>'; return; }
     const isTimeout = String(e && e.message).includes('timed out');
     outEl.innerHTML = '<span style="color:#ff6b6b">'+(isTimeout?'⏱ Timed out':'❌ '+escHtml(String((e && e.message) || e)))+'</span>';
   }
@@ -7638,7 +8254,7 @@ async function runCodingTests() {
   const q = _activeCodeQuestion;
   if (!q) return;
   const code = _cmEditor ? _cmEditor.getValue() : '';
-  const testCases = typeof q.testCases === 'string' ? JSON.parse(q.testCases) : (q.testCases || []);
+  const testCases = _parseTestCases(q.testCases);
   const statusEl  = document.getElementById('runStatus');
   const resultsEl = document.getElementById('testResultsPanel');
   const runBtn    = document.getElementById('codingRunBtn');
@@ -7656,14 +8272,15 @@ async function runCodingTests() {
   _switchCodingTab('results');
   if (runBtn) runBtn.disabled = true;
 
-  // Java: in-browser execution not supported — show info message
-  if (q.language === 'java') {
+  // Java: only auto-grade when an admin has enabled Java execution; otherwise
+  // keep the instructor-review flow (no student code leaves the app).
+  if (q.language === 'java' && !(await _javaExecEnabled())) {
     if (statusEl) statusEl.innerHTML = `<span style="color:#ffb86c">Code saved</span>`;
     if (resultsEl) resultsEl.innerHTML = `
       <div style="background:rgba(255,184,108,0.1);border:1px solid rgba(255,184,108,0.3);border-radius:8px;padding:16px;text-align:center">
         <div style="font-size:24px;margin-bottom:8px">☕</div>
         <div style="color:#ffb86c;font-weight:700;margin-bottom:4px">Java — Instructor Review</div>
-        <div style="color:#6272a4;font-size:12px">Java cannot run in-browser. Submit your code and the instructor will review it manually.</div>
+        <div style="color:#6272a4;font-size:12px">Auto-grading for Java is turned off. Your code is saved and will be reviewed by the instructor.</div>
       </div>`;
     if (runBtn) runBtn.disabled = false;
     return;
@@ -7671,7 +8288,11 @@ async function runCodingTests() {
 
   try {
     let results;
-    if (q.language === 'python') {
+    if (q.language === 'java') {
+      results = await runJavaTests(code, testCases, (current, total) => {
+        if (statusEl) statusEl.innerHTML = `<span style="color:#ffb86c">${current}/${total} running…</span>`;
+      });
+    } else if (q.language === 'python') {
       results = await runPythonTests(code, testCases, (current, total) => {
         // Live progress update — worker sends this between test cases
         if (statusEl) statusEl.innerHTML = `<span style="color:#ffb86c">${current}/${total} running…</span>`;
@@ -7752,12 +8373,13 @@ async function submitCodingQuestion() {
   const q = _activeCodeQuestion;
   if (!q) return;
   const code = _cmEditor ? _cmEditor.getValue() : '';
-  const testCases = typeof q.testCases === 'string' ? JSON.parse(q.testCases) : (q.testCases || []);
+  const testCases = _parseTestCases(q.testCases);
 
   document.getElementById('codingSubmitBtn').disabled = true;
   let results;
   try {
     if (q.language === 'python') results = await runPythonTests(code, testCases);
+    else if (q.language === 'java') results = await runJavaTests(code, testCases);
     else results = await runSQLTests(q.schema || '', q.seedData || '', code, testCases);
   } catch(e) { results = []; }
 
@@ -7911,7 +8533,7 @@ function _renderCodingList() {
       const sub = smap[q.id]; const solved = !!sub;
       const m = _SA_SUBJ[q.language] || {icon:'📄',label:q.language};
       const gi = qs.indexOf(q)+1;
-      let nT = 0; try { nT = (typeof q.testCases==='string'?JSON.parse(q.testCases||'[]'):(q.testCases||[])).length; } catch(e){}
+      let nT = 0; try { nT = _parseTestCases(q.testCases).length; } catch(e){}
       html += `<div class="sa-row ${t.cls} ${solved?'solved':''}" onclick="openCodingQuestion(${q.id})"><span class="sa-ledge"></span>
         <div class="sa-status ${solved?'done':'play'}">${solved?'✓':'▶'}</div>
         <span class="sa-num">#${String(gi).padStart(2,'0')}</span>
@@ -8065,7 +8687,7 @@ async function renderAdminCodingTests() {
           </tr></thead>
           <tbody>
             ${questions.map(q => {
-              const tc = typeof q.testCases === 'string' ? JSON.parse(q.testCases||'[]') : (q.testCases||[]);
+              const tc = _parseTestCases(q.testCases);
               return `<tr>
                 <td style="font-weight:600">${q.language==='python'?'🐍':'🗄️'} ${escHtml(q.title)}</td>
                 <td><span class="badge badge-${q.language==='python'?'blue':'green'}">${q.language}</span></td>
@@ -8281,7 +8903,7 @@ async function openCodingQuestionEditor(editId) {
     existing = data;
   }
   const lang = existing?.language || 'python';
-  const tc = existing ? (typeof existing.testCases === 'string' ? JSON.parse(existing.testCases||'[]') : existing.testCases||[]) : [];
+  const tc = existing ? _parseTestCases(existing.testCases) : [];
   _tcIdx = 0; _sqlTcIdx = 0;
 
   const modal = document.getElementById('modalGenericInner');
@@ -9005,6 +9627,27 @@ async function renderAdminSettings() {
       </div>
       <div class="card" style="margin-top:16px">
         <div class="card-inner">
+          <div class="chart-title" style="margin-bottom:16px">☕ Java Execution</div>
+          <div class="fgroup">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="cfgJavaExec" ${String(cfg.javaExec||'').toLowerCase()==='on'?'checked':''}>
+              Enable Java auto-run &amp; auto-grading (compile + run against test cases)
+            </label>
+          </div>
+          <div class="fgroup" style="margin-top:10px">
+            <label>Java runner URL (Piston/Judge0-compatible) — optional</label>
+            <input type="text" id="cfgJavaGraderUrl" value="${cfg.javaGraderUrl||''}" placeholder="https://emkc.org/api/v2/piston/execute (default)">
+          </div>
+          <div style="font-size:12px;color:var(--text3);line-height:1.6">
+            <b>Off</b> (default) = Java is saved for instructor review; no student code leaves the app.<br>
+            <b>On + URL empty</b> = uses the public Piston service (emkc.org). Zero setup, but student code is sent to a third-party server — confirm your campus network can reach it first.<br>
+            <b>On + URL set</b> = uses your own Piston/Judge0 server, keeping student code on your infrastructure.
+          </div>
+          <button class="btn btn-accent" style="margin-top:12px" onclick="saveSettings()">💾 Save Settings</button>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="card-inner">
           <div class="chart-title" style="margin-bottom:16px">🔗 Supabase Connection</div>
           <div class="fgroup">
             <label>Project URL</label>
@@ -9031,10 +9674,15 @@ async function saveSettings() {
   if (graderEl) updates.push({ key:'sqlGrader', value: graderEl.checked ? 'on' : 'off' });
   const graderUrlEl = document.getElementById('cfgSqlGraderUrl');
   if (graderUrlEl) updates.push({ key:'sqlGraderUrl', value: graderUrlEl.value.trim() });
+  const javaExecEl = document.getElementById('cfgJavaExec');
+  if (javaExecEl) updates.push({ key:'javaExec', value: javaExecEl.checked ? 'on' : 'off' });
+  const javaUrlEl = document.getElementById('cfgJavaGraderUrl');
+  if (javaUrlEl) updates.push({ key:'javaGraderUrl', value: javaUrlEl.value.trim() });
   for (const u of updates) {
     await SB.from('config').upsert(u, { onConflict: 'key' });
   }
   _resetSqlGraderCfg();   // pick up the new setting without a reload
+  _resetJavaCfg();
   toast('Settings saved!', 'success');
 }
 
@@ -9165,12 +9813,12 @@ async function renderStudentModules() {
         <div class="sd-cat-wrap">
           <div class="sd-cat-header">
             <span class="sd-cat-title">📚 Select Module</span>
-            <span class="sd-cat-count">${cache.modules.length}</span>
+            <span class="sd-cat-count">${visibleModules().length}</span>
           </div>
           <div class="sd-cat-grid" style="max-height:280px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.1) transparent">
-            ${cache.modules.length === 0
+            ${visibleModules().length === 0
               ? '<div style="grid-column:span 3;text-align:center;color:#7878a0;padding:20px;font-size:13px">Loading modules…</div>'
-              : cache.modules.map(m => {
+              : visibleModules().map(m => {
                   const mScores = myScores.filter(s => s.moduleId === m.id);
                   const avg = mScores.length ? Math.round(mScores.reduce((a,b)=>a+(b.pct||0),0)/mScores.length) : 0;
                   return `<div class="sd-cat-item" onclick="openModuleSets(${m.id})" title="${m.name}${mScores.length?' · '+avg+'% avg':''}">
@@ -11122,6 +11770,31 @@ function showConfirm(msg, onOk, btnLabel='Confirm', title='Confirm', icon='⚠�
   btn.onclick = () => { closeModal('modalConfirm'); onOk(); };
   openModal('modalConfirm');
 }
+
+// ── Global Ctrl+S / Cmd+S guard ──────────────────────────────────
+// The browser's native "Save Page" dialog should never appear anywhere in
+// this app — students on the exam, practice-set, or coding-arena screens
+// have all pressed Ctrl+S by habit (VS Code muscle memory) and hit it.
+// This is intentionally app-wide (not just inside the exam anti-cheat
+// listeners) so it also covers admin screens and the untimed Practice
+// Arena, which don't run the heavier proctoring listeners.
+(function () {
+  const blockSaveShortcut = (e) => {
+    const k = (e.key || '').toLowerCase();
+    if ((e.ctrlKey || e.metaKey) && k === 's' && !e.altKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      // Only nudge the student with a toast when something is actually in
+      // progress worth reassuring them about; stay silent elsewhere.
+      if (typeof toast === 'function' && ((typeof testState !== 'undefined' && testState) || (typeof examState !== 'undefined' && examState))) {
+        toast('Your progress auto-saves — no need to press Ctrl+S', 'info');
+      }
+      return false;
+    }
+  };
+  window.addEventListener('keydown', blockSaveShortcut, true);
+  document.addEventListener('keydown', blockSaveShortcut, true);
+})();
 
 window.addEventListener('DOMContentLoaded', tryAutoConnect);
 </script>
