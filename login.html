@@ -1607,57 +1607,7 @@ table tbody tr:hover{background:rgba(30,94,255,0.06)!important}
 <!-- ═══════════════════════════════════════════════════════════ -->
 <!-- TEST PAGE -->
 <!-- ═══════════════════════════════════════════════════════════ -->
-<div id="testPage" class="page">
-  <div class="topnav">
-    <div class="nav-brand" id="testModuleName">Test</div>
-    <div class="nav-spacer"></div>
-    <div id="testSetName" style="font-size:13px;color:var(--text2)"></div>
-    <div class="nav-spacer"></div>
-    <button class="btn btn-danger btn-sm" onclick="confirmSubmitTest()">⏹ Submit Test</button>
-  </div>
-  <div class="test-layout">
-    <div class="test-main">
-      <div class="test-topbar">
-        <span>⏱</span>
-        <div class="test-timer" id="testTimer">45:00</div>
-        <div class="test-progress-bar"><div class="test-progress-fill" id="testProgressFill"></div></div>
-        <div class="test-qnum" id="testQNum">Q 1 / 50</div>
-      </div>
-      <div class="test-content" id="testContent"></div>
-      <div class="test-nav">
-        <button class="btn btn-outline" id="btnPrev" onclick="testNav(-1)">← Previous</button>
-        <div style="flex:1"></div>
-        <button class="btn btn-yellow btn-sm" onclick="markForReview()">🚩 Mark Review</button>
-        <div style="flex:1"></div>
-        <button class="btn btn-accent" id="btnNext" onclick="testNav(1)">Next →</button>
-      </div>
-    </div>
-    <div class="test-sidebar">
-      <div class="test-sidebar-inner">
-        <h4>Question Navigator</h4>
-        <div class="q-grid" id="qNavGrid"></div>
-        <div class="q-legend" style="margin-top:16px">
-          <div class="q-legend-item"><div class="q-legend-dot" style="background:var(--accent)"></div> Answered</div>
-          <div class="q-legend-item"><div class="q-legend-dot" style="background:var(--bg3);border:1px solid var(--border)"></div> Not Answered</div>
-          <div class="q-legend-item"><div class="q-legend-dot" style="background:var(--yellow)"></div> Marked for Review</div>
-        </div>
-        <div style="margin-top:20px">
-          <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Progress</div>
-          <div id="testProgressSummary" style="font-size:12px;color:var(--text2)"></div>
-        </div>
-        <div style="margin-top:16px;padding:10px 12px;background:var(--bg3);border-radius:var(--r2);border:1px solid var(--border)">
-          <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">⌨️ Shortcuts</div>
-          <div style="font-size:11px;color:var(--text3);line-height:2">
-            <kbd style="font-family:'JetBrains Mono',monospace;background:var(--bg2);padding:1px 6px;border-radius:3px;border:1px solid var(--border2);color:var(--text2)">1–4</kbd> Select option<br>
-            <kbd style="font-family:'JetBrains Mono',monospace;background:var(--bg2);padding:1px 6px;border-radius:3px;border:1px solid var(--border2);color:var(--text2)">← →</kbd> Navigate<br>
-            <kbd style="font-family:'JetBrains Mono',monospace;background:var(--bg2);padding:1px 6px;border-radius:3px;border:1px solid var(--border2);color:var(--text2)">M</kbd> Mark / Unmark<br>
-            <kbd style="font-family:'JetBrains Mono',monospace;background:var(--bg2);padding:1px 6px;border-radius:3px;border:1px solid var(--border2);color:var(--text2)">Enter</kbd> Next / Submit
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+
 
 <!-- ═══════════════════════════════════════════════════════════ -->
 <!-- RESULT PAGE -->
