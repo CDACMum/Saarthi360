@@ -1494,9 +1494,6 @@ table tbody tr:hover{background:rgba(30,94,255,0.06)!important}
         <div class="sidebar-item" onclick="adminNav('tests')">
           <span class="si-icon">📄</span> Tests
         </div>
-        <div class="sidebar-item" onclick="adminNav('assign')">
-          <span class="si-icon">🎓</span> Assign Tests
-        </div>
         <div class="sidebar-item" onclick="adminNav('announcements')">
           <span class="si-icon">📢</span> Announcements
         </div>
@@ -2785,7 +2782,7 @@ function doLogout() {
 // LAUNCH
 // ════════════════════════════════════════════════════════════════
 // Sections a Course Coordinator may see (everything else is admin-only)
-const COORD_SECTIONS = ['dashboard','leaderboard','students','certs','modules'];
+const COORD_SECTIONS = ['dashboard','leaderboard','students','certs','modules','assignments'];
 function applyRoleUI(){
   const isCoord = currentUser?.role === 'coordinator';
   document.querySelectorAll('#adminPage .sidebar-item').forEach(el => {
@@ -2833,6 +2830,7 @@ async function launchAdmin() {
   await loadBatchesCache();
   await loadModuleCoursesCache();
   await loadModulesCache();
+  await loadAssignmentScopeCache();
   adminNav('dashboard');
 }
 
@@ -2854,6 +2852,7 @@ async function launchStudent() {
   await loadBatchesCache();
   await loadModuleCoursesCache();
   await loadModulesCache();
+  await loadAssignmentScopeCache();
   await loadSetsCache();   // needed for checkSavedTest to show set name + resumeSavedTest
   studentNav('modules');
   checkSavedTest();        // show resume banner if a live test was interrupted
@@ -2905,6 +2904,54 @@ function visibleModules(){
   }
   return all;
 }
+
+// ── Assignment course/batch scoping (mirrors module_courses) ──────
+// No rows for an assignment in either table = visible to everyone (global).
+// A row in assignment_courses narrows it to that program; a row in
+// assignment_batches (only meaningful alongside a course scope) narrows it
+// further to specific batches within that program.
+async function loadAssignmentScopeCache() {
+  try {
+    const [{ data: ac }, { data: ab }] = await Promise.all([
+      SB.from('assignment_courses').select('*'),
+      SB.from('assignment_batches').select('*')
+    ]);
+    cache.assignmentCourses = ac || [];
+    cache.assignmentBatches = ab || [];
+  } catch(e) { cache.assignmentCourses = []; cache.assignmentBatches = []; }
+}
+function assignmentCourseSet(assignmentId){
+  const s = new Set();
+  (cache.assignmentCourses||[]).forEach(r => { if (String(r.assignment_id)===String(assignmentId)) s.add(String(r.course_id)); });
+  return s;
+}
+function assignmentBatchSet(assignmentId){
+  const s = new Set();
+  (cache.assignmentBatches||[]).forEach(r => { if (String(r.assignment_id)===String(assignmentId)) s.add(String(r.batch_id)); });
+  return s;
+}
+// Is this assignment visible to a viewer in courseId/batchId? Unscoped (no
+// rows at all) = visible to everyone. Course-scoped = courseId must match one
+// of the chosen programs. Also batch-scoped = batchId must ALSO match one of
+// the chosen batches (batch scope only narrows further, never widens).
+function assignmentVisibleFor(assignmentId, courseId, batchId){
+  const cs = assignmentCourseSet(assignmentId);
+  if (cs.size && (courseId == null || !cs.has(String(courseId)))) return false;
+  const bs = assignmentBatchSet(assignmentId);
+  if (bs.size && (batchId == null || !bs.has(String(batchId)))) return false;
+  return true;
+}
+// Assignments a Course Coordinator is allowed to see/manage: unscoped ones,
+// plus any scoped to at least one of their programs. Admin sees everything.
+function visibleAssignmentsForViewer(list){
+  if (currentUser?.role !== 'coordinator') return list || [];
+  const cs = coordCourseSet();
+  if (!cs) return [];   // coordinator with no program scope manages nothing
+  return (list||[]).filter(a => {
+    const s = assignmentCourseSet(a.id);
+    return s.size === 0 || [...s].some(cid => cs.has(String(cid)));
+  });
+}
 async function loadStudentsCache() {
   const { data } = await SB.from('students').select('*').order('name');
   let list = data || [];
@@ -2941,6 +2988,28 @@ function courseCode(id){ if(id==null) return ''; const c=(cache.courses||[]).fin
 function batchName(id){ if(id==null) return ''; const b=(cache.batches||[]).find(x=>String(x.id)===String(id)); return b?b.name:''; }
 function batchCourseId(id){ const b=(cache.batches||[]).find(x=>String(x.id)===String(id)); return b?b.course_id:null; }
 function batchesForCourse(courseId){ return (cache.batches||[]).filter(b=>String(b.course_id)===String(courseId)); }
+// Courses/batches a Course Coordinator is allowed to see in dropdowns, filters,
+// and pickers — hard program isolation (a BDA coordinator must never even see
+// that an AI or AC batch exists). Admin: unrestricted. Coordinator with no
+// program assigned yet: sees nothing (fail closed, matches coordCanSeeStudent).
+function visibleCourses(){
+  const all = cache.courses || [];
+  if (currentUser?.role !== 'coordinator') return all;
+  const cs = coordCourseSet();
+  if (!cs) return [];
+  return all.filter(c => cs.has(String(c.id)));
+}
+function visibleBatches(){
+  const all = cache.batches || [];
+  if (currentUser?.role !== 'coordinator') return all;
+  const cs = coordCourseSet();
+  if (!cs) return [];
+  let list = all.filter(b => cs.has(String(b.course_id)));
+  const bs = coordBatchSet();
+  if (bs) list = list.filter(b => bs.has(String(b.id)));
+  return list;
+}
+function visibleBatchesForCourse(courseId){ return visibleBatches().filter(b=>String(b.course_id)===String(courseId)); }
 async function loadSetsCache() {
   try {
     const { data, error } = await SB.from('sets').select('*').order('created', { ascending: false });
@@ -2990,7 +3059,6 @@ async function adminNav(section) {
     assignments:   renderAdminAssignments,
     coding:        renderAdminCodingTests,
     tests:         renderAdminTests,
-    assign:        renderAdminAssignTests,
     gradebook:     renderAdminGradebook,
     announcements: renderAdminAnnouncements,
     flashcards:    renderAdminFlashcards,
@@ -3452,7 +3520,7 @@ let _certBatchFilter = '';
 async function renderAdminCertifications(){
   await Promise.all([loadStudentsCache(), loadCoursesCache(), loadBatchesCache(), loadPortfolioMonthsCache(), loadPortfolioEntriesCache()]);
   const el = document.getElementById('adminContent');
-  const batchOpts = (cache.batches||[]).map(b =>
+  const batchOpts = visibleBatches().map(b =>
     `<option value="${b.id}">${escHtml(courseCode(b.course_id)?courseCode(b.course_id)+' · ':'')}${escHtml(b.name)}</option>`).join('');
   el.innerHTML = `
     <div class="section-header">
@@ -4032,9 +4100,9 @@ async function deleteBatch(id, name) {
 async function renderAdminStudents() {
   await Promise.all([loadStudentsCache(), loadCoursesCache(), loadBatchesCache()]);
   const el = document.getElementById('adminContent');
-  const batchFilterOptions = (cache.batches||[]).map(b =>
+  const batchFilterOptions = visibleBatches().map(b =>
     `<option value="${b.id}">${escHtml(courseCode(b.course_id)?courseCode(b.course_id)+' · ':'')}${escHtml(b.name)}</option>`).join('');
-  const bulkCourseOptions = (cache.courses||[]).map(c =>
+  const bulkCourseOptions = visibleCourses().map(c =>
     `<option value="${c.id}">${escHtml(c.name)}${c.code?` (${escHtml(c.code)})`:''}</option>`).join('');
   el.innerHTML = `
     <div class="section-header">
@@ -4193,12 +4261,12 @@ async function bulkUnassignBatch(){
 // ── Course/Batch select helpers for the student modal ──
 function _fillCourseSelect(sel, selectedId){
   if (!sel) return;
-  sel.innerHTML = '<option value="">— None —</option>' + (cache.courses||[]).map(c =>
+  sel.innerHTML = '<option value="">— None —</option>' + visibleCourses().map(c =>
     `<option value="${c.id}" ${String(c.id)===String(selectedId)?'selected':''}>${escHtml(c.name)}${c.code?` (${escHtml(c.code)})`:''}</option>`).join('');
 }
 function _fillBatchSelect(sel, courseId, selectedId){
   if (!sel) return;
-  sel.innerHTML = '<option value="">— None —</option>' + batchesForCourse(courseId).map(b =>
+  sel.innerHTML = '<option value="">— None —</option>' + visibleBatchesForCourse(courseId).map(b =>
     `<option value="${b.id}" ${String(b.id)===String(selectedId)?'selected':''}>${escHtml(b.name)}</option>`).join('');
 }
 function onStudentCourseChange(courseSelId, batchSelId){
@@ -4260,6 +4328,12 @@ async function saveStudent() {
   const courseSel = document.getElementById('sCourse').value;
   const batch_id = batchSel ? Number(batchSel) : null;
   const course_id = batch_id ? batchCourseId(batch_id) : (courseSel ? Number(courseSel) : null);
+  // Defense-in-depth: a coordinator can only place a student in their own program(s),
+  // even if the dropdown were somehow bypassed (the UI already only lists their own).
+  if (currentUser?.role === 'coordinator' && course_id != null) {
+    const cs = coordCourseSet();
+    if (!cs || !cs.has(String(course_id))) return toast('You can only assign students to your own program.', 'error');
+  }
   const rec = { id, name, pass: pass || name.split(' ')[0].toLowerCase(), status, course_id, batch_id };
   const { error } = studentEditId
     ? await SB.from('students').update({ name, pass: rec.pass, status, course_id, batch_id }).eq('id', id)
@@ -5751,7 +5825,7 @@ function renderAssignTable() {
       <td>${escHtml(x.studentName||x.studentId)}</td>
       <td style="font-size:11px;color:var(--text3)">${(x.assignedAt||'').slice(0,10)}</td>
       <td><span class="badge ${x.status==='completed'?'badge-green':'badge-yellow'}">${x.status||'assigned'}</span></td>
-      <td><button class="btn btn-danger btn-sm" onclick="deleteAssignment('${x.id}')">🗑</button></td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteTestAssignment('${x.id}')">🗑</button></td>
     </tr>`).join('') || '<tr><td colspan="6"><div class="empty-state"><div class="icon">🎓</div><h3>No assignments yet</h3></div></td></tr>';
 }
 
@@ -5777,7 +5851,12 @@ async function createAssignments() {
   renderAdminAssignTests();
 }
 
-async function deleteAssignment(id) {
+// Renamed from the old `deleteAssignment` — that name collided with the
+// unrelated Assignments-page function of the same name below (two top-level
+// function declarations with the same name in JS: the later one silently
+// wins for every caller, so this "Assign Tests" delete button was actually
+// invoking the OTHER delete logic against the wrong table this whole time).
+async function deleteTestAssignment(id) {
   if (!confirm('Remove this assignment?')) return;
   const { error } = await SB.from('test_assignments').delete().eq('id', id);
   if (error) { toast('Delete failed: ' + error.message, 'error'); return; }
@@ -7627,23 +7706,36 @@ function _resetSqlGraderCfg() { _sqlGraderCfg = null; }
 
 // ── Java execution / grader (optional; OFF by default) ───────────
 // Java cannot compile+run+capture I/O in-browser (CheerpJ has no stdout/stdin
-// capture API), so grading uses a code-execution endpoint. Default endpoint is
-// the public Piston service; set config 'javaGraderUrl' to a self-hosted
-// Piston/Judge0-compatible URL to keep student code on your own infrastructure.
-// Nothing is sent anywhere until an admin turns config 'javaExec' = 'on'.
-const PISTON_DEFAULT_URL = 'https://emkc.org/api/v2/piston/execute';
+// capture API), so grading uses a code-execution endpoint (Piston protocol).
+// The public Piston service (emkc.org) went whitelist-only on 15 Feb 2026 and
+// now rejects unapproved callers with HTTP 401 — it is NOT usable as a silent
+// default anymore. A working config MUST set 'javaGraderUrl' to a self-hosted
+// Piston/Judge0-compatible instance. Nothing is sent anywhere until an admin
+// turns config 'javaExec' = 'on' AND a URL is configured.
+// Two grader protocols are supported (config 'javaGraderProtocol'):
+//  'piston'  — single POST with {language, files:[{name,content}], stdin}.
+//              Compiles under the STUDENT's own public class name.
+//  'judge0'  — POST /submissions?wait=true with {language_id, source_code,
+//              stdin}. Judge0 always compiles the source as "Main.java", so
+//              the student's public class is renamed to Main before sending
+//              (see _judge0RenameToMain below).
 let _javaCfg = null;
 async function _loadJavaCfg() {
   if (_javaCfg !== null) return _javaCfg;
-  let on = false, url = '';
+  let on = false, url = '', protocol = 'piston', langId = '91';
   try {
-    const { data } = await SB.from('config').select('key,value').in('key', ['javaExec','javaGraderUrl']);
+    const { data } = await SB.from('config').select('key,value').in('key', ['javaExec','javaGraderUrl','javaGraderProtocol','javaGraderLangId']);
     (data || []).forEach(r => {
       if (r.key === 'javaExec') on = String(r.value||'').toLowerCase() === 'on';
       if (r.key === 'javaGraderUrl') url = String(r.value||'').trim();
+      if (r.key === 'javaGraderProtocol') protocol = (String(r.value||'').trim().toLowerCase() === 'judge0') ? 'judge0' : 'piston';
+      if (r.key === 'javaGraderLangId') langId = String(r.value||'').trim() || '91';
     });
   } catch(e) {}
-  _javaCfg = { on, url: url || PISTON_DEFAULT_URL, custom: !!url };
+  // No self-hosted URL configured → treat as not usable, regardless of the
+  // 'javaExec' toggle, rather than silently falling through to the now-dead
+  // public endpoint and surfacing a confusing 401 to every student.
+  _javaCfg = { on: on && !!url, url, protocol, langId, custom: !!url, unconfigured: on && !url };
   return _javaCfg;
 }
 async function _javaExecEnabled() { return (await _loadJavaCfg()).on; }
@@ -7656,9 +7748,34 @@ function _javaMainFileName(code) {
   return (m ? m[1] : 'Main') + '.java';
 }
 
+// Judge0's Java runtimes always compile the submitted source as "Main.java",
+// unlike Piston (which is fine with any public class name). So for the
+// judge0 protocol we rename the student's public class to Main before
+// sending, and rename other bare occurrences of that identifier too (a
+// constructor call like `new Solution()`, say) — good enough for the
+// single-class, stdin/stdout style programs these practice questions use.
+// Verified live against ce.judge0.com: without this, a student's
+// `public class Solution` fails with "class Solution is public, should be
+// declared in a file named Solution.java" even though the code is correct.
+function _judge0RenameToMain(code) {
+  const m = /public\s+(?:final\s+|abstract\s+)*class\s+([A-Za-z_$][\w$]*)/.exec(code || '');
+  if (!m || m[1] === 'Main') return code;
+  return code.replace(new RegExp('\\b' + m[1] + '\\b', 'g'), 'Main');
+}
+
+function _javaRetryReason(status) {
+  return status === 429 ? 'rate-limited (too many students running Java at once) — please try again in a moment'
+    : status === 401 ? 'not authorized — the configured Java execution URL requires whitelisting or a self-hosted instance (ask your admin to set config “javaGraderUrl” to a self-hosted endpoint)'
+    : 'HTTP ' + status;
+}
+
 // Runs one Java program against one stdin via a Piston-compatible endpoint.
-// Returns { ok, stdout, stderr, compileError, message }.
-async function _javaRunOnce(url, code, stdin) {
+// Retries on 429 (rate limit) and 502/503/504 (transient) with backoff, since
+// a shared Piston/Judge0 instance under real classroom load (a whole batch
+// or exam section submitting Java within the same minute) will throttle
+// routinely, not just occasionally. Returns { ok, stdout, stderr, compileError, message }.
+async function _javaRunOncePiston(url, code, stdin, _attempt) {
+  _attempt = _attempt || 0;
   const body = {
     language: 'java', version: '*',
     files: [{ name: _javaMainFileName(code), content: code }],
@@ -7666,7 +7783,15 @@ async function _javaRunOnce(url, code, stdin) {
     compile_timeout: 12000, run_timeout: 8000
   };
   const resp = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
-  if (!resp.ok) throw new Error('Java runner HTTP ' + resp.status);
+  if (!resp.ok) {
+    const retryable = (resp.status === 429 || resp.status === 502 || resp.status === 503 || resp.status === 504);
+    if (retryable && _attempt < 4) {
+      const wait = 400 * Math.pow(2, _attempt) + Math.floor(Math.random() * 200); // 400ms, 800ms, 1.6s, 3.2s (+jitter)
+      await new Promise(r => setTimeout(r, wait));
+      return _javaRunOncePiston(url, code, stdin, _attempt + 1);
+    }
+    throw new Error('Java runner ' + _javaRetryReason(resp.status));
+  }
   const data = await resp.json();
   const comp = data.compile || {};
   const run  = data.run || {};
@@ -7680,11 +7805,53 @@ async function _javaRunOnce(url, code, stdin) {
   };
 }
 
+// Runs one Java program against one stdin via a Judge0-compatible endpoint
+// (POST /submissions?...&wait=true). langId defaults to 91 (Java, OpenJDK
+// 17) which is what ce.judge0.com's public demo instance exposes.
+async function _javaRunOnceJudge0(url, code, stdin, langId, _attempt) {
+  _attempt = _attempt || 0;
+  const endpoint = url.replace(/\/+$/, '') + '/submissions?base64_encoded=false&wait=true';
+  const body = {
+    language_id: Number(langId) || 91,
+    source_code: _judge0RenameToMain(code),
+    stdin: stdin == null ? '' : String(stdin).replace(/\\n/g, '\n')
+  };
+  const resp = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  if (!resp.ok) {
+    const retryable = (resp.status === 429 || resp.status === 502 || resp.status === 503 || resp.status === 504);
+    if (retryable && _attempt < 4) {
+      const wait = 400 * Math.pow(2, _attempt) + Math.floor(Math.random() * 200);
+      await new Promise(r => setTimeout(r, wait));
+      return _javaRunOnceJudge0(url, code, stdin, langId, _attempt + 1);
+    }
+    throw new Error('Java runner ' + _javaRetryReason(resp.status));
+  }
+  const data = await resp.json();
+  // status.id: 3 = Accepted (ran to completion, exit 0 — we do our own
+  // stdout-vs-expected comparison, same as Piston, rather than trusting a
+  // judge verdict); 6 = Compilation Error; anything else = a runtime failure
+  // (TLE, SIGSEGV, NZEC, etc.) reported via stderr/message.
+  const st = (data.status && data.status.id) || 0;
+  const compileError = st === 6 ? (data.compile_output || 'Compilation failed') : '';
+  return {
+    ok: !compileError && st === 3,
+    stdout: data.stdout != null ? data.stdout : '',
+    stderr: data.stderr || (st !== 3 && st !== 6 ? (data.status && data.status.description) : '') || '',
+    compileError,
+    message: compileError || data.stderr || (data.status && data.status.description) || ''
+  };
+}
+
+async function _javaRunOnce(cfg, code, stdin) {
+  return cfg.protocol === 'judge0'
+    ? _javaRunOnceJudge0(cfg.url, code, stdin, cfg.langId)
+    : _javaRunOncePiston(cfg.url, code, stdin);
+}
+
 // Grades Java against all test cases (stdin/expected), mirroring runPythonTests' shape.
 async function runJavaTests(code, testCases, onProgress) {
   const cfg = await _loadJavaCfg();
   if (!cfg.on) { const e = new Error('__JAVA_DISABLED__'); e.javaDisabled = true; throw e; }
-  const url = cfg.url;
   const cases = Array.isArray(testCases) && testCases.length ? testCases : [{ stdin:'', expected:'__none__', description:'run' }];
   const results = [];
   // Compile once to catch syntax errors fast (first case doubles as compile check).
@@ -7692,7 +7859,7 @@ async function runJavaTests(code, testCases, onProgress) {
     const tc = cases[i];
     if (onProgress) onProgress(i + 1, cases.length);
     try {
-      const r = await _javaRunOnce(url, code, tc.stdin);
+      const r = await _javaRunOnce(cfg, code, tc.stdin);
       if (r.compileError) {
         results.push({ description: tc.description, passed:false, error:true,
           output: 'Compilation error:\n' + r.compileError,
@@ -7818,25 +7985,101 @@ function _sqlReplaceFunc(sql, fnName, transform) {
   } catch (e) { return sql; }
 }
 
-// Light MySQL→SQLite compatibility so common MySQL syntax students type does not
-// error out in the in-browser (SQLite) engine. Best-effort; the server-side
-// MySQL grader (when enabled) is still the exact path.
+// Registers real MySQL-compatible scalar functions on a fresh sql.js Database
+// so common MySQL string/math functions used in PGCP-BDA/AI SQL practice
+// "just work" against SQLite instead of erroring "no such function: X".
+// Call once right after `new SQL.Database()`, before running any SQL on it.
+//
+// IMPORTANT sql.js limitation (verified against sql.js 1.10.2 / SQLite 3.45,
+// the exact version this app loads from cdnjs): Database.create_function()
+// registers the function for EXACTLY `fn.length` arguments — it cannot
+// register a variadic function (rest params report length 0 or the count of
+// only the leading fixed params, so a call with any other argument count
+// fails with "wrong number of arguments"). So every function below takes a
+// fixed, explicit argument list. True variadic MySQL functions (CONCAT,
+// CONCAT_WS, GREATEST, LEAST) are handled differently, below, via SQLite's
+// own native equivalents or a text-level rewrite — see _mysqlToSqlite.
+function _registerMysqlCompat(db) {
+  if (!db || typeof db.create_function !== 'function') return; // older sql.js — silently skip, regex shim below still helps
+  const reg = (name, fn) => { try { db.create_function(name, fn); } catch (e) {} };
+  const str = v => v == null ? '' : String(v);
+
+  reg('IF',        (c, a, b) => c ? a : b);
+  reg('IFNULL',    (a, b) => a == null ? b : a);
+  reg('ISNULL',    a => a == null ? 1 : 0);
+  reg('NULLIF',    (a, b) => a === b ? null : a);
+  reg('LEFT',      (s, n) => s == null ? null : str(s).slice(0, Number(n)));
+  reg('RIGHT',     (s, n) => s == null ? null : str(s).slice(-Number(n) || 0));
+  reg('LPAD', (s, len, pad) => {
+    s = str(s); pad = pad == null ? ' ' : str(pad); len = Number(len);
+    if (s.length >= len || !pad) return s.slice(0, len);
+    let out = s; while (out.length < len) out = pad.slice(0, len - out.length) + out; return out;
+  });
+  reg('RPAD', (s, len, pad) => {
+    s = str(s); pad = pad == null ? ' ' : str(pad); len = Number(len);
+    if (s.length >= len || !pad) return s.slice(0, len);
+    let out = s; while (out.length < len) out += pad.slice(0, len - out.length); return out;
+  });
+  reg('REPEAT',  (s, n) => str(s).repeat(Math.max(0, Number(n) || 0)));
+  reg('REVERSE', s => str(s).split('').reverse().join(''));
+  reg('SUBSTRING_INDEX', (s, delim, n) => {
+    s = str(s); delim = str(delim); n = Number(n);
+    const parts = s.split(delim);
+    return n >= 0 ? parts.slice(0, n).join(delim) : parts.slice(n).join(delim);
+  });
+  reg('FIND_IN_SET', (needle, list) => {
+    const i = str(list).split(',').indexOf(str(needle));
+    return i < 0 ? 0 : i + 1;
+  });
+  reg('STRCMP', (a, b) => { a = str(a); b = str(b); return a < b ? -1 : a > b ? 1 : 0; });
+  reg('ASCII',  s => { s = str(s); return s.length ? s.charCodeAt(0) : 0; });
+  reg('TRUNCATE', (x, d) => { const f = Math.pow(10, Number(d) || 0); return Math.trunc(Number(x) * f) / f; });
+  reg('MOD',    (a, b) => Number(b) === 0 ? null : Number(a) % Number(b));
+  reg('RAND',   () => Math.random());
+  reg('NOW',      () => new Date().toISOString().slice(0, 19).replace('T', ' '));
+  reg('CURDATE',  () => new Date().toISOString().slice(0, 10));
+  reg('CURTIME',  () => new Date().toISOString().slice(11, 19));
+  // YEAR/MONTH/DAY/DATEDIFF are deliberately NOT registered here even though
+  // they are fixed-arity: a JS-function return value always comes back as
+  // SQLite storage class REAL (this binding calls sqlite3_result_double no
+  // matter what), so e.g. YEAR('2024-05-01') would type as 2024.0 and any
+  // query that concatenates it as text (CONCAT(name, YEAR(dob)), a common
+  // student pattern) would read "…2024.0" instead of "…2024". The regex
+  // rewrite in _mysqlToSqlite below uses CAST(... AS INTEGER) instead, which
+  // gives genuine INTEGER storage and avoids that artifact.
+}
+
+// Light MySQL→SQLite compatibility for syntax create_function cannot fix:
+// true variadic calls (arity varies per call — sql.js's create_function binds
+// one fixed arity per name, see _registerMysqlCompat above) and MySQL-only
+// clause syntax. Runs on both the student query and any reference query.
+// Best-effort; the server-side MySQL grader (when enabled) is still exact.
 function _mysqlToSqlite(sql) {
   if (!sql || typeof sql !== 'string') return sql;
   try {
     let s = sql
-      .replace(/\bNOW\s*\(\s*\)/gi, "datetime('now')")
       .replace(/\bCURRENT_TIMESTAMP\s*\(\s*\)/gi, "datetime('now')")
       .replace(/\bSYSDATE\s*\(\s*\)/gi, "datetime('now')")
-      .replace(/\bCURDATE\s*\(\s*\)/gi, "date('now')")
-      .replace(/\bCURTIME\s*\(\s*\)/gi, "time('now')");
-    for (let k = 0; k < 5 && /\bCONCAT_WS\s*\(/i.test(s); k++)
-      s = _sqlReplaceFunc(s, 'CONCAT_WS', a => a.length > 1 ? '(' + a.slice(1).join(' || ' + a[0] + ' || ') + ')' : "''");
-    for (let k = 0; k < 5 && /\bCONCAT\s*\(/i.test(s); k++)
-      s = _sqlReplaceFunc(s, 'CONCAT', a => '(' + a.join(' || ') + ')');
-    s = _sqlReplaceFunc(s, 'YEAR',  a => "CAST(strftime('%Y'," + a[0] + ") AS INTEGER)");
-    s = _sqlReplaceFunc(s, 'MONTH', a => "CAST(strftime('%m'," + a[0] + ") AS INTEGER)");
-    s = _sqlReplaceFunc(s, 'DAY',   a => "CAST(strftime('%d'," + a[0] + ") AS INTEGER)");
+      // CONCAT / CONCAT_WS: SQLite 3.44+ (bundled here: 3.45) has native,
+      // properly variadic concat()/concat_ws() — same behavior as MySQL's,
+      // except concat() treats a NULL argument as empty string instead of
+      // making the whole result NULL (documented SQLite behavior; usually
+      // the more forgiving, more student-friendly outcome anyway).
+      .replace(/\bCONCAT_WS\s*\(/gi, 'concat_ws(')
+      .replace(/\bCONCAT\s*\(/gi, 'concat(')
+      // GREATEST/LEAST have no create_function-friendly variadic form, but
+      // SQLite's own scalar max()/min() (2+ args) already do exactly this.
+      .replace(/\bGREATEST\s*\(/gi, 'MAX(')
+      .replace(/\bLEAST\s*\(/gi, 'MIN(')
+      // MySQL-only GROUP_CONCAT(col SEPARATOR '-') syntax → SQLite's
+      // group_concat(col, '-'). This is a parse error, not a missing
+      // function, so it must be fixed before the query reaches SQLite.
+      .replace(/\bGROUP_CONCAT\s*\(([\s\S]+?)\s+SEPARATOR\s+('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")\s*\)/gi, 'GROUP_CONCAT($1, $2)');
+    s = _sqlReplaceFunc(s, 'YEAR',     a => "CAST(strftime('%Y'," + a[0] + ") AS INTEGER)");
+    s = _sqlReplaceFunc(s, 'MONTH',    a => "CAST(strftime('%m'," + a[0] + ") AS INTEGER)");
+    s = _sqlReplaceFunc(s, 'DAY',      a => "CAST(strftime('%d'," + a[0] + ") AS INTEGER)");
+    s = _sqlReplaceFunc(s, 'DAYOFMONTH', a => "CAST(strftime('%d'," + a[0] + ") AS INTEGER)");
+    s = _sqlReplaceFunc(s, 'DATEDIFF', a => "CAST(julianday(" + a[0] + ") - julianday(" + a[1] + ") AS INTEGER)");
     return s;
   } catch (e) { return sql; }
 }
@@ -7891,6 +8134,7 @@ async function runSQLTests(schema, seedData, studentQuery, testCases) {
     let db;
     try {
       db = new SQL.Database();
+      _registerMysqlCompat(db);
 
       // Setup schema
       if (schema) {
@@ -7911,6 +8155,7 @@ async function runSQLTests(schema, seedData, studentQuery, testCases) {
       if (expRows == null && refSql && !(tc.probe && String(tc.probe).trim())) {
         try {
           const rdb = new SQL.Database();
+          _registerMysqlCompat(rdb);
           if (schema)   rdb.run(schema);
           if (seedData) rdb.run(seedData);
           const rr = rdb.exec(_mysqlToSqlite(refSql));
@@ -9330,6 +9575,39 @@ async function deleteFlashcard(id) {
 // ════════════════════════════════════════════════════════════════
 // ADMIN: ASSIGNMENTS
 // ════════════════════════════════════════════════════════════════
+// Course/batch checkboxes for the assignment modal. `restrictIds`, when
+// given (a Course Coordinator's own programs), limits which programs/batches
+// are offered — a coordinator can only ever scope an assignment to their own
+// program(s), never someone else's.
+function _asnCourseCheckboxes(selectedIds, restrictIds){
+  const sel = new Set((selectedIds||[]).map(String));
+  const restrict = restrictIds ? new Set(restrictIds.map(String)) : null;
+  const list = (cache.courses||[]).filter(c => !restrict || restrict.has(String(c.id)));
+  return list.map(c =>
+    `<label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" class="asn-course" value="${c.id}" ${sel.has(String(c.id))?'checked':''}> ${escHtml((c.code?c.code+' — ':'')+(c.name||('#'+c.id)))}</label>`
+  ).join('') || '<div style="color:var(--text3);font-size:12px">No programs available.</div>';
+}
+function _asnBatchCheckboxes(selectedIds, restrictCourseIds){
+  const sel = new Set((selectedIds||[]).map(String));
+  const restrict = restrictCourseIds ? new Set(restrictCourseIds.map(String)) : null;
+  const byCourse = {};
+  (cache.batches||[]).forEach(b => { if (!restrict || restrict.has(String(b.course_id))) (byCourse[b.course_id] = byCourse[b.course_id] || []).push(b); });
+  return Object.keys(byCourse).map(cid => {
+    const rows = byCourse[cid].map(b =>
+      `<label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" class="asn-batch" value="${b.id}" ${sel.has(String(b.id))?'checked':''}> ${escHtml(b.name)}</label>`).join('');
+    return `<div><div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;margin:4px 0">${escHtml(courseName(cid)||'No course')}</div>${rows}</div>`;
+  }).join('') || '<div style="color:var(--text3);font-size:12px">No batches yet — create batches first.</div>';
+}
+// Program/batch scope as chips for the admin/coordinator list table.
+function _asnScopeChips(assignmentId){
+  const cs = [...assignmentCourseSet(assignmentId)];
+  const bs = [...assignmentBatchSet(assignmentId)];
+  if (!cs.length && !bs.length) return '<span class="badge badge-gray">All programs</span>';
+  const cChips = cs.map(cid => `<span class="badge badge-blue">${escHtml(courseCode(cid)||courseName(cid)||('#'+cid))}</span>`).join(' ');
+  const bChips = bs.map(bid => `<span class="badge badge-gray">${escHtml(batchName(bid)||('#'+bid))}</span>`).join(' ');
+  return cChips + (bChips ? ' ' + bChips : '');
+}
+
 async function renderAdminAssignments() {
   const el = document.getElementById('adminContent');
 
@@ -9342,10 +9620,13 @@ async function renderAdminAssignments() {
     const { data: subs } = await SB.from('submissions').select('*');
     submissions = subs || [];
   } catch(e) {}
+  await loadAssignmentScopeCache();
+  assignments = visibleAssignmentsForViewer(assignments);
 
   const subCount = id => submissions.filter(s => s.assignmentId === id).length;
   const gradedCount = id => submissions.filter(s => s.assignmentId === id && s.marks != null).length;
-  const typeIcon = t => ({ mcq:'🎯', link:'🔗', text:'✍️', file:'📎', coding:'💻' }[t] || '📋');
+  const typeIcon = t => ({ link:'🔗', text:'✍️', file:'📎', coding:'💻' }[t] || '📋');
+  const moduleLabel = mid => { const m = (cache.modules||[]).find(x=>String(x.id)===String(mid)); return mid ? (m ? `${m.icon||'📚'} ${m.name}` : '#'+mid) : 'All'; };
 
   el.innerHTML = `
     <div class="section-header">
@@ -9365,7 +9646,7 @@ async function renderAdminAssignments() {
       <div class="tbl-wrap">
         <table>
           <thead><tr>
-            <th>Title</th><th>Type</th><th>Module</th><th>Deadline</th><th>Marks</th><th>Submissions</th><th>Actions</th>
+            <th>Title</th><th>Type</th><th>Module</th><th>Program / Batch</th><th>Deadline</th><th>Marks</th><th>Submissions</th><th>Actions</th>
           </tr></thead>
           <tbody>
             ${assignments.map(a => {
@@ -9374,7 +9655,8 @@ async function renderAdminAssignments() {
               return `<tr>
                 <td style="font-weight:600">${typeIcon(a.type)} ${escHtml(a.title)}</td>
                 <td><span class="badge badge-blue">${a.type || 'link'}</span></td>
-                <td>${a.moduleId || 'All'}</td>
+                <td>${moduleLabel(a.moduleId)}</td>
+                <td style="max-width:200px"><div style="display:flex;flex-wrap:wrap;gap:4px">${_asnScopeChips(a.id)}</div></td>
                 <td style="color:${isPast?'var(--red)':'var(--text2)'}">${dl.toLocaleDateString('en-IN',{day:'numeric',month:'short'})}</td>
                 <td>${a.maxMarks || '—'}</td>
                 <td>
@@ -9383,6 +9665,7 @@ async function renderAdminAssignments() {
                 </td>
                 <td>
                   <div style="display:flex;gap:6px">
+                    <button class="btn btn-outline btn-sm" onclick="openCreateAssignment('${a.id}')">✏️</button>
                     <button class="btn btn-accent btn-sm" onclick="openGradeAssignment('${a.id}')">✏️ Grade</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteAssignment('${a.id}')">🗑</button>
                   </div>
@@ -9395,59 +9678,85 @@ async function renderAdminAssignments() {
     </div>`}`;
 }
 
-async function openCreateAssignment() {
+// Pass an assignment id to edit it in place; omit to create a new one.
+async function openCreateAssignment(editId) {
   await loadModulesCache();
+  await loadAssignmentScopeCache();
+  const isCoord = currentUser?.role === 'coordinator';
+  const coordCourses = isCoord ? [...(coordCourseSet() || [])] : null;   // null = admin, no restriction
+  if (isCoord && (!coordCourses || !coordCourses.length)) { toast('You have no program assigned — ask an admin to give you one before creating assignments.', 'error'); return; }
+
+  let a = null;
+  if (editId != null) {
+    const { data } = await SB.from('assignments').select('*').eq('id', editId).single();
+    a = data;
+    if (!a) { toast('Assignment not found', 'error'); return; }
+  }
+  const selCourses = editId != null ? [...assignmentCourseSet(editId)] : [];
+  const selBatches = editId != null ? [...assignmentBatchSet(editId)] : [];
+
+  const toLocalInput = iso => { if (!iso) return ''; const d = new Date(iso); const p = n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; };
+
   const modal = document.getElementById('modalGenericInner');
   modal.innerHTML = `
-    <div class="modal-box" style="max-width:540px">
-      <div class="modal-header"><h3>📋 Create Assignment</h3></div>
+    <div class="modal-box" style="max-width:560px;max-height:85vh;overflow-y:auto">
+      <div class="modal-header"><h3>📋 ${a ? 'Edit' : 'Create'} Assignment</h3></div>
+      <input type="hidden" id="asnEditId" value="${a ? escHtml(String(a.id)) : ''}">
       <div class="modal-body" style="padding:20px;display:flex;flex-direction:column;gap:14px">
         <div>
           <label style="font-size:12px;color:var(--text3);font-weight:600;display:block;margin-bottom:6px">TITLE *</label>
-          <input id="asnTitle" type="text" class="filter-select" style="width:100%" placeholder="e.g. Python Data Analysis Lab">
+          <input id="asnTitle" type="text" class="filter-select" style="width:100%" placeholder="e.g. Python Data Analysis Lab" value="${escHtml(a?.title||'')}">
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div>
             <label style="font-size:12px;color:var(--text3);font-weight:600;display:block;margin-bottom:6px">TYPE *</label>
             <select id="asnType" class="filter-select" style="width:100%">
-              <option value="link">🔗 Link (GitHub/Drive)</option>
-              <option value="text">✍️ Text Answer</option>
-              <option value="coding">💻 Code Submission</option>
-              <option value="mcq">🎯 MCQ Test</option>
+              <option value="link" ${a?.type==='link'||!a?'selected':''}>🔗 Link (GitHub/Drive)</option>
+              <option value="text" ${a?.type==='text'?'selected':''}>✍️ Text Answer</option>
+              <option value="coding" ${a?.type==='coding'?'selected':''}>💻 Code Submission</option>
             </select>
           </div>
           <div>
             <label style="font-size:12px;color:var(--text3);font-weight:600;display:block;margin-bottom:6px">MODULE</label>
             <select id="asnModule" class="filter-select" style="width:100%">
               <option value="">All Students</option>
-              ${cache.modules.map(m=>`<option value="${m.id}">${m.icon} ${m.name}</option>`).join('')}
+              ${visibleModules().map(m=>`<option value="${m.id}" ${String(a?.moduleId)===String(m.id)?'selected':''}>${m.icon} ${m.name}</option>`).join('')}
             </select>
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div>
             <label style="font-size:12px;color:var(--text3);font-weight:600;display:block;margin-bottom:6px">DEADLINE *</label>
-            <input id="asnDeadline" type="datetime-local" class="filter-select" style="width:100%">
+            <input id="asnDeadline" type="datetime-local" class="filter-select" style="width:100%" value="${toLocalInput(a?.deadline)}">
           </div>
           <div>
             <label style="font-size:12px;color:var(--text3);font-weight:600;display:block;margin-bottom:6px">MAX MARKS</label>
-            <input id="asnMarks" type="number" class="filter-select" style="width:100%" placeholder="e.g. 20">
+            <input id="asnMarks" type="number" class="filter-select" style="width:100%" placeholder="e.g. 20" value="${a?.maxMarks||''}">
           </div>
         </div>
         <div>
           <label style="font-size:12px;color:var(--text3);font-weight:600;display:block;margin-bottom:6px">INSTRUCTIONS</label>
-          <textarea id="asnInstr" rows="3" class="filter-select" style="width:100%;resize:vertical" placeholder="Describe what students need to do..."></textarea>
+          <textarea id="asnInstr" rows="3" class="filter-select" style="width:100%;resize:vertical" placeholder="Describe what students need to do...">${escHtml(a?.instructions||'')}</textarea>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text3);font-weight:600;display:block;margin-bottom:6px">PROGRAM(S) ${isCoord?'':'— leave all unchecked for every program'}</label>
+          <div id="asnCourseList" style="display:flex;flex-direction:column;gap:4px;max-height:110px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:8px">${_asnCourseCheckboxes(selCourses, coordCourses)}</div>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text3);font-weight:600;display:block;margin-bottom:6px">BATCH(ES) — leave unchecked for every batch in the chosen program(s)</label>
+          <div id="asnBatchList" style="display:flex;flex-direction:column;gap:8px;max-height:150px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:8px">${_asnBatchCheckboxes(selBatches, coordCourses)}</div>
         </div>
       </div>
       <div class="modal-footer" style="display:flex;gap:10px;justify-content:flex-end;padding:16px 20px;border-top:1px solid var(--border)">
         <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
-        <button class="btn btn-accent" onclick="saveAssignment()">✅ Create Assignment</button>
+        <button class="btn btn-accent" onclick="saveAssignment()">✅ ${a ? 'Save Changes' : 'Create Assignment'}</button>
       </div>
     </div>`;
   openModal('modalGeneric');
 }
 
 async function saveAssignment() {
+  const editId   = document.getElementById('asnEditId')?.value || null;
   const title    = document.getElementById('asnTitle')?.value?.trim();
   const type     = document.getElementById('asnType')?.value;
   const moduleId = document.getElementById('asnModule')?.value;
@@ -9455,15 +9764,48 @@ async function saveAssignment() {
   const maxMarks = parseInt(document.getElementById('asnMarks')?.value) || null;
   const instructions = document.getElementById('asnInstr')?.value?.trim();
   if (!title || !deadline) { toast('Title and deadline are required', 'error'); return; }
-  const { error } = await SB.from('assignments').insert({ title, type, moduleId: moduleId||null, deadline: new Date(deadline).toISOString(), maxMarks, instructions, createdAt: new Date().toISOString() });
-  if (error) { toast('Error: ' + error.message, 'error'); return; }
-  toast('✅ Assignment created!', 'success');
+
+  let chosenCourses = Array.from(document.querySelectorAll('.asn-course:checked')).map(c => Number(c.value));
+  const chosenBatches = Array.from(document.querySelectorAll('.asn-batch:checked')).map(c => Number(c.value));
+  // A coordinator can never leave an assignment fully unscoped (that would
+  // make it visible platform-wide) — an empty selection defaults to "all of
+  // my own program(s)" rather than "every program".
+  if (currentUser?.role === 'coordinator' && !chosenCourses.length) {
+    chosenCourses = [...(coordCourseSet() || [])].map(Number);
+  }
+
+  const rec = { title, type, moduleId: moduleId||null, deadline: new Date(deadline).toISOString(), maxMarks, instructions };
+  let assignmentId = editId;
+  if (editId) {
+    const { error } = await SB.from('assignments').update(rec).eq('id', editId);
+    if (error) { toast('Error: ' + error.message, 'error'); return; }
+  } else {
+    const { data, error } = await SB.from('assignments').insert({ ...rec, createdAt: new Date().toISOString() }).select('id').single();
+    if (error) { toast('Error: ' + error.message, 'error'); return; }
+    assignmentId = data.id;
+  }
+
+  // Sync program/batch scope (delete-then-insert, same pattern as coordinator scoping).
+  await SB.from('assignment_courses').delete().eq('assignment_id', assignmentId);
+  await SB.from('assignment_batches').delete().eq('assignment_id', assignmentId);
+  if (chosenCourses.length) {
+    const { error: e0 } = await SB.from('assignment_courses').insert(chosenCourses.map(cid => ({ assignment_id: assignmentId, course_id: cid })));
+    if (e0) { toast('Saved, but program scope error: ' + e0.message, 'error'); }
+  }
+  if (chosenBatches.length) {
+    const { error: e1 } = await SB.from('assignment_batches').insert(chosenBatches.map(bid => ({ assignment_id: assignmentId, batch_id: bid })));
+    if (e1) { toast('Saved, but batch scope error: ' + e1.message, 'error'); }
+  }
+
+  toast(editId ? '✅ Assignment updated!' : '✅ Assignment created!', 'success');
   closeModal();
   adminNav('assignments');
 }
 
 async function openGradeAssignment(assignmentId) {
-  const { data: subs } = await SB.from('submissions').select('*, students(name)').eq('assignmentId', assignmentId);
+  let { data: subs } = await SB.from('submissions').select('*, students(name, course_id, batch_id)').eq('assignmentId', assignmentId);
+  // A coordinator only grades submissions from students in their own program.
+  if (currentUser?.role === 'coordinator') subs = (subs||[]).filter(s => coordCanSeeStudent(s.students||{}));
   const { data: asn } = await SB.from('assignments').select('*').eq('id', assignmentId).single();
   const modal = document.getElementById('modalGenericInner');
   modal.innerHTML = `
@@ -9585,13 +9927,25 @@ async function renderAdminSettings() {
             </label>
           </div>
           <div class="fgroup" style="margin-top:10px">
-            <label>Java runner URL (Piston/Judge0-compatible) — optional</label>
-            <input type="text" id="cfgJavaGraderUrl" value="${cfg.javaGraderUrl||''}" placeholder="https://emkc.org/api/v2/piston/execute (default)">
+            <label>Grader protocol</label>
+            <select id="cfgJavaGraderProtocol">
+              <option value="piston" ${String(cfg.javaGraderProtocol||'piston').toLowerCase()!=='judge0'?'selected':''}>Piston (self-hosted recommended)</option>
+              <option value="judge0" ${String(cfg.javaGraderProtocol||'').toLowerCase()==='judge0'?'selected':''}>Judge0 (e.g. the public ce.judge0.com demo)</option>
+            </select>
+          </div>
+          <div class="fgroup" style="margin-top:10px">
+            <label>Java runner URL — <b>required</b></label>
+            <input type="text" id="cfgJavaGraderUrl" value="${cfg.javaGraderUrl||''}" placeholder="Piston: https://your-server/api/v2/piston/execute · Judge0: https://ce.judge0.com">
+          </div>
+          <div class="fgroup" style="margin-top:10px">
+            <label>Judge0 language id (only used when protocol = Judge0)</label>
+            <input type="text" id="cfgJavaGraderLangId" value="${cfg.javaGraderLangId||'91'}" placeholder="91 (Java, OpenJDK 17) on ce.judge0.com">
           </div>
           <div style="font-size:12px;color:var(--text3);line-height:1.6">
             <b>Off</b> (default) = Java is saved for instructor review; no student code leaves the app.<br>
-            <b>On + URL empty</b> = uses the public Piston service (emkc.org). Zero setup, but student code is sent to a third-party server — confirm your campus network can reach it first.<br>
-            <b>On + URL set</b> = uses your own Piston/Judge0 server, keeping student code on your infrastructure.
+            <b>⚠️ The public Piston service (emkc.org) went whitelist-only on 15 Feb 2026</b> and no longer accepts requests without approval — leaving the URL blank (or pointing it there) will make every Java submission fail.<br>
+            <b>Judge0 + ce.judge0.com</b> is a free public demo instance that is live and working right now (verified) — good for trying auto-grading out, but it is rate-limited and offers no uptime guarantee, so it is not meant to carry a whole batch's exam traffic.<br>
+            <b>Piston, self-hosted</b> = your own server, keeping student code on your infrastructure and with no rate limit you don't set yourself. Self-hosting is a single Docker command (see github.com/engineer-man/piston) — recommended before relying on this for real grading at scale.
           </div>
           <button class="btn btn-accent" style="margin-top:12px" onclick="saveSettings()">💾 Save Settings</button>
         </div>
@@ -9628,6 +9982,10 @@ async function saveSettings() {
   if (javaExecEl) updates.push({ key:'javaExec', value: javaExecEl.checked ? 'on' : 'off' });
   const javaUrlEl = document.getElementById('cfgJavaGraderUrl');
   if (javaUrlEl) updates.push({ key:'javaGraderUrl', value: javaUrlEl.value.trim() });
+  const javaProtoEl = document.getElementById('cfgJavaGraderProtocol');
+  if (javaProtoEl) updates.push({ key:'javaGraderProtocol', value: javaProtoEl.value });
+  const javaLangIdEl = document.getElementById('cfgJavaGraderLangId');
+  if (javaLangIdEl) updates.push({ key:'javaGraderLangId', value: javaLangIdEl.value.trim() });
   for (const u of updates) {
     await SB.from('config').upsert(u, { onConflict: 'key' });
   }
@@ -10110,6 +10468,8 @@ async function renderStudentAssignments() {
   try {
     const { data } = await SB.from('assignments').select('*').order('deadline', { ascending: true });
     assignments = data || [];
+    await loadAssignmentScopeCache();
+    assignments = assignments.filter(a => assignmentVisibleFor(a.id, currentUser.course_id, currentUser.batch_id));
   } catch(e) { /* assignments table may not exist yet */ }
 
   // My submissions
@@ -10135,7 +10495,12 @@ async function renderStudentAssignments() {
     return `<span class="badge badge-blue">🕐 Pending</span>`;
   };
 
-  const typeIcon = t => ({ mcq:'🎯', link:'🔗', text:'✍️', file:'📎', coding:'💻' }[t] || '📋');
+  const typeIcon = t => ({ link:'🔗', text:'✍️', file:'📎', coding:'💻' }[t] || '📋');
+
+  // Store title/type per assignment for a safe, id-based submit lookup
+  // (avoids inline-onclick string interpolation / quote-escaping bugs)
+  window._asgnMeta = {};
+  assignments.forEach(a => { window._asgnMeta[a.id] = { title: a.title, type: a.type || 'link' }; });
 
   // Group assignments by module
   const modGroups = {};
@@ -10187,7 +10552,7 @@ async function renderStudentAssignments() {
         ${sub.content ? `<div style="font-size:12px;color:#9090b0;word-break:break-all;font-family:'JetBrains Mono',monospace">${escHtml(sub.content.slice(0,120))}${sub.content.length>120?'…':''}</div>` : ''}
         ${sub.marks != null ? `<div style="margin-top:6px;font-size:12px;font-weight:700;color:#f0f0ff;font-family:'Inter',sans-serif">Score: <span style="color:#4ade80">${sub.marks}</span>/${a.maxMarks||'?'}${sub.feedback?' · '+escHtml(sub.feedback):''}</div>` : '<div style="font-size:11px;color:#7878a0;margin-top:4px;font-family:\'Inter\',sans-serif">⏳ Awaiting grading…</div>'}
       </div>` : `
-      <button class="btn btn-accent btn-sm" onclick="openSubmitAssignment('${a.id}','${escHtml(a.title).replace(/'/g,"\\'")}','${a.type||"link"}')" style="font-family:'Inter',sans-serif;font-weight:700;border-radius:10px">
+      <button class="btn btn-accent btn-sm" onclick="openSubmitAssignment('${a.id}')" style="font-family:'Inter',sans-serif;font-weight:700;border-radius:10px">
         ${typeIcon(a.type)} Submit
       </button>`}
     </div>`;
@@ -10252,9 +10617,15 @@ function toggleAsgnInstr(id, btn) {
   btn.textContent = exp ? '▲ Show less' : '▼ Show full instructions';
 }
 
-function openSubmitAssignment(id, title, type) {
+function openSubmitAssignment(id) {
+  const meta = (window._asgnMeta && window._asgnMeta[id]) || {};
+  const title = meta.title || '';
+  const type = meta.type || 'link';
   const modal = document.getElementById('modalGenericInner');
-  const typeLabel = { link:'GitHub / Drive / Colab Link', text:'Written Answer', coding:'Code Submission', mcq:'MCQ Test' }[type] || 'Submission';
+  const typeLabel = { link:'GitHub / Drive / Colab Link', text:'Written Answer', coding:'Code Submission' }[type] || 'Submission';
+  // Link submissions use a plain text input (not type="url") so a value the
+  // browser doesn't consider a fully-qualified URL (e.g. missing https://,
+  // or a bare drive/github short link) never silently blocks submission.
   modal.innerHTML = `
     <div class="modal-box" style="max-width:520px">
       <div class="modal-header"><h3>📋 Submit: ${escHtml(title)}</h3></div>
@@ -10262,7 +10633,7 @@ function openSubmitAssignment(id, title, type) {
         <label style="font-size:13px;font-weight:600;color:var(--text2);display:block;margin-bottom:8px">${typeLabel}</label>
         ${type === 'text' || type === 'coding' ? `
           <textarea id="submitContent" rows="8" class="filter-select" style="width:100%;resize:vertical;font-family:${type==='coding'?"'JetBrains Mono',monospace":'inherit'};font-size:13px" placeholder="${type==='coding'?'Paste your code here...':'Write your answer here...'}"></textarea>` : `
-          <input id="submitContent" type="url" class="filter-select" style="width:100%" placeholder="https://github.com/... or https://drive.google.com/...">`}
+          <input id="submitContent" type="text" class="filter-select" style="width:100%" placeholder="https://github.com/... or https://drive.google.com/...">`}
         <p style="font-size:12px;color:var(--text3);margin-top:8px">⚠️ You can submit only once. Make sure your submission is final.</p>
       </div>
       <div class="modal-footer" style="display:flex;gap:10px;justify-content:flex-end;padding:16px 20px;border-top:1px solid var(--border)">
