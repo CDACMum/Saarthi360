@@ -1604,6 +1604,57 @@ table tbody tr:hover{background:rgba(30,94,255,0.06)!important}
 <!-- ═══════════════════════════════════════════════════════════ -->
 <!-- TEST PAGE -->
 <!-- ═══════════════════════════════════════════════════════════ -->
+<div id="testPage" class="page">
+  <div class="topnav">
+    <div class="nav-brand" id="testModuleName">Test</div>
+    <div class="nav-spacer"></div>
+    <div id="testSetName" style="font-size:13px;color:var(--text2)"></div>
+    <div class="nav-spacer"></div>
+    <button class="btn btn-danger btn-sm" onclick="confirmSubmitTest()">⏹ Submit Test</button>
+  </div>
+  <div class="test-layout">
+    <div class="test-main">
+      <div class="test-topbar">
+        <span>⏱</span>
+        <div class="test-timer" id="testTimer">45:00</div>
+        <div class="test-progress-bar"><div class="test-progress-fill" id="testProgressFill"></div></div>
+        <div class="test-qnum" id="testQNum">Q 1 / 50</div>
+      </div>
+      <div class="test-content" id="testContent"></div>
+      <div class="test-nav">
+        <button class="btn btn-outline" id="btnPrev" onclick="testNav(-1)">← Previous</button>
+        <div style="flex:1"></div>
+        <button class="btn btn-yellow btn-sm" onclick="markForReview()">🚩 Mark Review</button>
+        <div style="flex:1"></div>
+        <button class="btn btn-accent" id="btnNext" onclick="testNav(1)">Next →</button>
+      </div>
+    </div>
+    <div class="test-sidebar">
+      <div class="test-sidebar-inner">
+        <h4>Question Navigator</h4>
+        <div class="q-grid" id="qNavGrid"></div>
+        <div class="q-legend" style="margin-top:16px">
+          <div class="q-legend-item"><div class="q-legend-dot" style="background:var(--accent)"></div> Answered</div>
+          <div class="q-legend-item"><div class="q-legend-dot" style="background:var(--bg3);border:1px solid var(--border)"></div> Not Answered</div>
+          <div class="q-legend-item"><div class="q-legend-dot" style="background:var(--yellow)"></div> Marked for Review</div>
+        </div>
+        <div style="margin-top:20px">
+          <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Progress</div>
+          <div id="testProgressSummary" style="font-size:12px;color:var(--text2)"></div>
+        </div>
+        <div style="margin-top:16px;padding:10px 12px;background:var(--bg3);border-radius:var(--r2);border:1px solid var(--border)">
+          <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">⌨️ Shortcuts</div>
+          <div style="font-size:11px;color:var(--text3);line-height:2">
+            <kbd style="font-family:'JetBrains Mono',monospace;background:var(--bg2);padding:1px 6px;border-radius:3px;border:1px solid var(--border2);color:var(--text2)">1–4</kbd> Select option<br>
+            <kbd style="font-family:'JetBrains Mono',monospace;background:var(--bg2);padding:1px 6px;border-radius:3px;border:1px solid var(--border2);color:var(--text2)">← →</kbd> Navigate<br>
+            <kbd style="font-family:'JetBrains Mono',monospace;background:var(--bg2);padding:1px 6px;border-radius:3px;border:1px solid var(--border2);color:var(--text2)">M</kbd> Mark / Unmark<br>
+            <kbd style="font-family:'JetBrains Mono',monospace;background:var(--bg2);padding:1px 6px;border-radius:3px;border:1px solid var(--border2);color:var(--text2)">Enter</kbd> Next / Submit
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 
 <!-- ═══════════════════════════════════════════════════════════ -->
@@ -5582,7 +5633,7 @@ let _gbState = { rows: [], codingSubs: [], codingQs: [], approvedOnly: false };
 
 async function loadCodingData() {
   let subs = [], qs = [];
-  try { const { data } = await SB.from('coding_submissions').select('*'); subs = data || []; } catch(e) {}
+  try { subs = await fetchAllRows(() => SB.from('coding_submissions').select('*')); } catch(e) {}
   try { const { data } = await SB.from('coding_questions').select('id,title,language,maxScore'); qs = data || []; } catch(e) {}
   return { subs, qs };
 }
@@ -7212,7 +7263,7 @@ async function renderAdminAnalytics() {
 // LEADERBOARD SCORING ENGINE  (shared by admin + student — SAME MATH)
 // Score = weighted(MCQ, Coding) − integrity penalty. Tune weights here.
 // ════════════════════════════════════════════════════════════════
-const LB_WEIGHTS = { mcq: 0.35, coding: 0.65 };  // coding weighted higher (65/35)
+const LB_WEIGHTS = { mcq: 0.30, coding: 0.70 };  // coding weighted higher (70/30) — applies uniformly to every course & batch, this is the only place the split is defined
 const LB_PENALTY = { tabSwitch: 1, paste: 2, fullscreen: 2, violation: 1, max: 15 };
 
 function lbViolationCount(v){
@@ -7237,21 +7288,53 @@ function lbAggregateCoding(cSubs, cQs){
   });
   return { map, maxPts };
 }
+// Fetches ALL rows of a query, paging past PostgREST's per-request row cap
+// (server default, or any .limit() someone adds) instead of silently
+// truncating. `buildQuery` must return a FRESH SB.from(...) builder each
+// call (a builder can't be re-used across multiple .range() calls) — pass
+// it as `() => SB.from('table').select(...)`, no .limit()/.range() of your
+// own. Needed because coding_submissions alone is already past 7,500 rows
+// and growing every day a student submits code; a hardcoded .limit(5000)
+// here previously made ~2,500+ of the newest submissions vanish from every
+// screen that used this data (leaderboard, gradebook, coding-tests admin
+// view) with no error — students who'd done plenty of coding work still
+// showed 0 coding score simply because their rows landed past the cutoff.
+async function fetchAllRows(buildQuery, pageSize = 1000) {
+  let all = [], from = 0;
+  while (true) {
+    const { data, error } = await buildQuery().range(from, from + pageSize - 1);
+    if (error) throw error;
+    if (!data || !data.length) break;
+    all = all.concat(data);
+    if (data.length < pageSize) break;
+    from += pageSize;
+  }
+  return all;
+}
 async function lbFetchCoding(){
   try {
-    const [{ data: cSubs }, { data: cQs }] = await Promise.all([
-      SB.from('coding_submissions').select('studentId,score,questionId').limit(5000),
+    const [cSubs, { data: cQs }] = await Promise.all([
+      fetchAllRows(() => SB.from('coding_submissions').select('studentId,score,questionId')),
       SB.from('coding_questions').select('id,maxScore').limit(1000)
     ]);
     return lbAggregateCoding(cSubs, cQs);
   } catch(e){ return { map:{}, maxPts:0 }; }
 }
 // Build ranked rows. mcqScores = scores rows; codingMap/maxCodingPts from lbAggregateCoding.
-function lbBuildRows(mcqScores, codingMap, maxCodingPts){
+function lbBuildRows(mcqScores, codingMap, maxCodingPts, studentsList){
+  // Real name always wins over the denormalized scores.studentName or a bare
+  // fallback to the id/roll-number — a student who has coding submissions but
+  // no MCQ score row (or vice versa) must still show their actual name.
+  // studentsList lets a caller pass a more complete/current roster than
+  // cache.students (e.g. the student leaderboard's own batch-members fetch);
+  // falls back to cache.students when not given.
+  const studentsById = {};
+  (studentsList || cache.students || []).forEach(st => { studentsById[st.id] = st; });
+  const nameFor = (sid, fallback) => (studentsById[sid] && studentsById[sid].name) || fallback || sid;
   const m = {};
   (mcqScores||[]).forEach(s => {
     const sid = s.studentId;
-    if (!m[sid]) m[sid] = { id:sid, name:s.studentName||sid, tests:0, totalPct:0, best:0, modules:new Set(), pen:0 };
+    if (!m[sid]) m[sid] = { id:sid, name:nameFor(sid, s.studentName), tests:0, totalPct:0, best:0, modules:new Set(), pen:0 };
     m[sid].tests++;
     m[sid].totalPct += s.pct||0;
     m[sid].best = Math.max(m[sid].best, s.pct||0);
@@ -7262,7 +7345,7 @@ function lbBuildRows(mcqScores, codingMap, maxCodingPts){
                +  lbViolationCount(s.violations)*LB_PENALTY.violation;
   });
   Object.entries(codingMap||{}).forEach(([sid,cd]) => {
-    if (!m[sid]) m[sid] = { id:sid, name:sid, tests:0, totalPct:0, best:0, modules:new Set(), pen:0 };
+    if (!m[sid]) m[sid] = { id:sid, name:nameFor(sid), tests:0, totalPct:0, best:0, modules:new Set(), pen:0 };
     m[sid].codingSolved = cd.solved; m[sid].codingScore = cd.totalScore;
   });
   const _rows = Object.values(m);
@@ -7273,11 +7356,16 @@ function lbBuildRows(mcqScores, codingMap, maxCodingPts){
     const mcqAvg   = s.tests > 0 ? Math.round(s.totalPct/s.tests) : 0;
     const codingPts= s.codingScore || 0;
     const codingPct= peakCoding > 0 ? Math.round(codingPts/peakCoding*100) : 0;
-    const hasCoding= (s.codingSolved||0) > 0;
-    let base;
-    if (s.tests > 0 && hasCoding) base = mcqAvg*LB_WEIGHTS.mcq + codingPct*LB_WEIGHTS.coding;
-    else if (s.tests > 0)         base = mcqAvg;
-    else                          base = codingPct;
+    // Always apply the real weights, even when a student has only done one
+    // side. A student who has ONLY done MCQ (no coding at all) must NOT be
+    // able to out-rank someone who has actually done substantial coding —
+    // that was the old behavior (falling back to the raw, un-weighted
+    // component) and it let a single easy MCQ attempt at 95% beat students
+    // with 90+ coding submissions, defeating the whole point of weighting
+    // coding at 70%. Missing side simply contributes 0, so its weight is
+    // "lost" rather than backfilled — exactly what "coding is worth 70%"
+    // has to mean for someone who hasn't done any coding yet.
+    const base = mcqAvg*LB_WEIGHTS.mcq + codingPct*LB_WEIGHTS.coding;
     const penalty  = Math.min(LB_PENALTY.max, Math.round(s.pen||0));
     const combined = Math.max(0, Math.round(base - penalty));
     return { id:s.id, name:s.name, tests:s.tests, avg:mcqAvg, best:s.best,
@@ -8849,8 +8937,7 @@ async function renderAdminCodingTests() {
   try {
     const { data } = await SB.from('coding_questions').select('*').order('createdAt', { ascending: false });
     questions = data || [];
-    const { data: subs } = await SB.from('coding_submissions').select('*');
-    submissions = subs || [];
+    submissions = await fetchAllRows(() => SB.from('coding_submissions').select('*'));
   } catch(e) {}
 
   const subCount = id => submissions.filter(s => s.questionId === id).length;
@@ -9730,8 +9817,8 @@ async function openCreateAssignment(editId) {
             <input id="asnDeadline" type="datetime-local" class="filter-select" style="width:100%" value="${toLocalInput(a?.deadline)}">
           </div>
           <div>
-            <label style="font-size:12px;color:var(--text3);font-weight:600;display:block;margin-bottom:6px">MAX MARKS</label>
-            <input id="asnMarks" type="number" class="filter-select" style="width:100%" placeholder="e.g. 20" value="${a?.maxMarks||''}">
+            <label style="font-size:12px;color:var(--text3);font-weight:600;display:block;margin-bottom:6px">MAX MARKS *</label>
+            <input id="asnMarks" type="number" min="1" class="filter-select" style="width:100%" placeholder="e.g. 20" value="${a ? (a.maxMarks || '') : 100}">
           </div>
         </div>
         <div>
@@ -9761,9 +9848,15 @@ async function saveAssignment() {
   const type     = document.getElementById('asnType')?.value;
   const moduleId = document.getElementById('asnModule')?.value;
   const deadline = document.getElementById('asnDeadline')?.value;
-  const maxMarks = parseInt(document.getElementById('asnMarks')?.value) || null;
+  const maxMarksRaw = document.getElementById('asnMarks')?.value;
+  const maxMarks = parseInt(maxMarksRaw);
   const instructions = document.getElementById('asnInstr')?.value?.trim();
   if (!title || !deadline) { toast('Title and deadline are required', 'error'); return; }
+  if (!maxMarksRaw || isNaN(maxMarks) || maxMarks < 1) {
+    toast('⚠️ Enter Max Marks (needed so students see a score out of something when graded)', 'error');
+    document.getElementById('asnMarks')?.focus();
+    return;
+  }
 
   let chosenCourses = Array.from(document.querySelectorAll('.asn-course:checked')).map(c => Number(c.value));
   const chosenBatches = Array.from(document.querySelectorAll('.asn-batch:checked')).map(c => Number(c.value));
@@ -9803,9 +9896,22 @@ async function saveAssignment() {
 }
 
 async function openGradeAssignment(assignmentId) {
-  let { data: subs } = await SB.from('submissions').select('*, students(name, course_id, batch_id)').eq('assignmentId', assignmentId);
+  // NOTE: submissions.studentId has no FK constraint to students.id, so a
+  // PostgREST embedded select (`select('*, students(...)')`) silently fails
+  // to find the relationship and returns no rows — even though the plain
+  // count on the assignments table shows submissions exist. Join manually.
+  const { data: subsRaw, error: subsErr } = await SB.from('submissions').select('*').eq('assignmentId', assignmentId);
+  if (subsErr) toast('Error loading submissions: ' + subsErr.message, 'error');
+  let subs = subsRaw || [];
+  if (subs.length) {
+    const studentIds = [...new Set(subs.map(s => s.studentId))];
+    const { data: studs } = await SB.from('students').select('id, name, course_id, batch_id').in('id', studentIds);
+    const byId = {};
+    (studs || []).forEach(st => { byId[st.id] = st; });
+    subs.forEach(s => { s.students = byId[s.studentId] || null; });
+  }
   // A coordinator only grades submissions from students in their own program.
-  if (currentUser?.role === 'coordinator') subs = (subs||[]).filter(s => coordCanSeeStudent(s.students||{}));
+  if (currentUser?.role === 'coordinator') subs = subs.filter(s => coordCanSeeStudent(s.students||{}));
   const { data: asn } = await SB.from('assignments').select('*').eq('id', assignmentId).single();
   const modal = document.getElementById('modalGenericInner');
   modal.innerHTML = `
@@ -9821,7 +9927,7 @@ async function openGradeAssignment(assignmentId) {
                 <div style="font-weight:700">${escHtml(s.students?.name || s.studentId)}</div>
                 <div style="font-size:11px;color:var(--text3)">${new Date(s.submittedAt).toLocaleString('en-IN')}</div>
               </div>
-              ${s.marks != null ? `<span class="badge badge-green">✅ Graded: ${s.marks}/${asn?.maxMarks||'?'}</span>` : '<span class="badge badge-yellow">⏳ Pending</span>'}
+              ${s.marks != null ? `<span class="badge badge-green">✅ Graded: ${s.marks}${asn?.maxMarks ? '/' + asn.maxMarks : ''}</span>` : '<span class="badge badge-yellow">⏳ Pending</span>'}
             </div>
             <div style="background:var(--bg2);border-radius:var(--r2);padding:10px;font-size:13px;word-break:break-all;margin-bottom:10px;max-height:120px;overflow-y:auto">${escHtml(s.content || '')}</div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -10497,12 +10603,20 @@ async function renderStudentAssignments() {
 
   const typeIcon = t => ({ link:'🔗', text:'✍️', file:'📎', coding:'💻' }[t] || '📋');
 
-  // Store title/type per assignment for a safe, id-based submit lookup
-  // (avoids inline-onclick string interpolation / quote-escaping bugs)
+  // Store per-assignment data (title/type/marks/deadline/submission) for the
+  // detail modal — avoids inline-onclick string interpolation / quote-escaping
+  // bugs, and avoids re-querying Supabase just to open a row's detail view.
   window._asgnMeta = {};
-  assignments.forEach(a => { window._asgnMeta[a.id] = { title: a.title, type: a.type || 'link' }; });
+  assignments.forEach(a => {
+    window._asgnMeta[a.id] = {
+      title: a.title, type: a.type || 'link', maxMarks: a.maxMarks, deadline: a.deadline,
+      submission: mySubmissions.find(s => s.assignmentId === a.id) || null
+    };
+  });
 
-  // Group assignments by module
+  // Group assignments by module — this is the top level of the drill-down:
+  // Module (collapsed accordion) → compact section rows → tap a row for full
+  // instructions + submit, in a single modal (openAssignmentDetail).
   const modGroups = {};
   assignments.forEach(a => {
     const mod = cache.modules.find(m => m.id == a.moduleId);
@@ -10511,51 +10625,25 @@ async function renderStudentAssignments() {
     modGroups[key].push(a);
   });
 
-  const renderAssignmentCard = (a, i) => {
+  // One compact, always-visible row per assignment inside an expanded module —
+  // no instructions text here at all, so a module with a 20-question wall of
+  // text doesn't dump all of it onto the page at once.
+  const renderSectionRow = (a, i) => {
     const sub = mySubmissions.find(s => s.assignmentId === a.id);
     const dl = new Date(a.deadline);
     const isOverdue = dl < now && !sub;
     const isDueSoon = !sub && !isOverdue && Math.ceil((dl - now) / 86400000) <= 2;
-    const shortInstr = a.instructions && a.instructions.length > 160
-      ? a.instructions.slice(0, 160).trim() + '…'
-      : (a.instructions || '');
-    const borderCol = isOverdue ? 'rgba(239,68,68,0.35)' : isDueSoon ? 'rgba(245,158,11,0.35)' : sub ? 'rgba(34,197,94,0.25)' : 'rgba(255,255,255,0.08)';
-    const bgCol = isOverdue ? 'rgba(239,68,68,0.04)' : isDueSoon ? 'rgba(245,158,11,0.04)' : sub ? 'rgba(34,197,94,0.04)' : 'rgba(255,255,255,0.02)';
+    const accentCol = isOverdue ? '#f87171' : isDueSoon ? '#fbbf24' : sub ? '#4ade80' : 'rgba(255,255,255,0.18)';
     return `
-    <div style="background:${bgCol};border:1px solid ${borderCol};border-radius:16px;padding:18px 20px;animation:rowSlideIn 0.3s ease ${i*40}ms both">
-      <!-- Top row: title + badges -->
-      <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:10px">
-        <div style="font-size:26px;flex-shrink:0;margin-top:2px">${typeIcon(a.type)}</div>
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px">
-            <span style="font-family:'Inter',sans-serif;font-weight:800;font-size:14.5px;color:#f0f0ff">${escHtml(a.title)}</span>
-            ${statusBadge(a)}
-            ${a.maxMarks ? `<span class="badge badge-gray">🎯 ${a.maxMarks} marks</span>` : ''}
-          </div>
-          <!-- Meta row -->
-          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-            <span style="font-size:11.5px;color:#7878a0;font-family:'Inter',sans-serif">📅 Due ${dl.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}</span>
-            <span style="font-size:11.5px;color:#7878a0;font-family:'Inter',sans-serif;text-transform:capitalize">🗂️ ${a.type||'link'}</span>
-            ${isOverdue ? '<span style="font-size:11px;color:#f87171;font-weight:700">⛔ Overdue</span>' : ''}
-            ${isDueSoon ? '<span style="font-size:11px;color:#fbbf24;font-weight:700">⚠️ Due soon</span>' : ''}
-          </div>
-        </div>
+    <button onclick="openAssignmentDetail('${a.id}')" style="all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-left:3px solid ${accentCol};width:100%;animation:rowSlideIn 0.25s ease ${i*30}ms both">
+      <div style="font-size:19px;flex-shrink:0">${typeIcon(a.type)}</div>
+      <div style="flex:1;min-width:0;text-align:left">
+        <div style="font-family:'Inter',sans-serif;font-weight:700;font-size:13.5px;color:#f0f0ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(a.title)}</div>
+        <div style="font-size:11px;color:#7878a0;margin-top:2px;font-family:'Inter',sans-serif">📅 Due ${dl.toLocaleDateString('en-IN',{day:'numeric',month:'short'})}${a.maxMarks ? ` · 🎯 ${a.maxMarks} marks` : ''}</div>
       </div>
-      <!-- Truncated instructions with expand -->
-      ${shortInstr ? `
-      <div style="font-size:12.5px;color:#9090b0;margin:8px 0 6px;line-height:1.7;background:rgba(255,255,255,0.03);border-radius:10px;padding:10px 13px;border-left:3px solid rgba(30,94,255,0.4);white-space:pre-wrap" id="ainstr_${a.id}">${escHtml(shortInstr)}</div>
-      ${a.instructions && a.instructions.length > 160 ? `<button onclick="toggleAsgnInstr('${a.id}',this)" style="background:rgba(30,94,255,0.08);border:1px solid rgba(30,94,255,0.2);border-radius:8px;font-size:11px;color:#fb7185;cursor:pointer;margin-bottom:10px;font-family:'Inter',sans-serif;padding:4px 12px;font-weight:600">▼ Show full instructions</button>` : ''}` : ''}
-      <!-- Submission area -->
-      ${sub ? `
-      <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:11px;padding:11px 14px">
-        <div style="font-size:12px;font-weight:700;color:#4ade80;margin-bottom:4px;font-family:'Inter',sans-serif">✅ Submitted</div>
-        ${sub.content ? `<div style="font-size:12px;color:#9090b0;word-break:break-all;font-family:'JetBrains Mono',monospace">${escHtml(sub.content.slice(0,120))}${sub.content.length>120?'…':''}</div>` : ''}
-        ${sub.marks != null ? `<div style="margin-top:6px;font-size:12px;font-weight:700;color:#f0f0ff;font-family:'Inter',sans-serif">Score: <span style="color:#4ade80">${sub.marks}</span>/${a.maxMarks||'?'}${sub.feedback?' · '+escHtml(sub.feedback):''}</div>` : '<div style="font-size:11px;color:#7878a0;margin-top:4px;font-family:\'Inter\',sans-serif">⏳ Awaiting grading…</div>'}
-      </div>` : `
-      <button class="btn btn-accent btn-sm" onclick="openSubmitAssignment('${a.id}')" style="font-family:'Inter',sans-serif;font-weight:700;border-radius:10px">
-        ${typeIcon(a.type)} Submit
-      </button>`}
-    </div>`;
+      <div style="flex-shrink:0">${statusBadge(a)}</div>
+      <span style="color:#7878a0;font-size:15px;flex-shrink:0">›</span>
+    </button>`;
   };
 
   el.innerHTML = `
@@ -10589,64 +10677,173 @@ async function renderStudentAssignments() {
         <h3 style="font-family:'Inter',sans-serif;font-size:18px;font-weight:800;color:#f0f0ff;margin-bottom:8px">No Assignments Yet</h3>
         <p style="color:#7878a0;font-size:13.5px;font-family:'Inter',sans-serif">Your instructor hasn't posted any assignments yet. Check back soon!</p>
       </div>` : `
-    <div style="display:flex;flex-direction:column;gap:22px">
-      ${Object.entries(modGroups).map(([groupName, items]) => `
-        <!-- Module group -->
-        <div>
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-            <span style="font-family:'Inter',sans-serif;font-size:14px;font-weight:800;color:#f0f0ff">${groupName}</span>
-            <span style="background:#1e5eff;color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;font-family:'Inter',sans-serif">${items.length}</span>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      ${Object.entries(modGroups).map(([groupName, items], gi) => {
+        const doneCount = items.filter(a => submittedIds.has(a.id)).length;
+        // A module auto-opens if something inside it needs attention (not yet
+        // submitted, and overdue or due within 2 days) — everything else stays
+        // collapsed by default so the page opens as a scannable list of
+        // modules, not a wall of every question in every module at once.
+        const urgent = items.some(a => !submittedIds.has(a.id) && (new Date(a.deadline) < now || Math.ceil((new Date(a.deadline) - now) / 86400000) <= 2));
+        return `
+        <div class="asgn-modgroup">
+          <button onclick="toggleAsgnModule(${gi})" style="all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 16px;border-radius:14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08)">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <span style="font-family:'Inter',sans-serif;font-size:14px;font-weight:800;color:#f0f0ff">${groupName}</span>
+              <span style="background:#1e5eff;color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;font-family:'Inter',sans-serif">${items.length}</span>
+              <span style="font-size:11px;color:#7878a0;font-family:'Inter',sans-serif">${doneCount}/${items.length} done</span>
+            </div>
+            <span id="modgrpChevron_${gi}" style="color:#7878a0;font-size:13px;font-weight:700;transition:transform .2s;transform:rotate(${urgent ? 90 : 0}deg);flex-shrink:0">›</span>
+          </button>
+          <div id="modgrpBody_${gi}" style="display:${urgent ? 'flex' : 'none'};flex-direction:column;gap:8px;margin-top:8px">
+            ${items.map((a, i) => renderSectionRow(a, i)).join('')}
           </div>
-          <div style="display:flex;flex-direction:column;gap:10px">
-            ${items.map((a, i) => renderAssignmentCard(a, i)).join('')}
-          </div>
-        </div>`).join('')}
+        </div>`;
+      }).join('')}
     </div>`}
   `;
 }
 
-// Global helper — stores full assignment instructions for safe expansion
-// (avoids JSON.stringify embedding double-quotes inside onclick attr)
-function toggleAsgnInstr(id, btn) {
-  const el = document.getElementById('ainstr_' + id);
-  if (!el || !window._asgnFull) return;
-  const full = window._asgnFull[id] || '';
-  const exp = !btn.classList.contains('exp');
-  el.textContent = exp ? full : (full.length > 160 ? full.slice(0,160).trim() + '…' : full);
-  btn.classList.toggle('exp', exp);
-  btn.textContent = exp ? '▲ Show less' : '▼ Show full instructions';
+// Expands/collapses one module's section list on the student Assignments page.
+function toggleAsgnModule(gi) {
+  const body = document.getElementById('modgrpBody_' + gi);
+  const chevron = document.getElementById('modgrpChevron_' + gi);
+  if (!body) return;
+  const opening = body.style.display === 'none';
+  body.style.display = opening ? 'flex' : 'none';
+  if (chevron) chevron.style.transform = opening ? 'rotate(90deg)' : 'rotate(0deg)';
 }
 
-function openSubmitAssignment(id) {
+// Turns plain-text assignment instructions into readable HTML:
+// - consecutive tab-separated lines become a proper table (schema dumps etc.)
+// - "🟢 Section A: ..." lines become section banners
+// - "Question N: ..." lines become sub-headings
+// - "Task:" / "Concept:" / "Business Scenario:" / "Required Output:" /
+//   "Instructor Note:" / "Business Requirements:" labels are bolded
+// - everything else is grouped into normal paragraphs
+// Falls back gracefully (plain escaped paragraphs) for text with none of these patterns.
+function _fmtInstructions(raw) {
+  if (!raw) return '';
+  const lines = String(raw).replace(/\r\n/g, '\n').split('\n');
+  const isTabRow = l => l.includes('\t') && l.split('\t').length >= 2;
+  const sectionRe = /^[\u{1F7E2}\u{1F7E1}\u{1F534}\u{1F535}\u{1F7E0}]\s*Section\s+[A-Z]/iu;
+  const questionRe = /^Question\s+\d+\s*:/i;
+  const numberedRe = /^\d+\.\s+\S/;
+  const labelRe = /^(Business Scenario|Business Requirements|Task|Concept|Required Output|Instructor Note)\s*:\s*(.*)$/i;
+
+  let html = '', paraBuf = [], i = 0;
+  const flush = () => { if (paraBuf.length) { html += `<p style="margin:0 0 10px">${paraBuf.join('<br>')}</p>`; paraBuf = []; } };
+
+  while (i < lines.length) {
+    const line = lines[i].trim();
+    if (!line) { flush(); i++; continue; }
+
+    if (isTabRow(line)) {
+      flush();
+      const rows = [];
+      while (i < lines.length && isTabRow(lines[i].trim())) { rows.push(lines[i].trim().split('\t').map(c => c.trim())); i++; }
+      const [head, ...body] = rows;
+      html += `<div style="overflow-x:auto;margin:6px 0 14px"><table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr>${head.map(h => `<th style="text-align:left;padding:6px 10px;border-bottom:2px solid rgba(255,255,255,0.15);color:#a5b4fc;font-weight:700;white-space:nowrap">${escHtml(h)}</th>`).join('')}</tr></thead>
+        <tbody>${body.map(r => `<tr>${r.map(c => `<td style="padding:6px 10px;border-bottom:1px solid rgba(255,255,255,0.06);color:#c8c8e0">${escHtml(c)}</td>`).join('')}</tr>`).join('')}</tbody>
+      </table></div>`;
+      continue;
+    }
+    if (sectionRe.test(line)) {
+      flush();
+      html += `<div style="font-weight:800;font-size:13.5px;margin:16px 0 8px;padding:7px 12px;background:rgba(30,94,255,0.1);border-left:3px solid #1e5eff;border-radius:6px;color:#f0f0ff">${escHtml(line)}</div>`;
+      i++; continue;
+    }
+    if (questionRe.test(line)) {
+      flush();
+      html += `<div style="font-weight:800;font-size:13px;margin:14px 0 4px;color:#f0f0ff">${escHtml(line)}</div>`;
+      i++; continue;
+    }
+    if (numberedRe.test(line) && lines[i + 1] && isTabRow(lines[i + 1].trim())) {
+      flush();
+      html += `<div style="font-weight:700;font-size:12.5px;margin:12px 0 4px;color:#c7d2fe">${escHtml(line)}</div>`;
+      i++; continue;
+    }
+    const lm = line.match(labelRe);
+    if (lm) {
+      flush();
+      const rest = lm[2] ? escHtml(lm[2]) : '';
+      html += `<div style="margin:6px 0;color:#c8c8e0"><strong style="color:#fbbf24">${escHtml(lm[1])}:</strong>${rest ? ' ' + rest : ''}</div>`;
+      i++; continue;
+    }
+    paraBuf.push(escHtml(line));
+    i++;
+  }
+  flush();
+  return html;
+}
+
+// Single detail view for one assignment/section: full formatted instructions
+// plus — in the same modal, no extra click — either the submission's status
+// (if already submitted) or the submit form (if not). Reached by tapping a
+// section row inside an expanded module on the student Assignments page.
+function openAssignmentDetail(id) {
   const meta = (window._asgnMeta && window._asgnMeta[id]) || {};
-  const title = meta.title || '';
+  const full = (window._asgnFull && window._asgnFull[id]) || '';
+  const sub = meta.submission || null;
   const type = meta.type || 'link';
-  const modal = document.getElementById('modalGenericInner');
+  const typeIconMap = { link:'🔗', text:'✍️', file:'📎', coding:'💻' };
   const typeLabel = { link:'GitHub / Drive / Colab Link', text:'Written Answer', coding:'Code Submission' }[type] || 'Submission';
-  // Link submissions use a plain text input (not type="url") so a value the
-  // browser doesn't consider a fully-qualified URL (e.g. missing https://,
-  // or a bare drive/github short link) never silently blocks submission.
+  const dl = meta.deadline ? new Date(meta.deadline) : null;
+  const isOverdue = dl && dl < new Date() && !sub;
+  const modal = document.getElementById('modalGenericInner');
   modal.innerHTML = `
-    <div class="modal-box" style="max-width:520px">
-      <div class="modal-header"><h3>📋 Submit: ${escHtml(title)}</h3></div>
+    <div class="modal-box" style="max-width:680px;max-height:85vh;overflow-y:auto">
+      <div class="modal-header"><h3>${typeIconMap[type]||'📋'} ${escHtml(meta.title||'')}</h3></div>
       <div class="modal-body" style="padding:20px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+          ${sub ? '<span class="badge badge-green">✅ Submitted</span>' : (isOverdue ? '<span class="badge badge-red">⛔ Overdue</span>' : '<span class="badge badge-blue">🕐 Pending</span>')}
+          ${dl ? `<span style="font-size:12px;color:var(--text3)">📅 Due ${dl.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}</span>` : ''}
+          ${meta.maxMarks ? `<span class="badge badge-gray">🎯 ${meta.maxMarks} marks</span>` : ''}
+        </div>
+        ${full ? `<div style="font-size:13px;color:#c8c8e0;line-height:1.7;background:rgba(255,255,255,0.03);border-radius:12px;padding:14px 16px;border-left:3px solid rgba(30,94,255,0.4);margin-bottom:16px">${_fmtInstructions(full)}</div>` : ''}
+        ${sub ? `
+        <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:11px;padding:14px 16px">
+          <div style="font-size:12px;font-weight:700;color:#4ade80;margin-bottom:6px">✅ Your Submission</div>
+          ${sub.content ? `<div style="font-size:12.5px;color:#c8c8e0;word-break:break-all;font-family:'JetBrains Mono',monospace;white-space:pre-wrap">${escHtml(sub.content)}</div>` : ''}
+          ${sub.marks != null ? `<div style="margin-top:8px;font-size:13px;font-weight:700;color:#f0f0ff">Score: <span style="color:#4ade80">${sub.marks}</span>${meta.maxMarks ? '/' + meta.maxMarks : ''}${sub.feedback ? ' · ' + escHtml(sub.feedback) : ''}</div>` : '<div style="font-size:11.5px;color:#7878a0;margin-top:6px">⏳ Awaiting grading…</div>'}
+        </div>` : `
         <label style="font-size:13px;font-weight:600;color:var(--text2);display:block;margin-bottom:8px">${typeLabel}</label>
         ${type === 'text' || type === 'coding' ? `
           <textarea id="submitContent" rows="8" class="filter-select" style="width:100%;resize:vertical;font-family:${type==='coding'?"'JetBrains Mono',monospace":'inherit'};font-size:13px" placeholder="${type==='coding'?'Paste your code here...':'Write your answer here...'}"></textarea>` : `
           <input id="submitContent" type="text" class="filter-select" style="width:100%" placeholder="https://github.com/... or https://drive.google.com/...">`}
+        ${type !== 'text' && type !== 'coding' ? `<p style="font-size:11.5px;color:#fbbf24;margin-top:6px">🔗 Only GitHub or Google Drive/Docs/Colab links are accepted — other links (including ChatGPT/AI-chat links) will be rejected.</p>` : ''}
         <p style="font-size:12px;color:var(--text3);margin-top:8px">⚠️ You can submit only once. Make sure your submission is final.</p>
+        `}
       </div>
       <div class="modal-footer" style="display:flex;gap:10px;justify-content:flex-end;padding:16px 20px;border-top:1px solid var(--border)">
-        <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
-        <button class="btn btn-accent" onclick="submitAssignment('${id}')">✅ Submit</button>
+        <button class="btn btn-outline" onclick="closeModal()">Close</button>
+        ${!sub ? `<button class="btn btn-accent" onclick="submitAssignment('${id}')">✅ Submit</button>` : ''}
       </div>
     </div>`;
   openModal('modalGeneric');
 }
 
+// Only GitHub / Google Drive / Docs / Colab links are accepted for link-type
+// assignment submissions (a student previously submitted a ChatGPT chat link).
+function _isAllowedSubmissionLink(raw) {
+  let url = (raw || '').trim();
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  let host;
+  try { host = new URL(url).hostname.toLowerCase().replace(/^www\./, ''); }
+  catch (e) { return false; }
+  const allowed = ['github.com', 'drive.google.com', 'docs.google.com', 'colab.research.google.com'];
+  return allowed.some(h => host === h || host.endsWith('.' + h));
+}
+
 async function submitAssignment(assignmentId) {
   const content = document.getElementById('submitContent')?.value?.trim();
   if (!content) { toast('Please enter your submission', 'error'); return; }
+  const meta = (window._asgnMeta && window._asgnMeta[assignmentId]) || {};
+  if ((meta.type || 'link') === 'link' && !_isAllowedSubmissionLink(content)) {
+    toast('⚠️ Only GitHub or Google Drive/Docs/Colab links are accepted. Paste a link from github.com, drive.google.com or colab.research.google.com.', 'error');
+    return;
+  }
   const { error } = await SB.from('submissions').insert({
     assignmentId, studentId: currentUser.id, content, submittedAt: new Date().toISOString(), status: 'submitted'
   });
@@ -10808,10 +11005,10 @@ async function renderStudentLeaderboard() {
 
   // ── Scope to the student's OWN batch (batches don't compete) ──
   await _ensureBatchCaches();
-  let batchMemberIds = null, myBatchLabel = '';
+  let batchMemberIds = null, myBatchLabel = '', batchMembers = [];
   if (currentUser.batch_id != null) {
-    const members = await loadBatchMembers(currentUser.batch_id);
-    batchMemberIds = new Set(members.map(m => m.id));
+    batchMembers = await loadBatchMembers(currentUser.batch_id);
+    batchMemberIds = new Set(batchMembers.map(m => m.id));
     batchMemberIds.add(currentUser.id); // always include self
     const cn = courseName(currentUser.course_id) || courseName(batchCourseId(currentUser.batch_id));
     myBatchLabel = `${cn ? cn + ' · ' : ''}${batchName(currentUser.batch_id)}`;
@@ -10827,7 +11024,7 @@ async function renderStudentLeaderboard() {
   }
 
   // SAME scoring engine as the admin board → ranks match exactly
-  const lb = lbBuildRows(lbScores, codingMap, maxCodingPts);
+  const lb = lbBuildRows(lbScores, codingMap, maxCodingPts, batchMembers);
 
   const myRank = lb.findIndex(s => s.id === currentUser.id) + 1;
   const myEntry = lb.find(s => s.id === currentUser.id);
