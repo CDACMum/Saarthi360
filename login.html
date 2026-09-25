@@ -2525,6 +2525,9 @@ async function CG(action, body) {
   }
   return data;
 }
+// Columns of coding_submissions the browser may read — the submitted code
+// itself is never readable from the browser (students could copy answers).
+const CS_COLS = 'id,questionId,studentId,studentName,passed,total,score,submittedAt,tabSwitches,pasteAttempts,aiFlags,violations,approved';
 // Staff actions need the session token issued at login.
 function staffToken() { return (currentUser && currentUser.token) || ''; }
 async function CGstaff(action, body) {
@@ -2543,18 +2546,25 @@ function _cgRevive(x) {
   return x;
 }
 // Runs Python/Java locally on every test input and returns raw outputs only.
-async function _cgLocalOutputs(q, code, onProgress) {
+async function _cgLocalOutputs(q, code, onProgress, forScore) {
   const tcs = _parseTestCases(q.testCases).map(t => ({ stdin: t.stdin == null ? null : t.stdin, expected: '', description: t.description || '' }));
   if (!tcs.length) return [];
   let res;
   try { res = q.language === 'java' ? await runJavaTests(code, tcs, onProgress) : await runPythonTests(code, tcs, onProgress); }
-  catch (e) { if (e && e.javaDisabled) return []; throw e; }   // Java auto-run off → saved for instructor review
+  catch (e) {
+    if (e && e.javaDisabled) return [];   // Java auto-run off → saved for instructor review
+    const msg = String((e && e.message) || e);
+    // When scoring, a syntax error or timeout in the student's own code counts as
+    // failing every test (as before) — only a runtime that failed to load is retried.
+    if (forScore && !/could not be loaded|failed to load|Worker crashed|Could not reach/i.test(msg)) return tcs.map(() => ({ out: msg, error: true }));
+    throw e;
+  }
   return res.map(r => ({ out: r.output == null ? '' : String(r.output), error: !!r.error }));
 }
 // action: 'run' | 'submit' | 'exam_run' | 'exam_grade'. Returns the server reply.
 async function serverGrade(action, q, code, extra, onProgress) {
   const body = Object.assign({ code }, extra || {});
-  if (q.language === 'python' || q.language === 'java') body.outputs = await _cgLocalOutputs(q, code, onProgress);
+  if (q.language === 'python' || q.language === 'java') body.outputs = await _cgLocalOutputs(q, code, onProgress, action === 'submit' || action === 'exam_grade');
   const data = await CG(action, body);
   if (Array.isArray(data.results)) data.results = data.results.map(_cgRevive);
   return data;
@@ -2734,6 +2744,10 @@ async function tryAutoConnect() {
     const saved = localStorage.getItem('pgcp_user');
     if (saved) {
       currentUser = JSON.parse(saved);
+      // Staff sessions from before server-side login have no token — ask them to log in again.
+      if ((currentUser.role === 'admin' || currentUser.role === 'coordinator') && !currentUser.token) {
+        localStorage.removeItem('pgcp_user'); currentUser = null; showPage('loginPage'); return;
+      }
       if (currentUser.role === 'admin' || currentUser.role === 'coordinator') launchAdmin();
       else launchStudent();
     } else {
@@ -5666,7 +5680,7 @@ let _gbState = { rows: [], codingSubs: [], codingQs: [], approvedOnly: false };
 
 async function loadCodingData() {
   let subs = [], qs = [];
-  try { subs = await fetchAllRows(() => SB.from('coding_submissions').select('*')); } catch(e) {}
+  try { subs = await fetchAllRows(() => SB.from('coding_submissions').select(CS_COLS)); } catch(e) {}
   try { const { data } = await SB.from('coding_questions').select('id,title,language,maxScore'); qs = data || []; } catch(e) {}
   return { subs, qs };
 }
@@ -6174,6 +6188,10 @@ async function openTestBuilder(editId) {
     <div class="card" style="padding:16px 18px;margin-bottom:16px">
       <div style="font-weight:700;margin-bottom:10px">💻 Coding questions</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+        <select id="tbCodeModuleFilter" class="filter-select" style="min-width:220px" onchange="_tbRefreshCodeBankSel()">
+          <option value="">All modules</option>
+          ${_tbCodeModuleOptions()}
+        </select>
         <select id="tbCodeLangFilter" class="filter-select" style="min-width:180px" onchange="_tbRefreshCodeBankSel()">
           <option value="">All languages</option>
           <option value="python">🐍 Python  ·  LANG-PY</option>
@@ -6351,10 +6369,21 @@ function tbRemoveMcq(i){ _testBuilder.mcqQuestions.splice(i,1); _tbRenderMcqList
 
 // Builds the <optgroup>-grouped option list for the coding bank picker,
 // optionally restricted to one language (used by the language filter dropdown).
-function _tbCodeBankOptions(filterLang) {
+// Module picker for the coding bank — same idea as the MCQ module filter.
+// Only modules that actually have coding questions are listed (with counts).
+function _tbCodeModuleOptions() {
+  const count = {};
+  (_tbBank.coding||[]).forEach(q => { const k = q.moduleId == null ? 'none' : String(q.moduleId); count[k] = (count[k]||0) + 1; });
+  const mods = (cache.modules||[]).filter(m => count[String(m.id)]);
+  return mods.map(m => `<option value="${m.id}">${m.icon||'📚'} ${escHtml(m.name)}  ·  MOD${m.id}  (${count[String(m.id)]})</option>`).join('')
+    + (count.none ? `<option value="none">📄 No module  (${count.none})</option>` : '');
+}
+function _tbCodeBankOptions(filterLang, filterModule) {
   return ['python','sql','java','mongodb','cassandra'].map(lang => {
     if (filterLang && lang !== filterLang) return '';
-    const items = (_tbBank.coding||[]).filter(q => (q.language||'sql')===lang).sort((a,b)=>String(a.title||'').localeCompare(String(b.title||'')));
+    const items = (_tbBank.coding||[]).filter(q => (q.language||'sql')===lang)
+      .filter(q => !filterModule || (filterModule === 'none' ? q.moduleId == null : String(q.moduleId) === String(filterModule)))
+      .sort((a,b)=>String(a.title||'').localeCompare(String(b.title||'')));
     if (!items.length) return '';
     const label = lang==='python'?'🐍 Python':lang==='sql'?'🗄️ SQL':lang==='mongodb'?'🍃 MongoDB':lang==='cassandra'?'👁️ Cassandra':'☕ Java';
     return `<optgroup label="${label}  (${items.length})">${items.map(q=>`<option value="${q.id}">${escHtml(String(q.title||'').slice(0,70))}</option>`).join('')}</optgroup>`;
@@ -6362,8 +6391,10 @@ function _tbCodeBankOptions(filterLang) {
 }
 function _tbRefreshCodeBankSel() {
   const lang = document.getElementById('tbCodeLangFilter').value;
+  const mod = (document.getElementById('tbCodeModuleFilter') || {}).value || '';
   const sel = document.getElementById('tbCodeBankSel');
-  sel.innerHTML = `<option value="">— pick from coding bank —</option>${_tbCodeBankOptions(lang)}`;
+  const opts = _tbCodeBankOptions(lang, mod);
+  sel.innerHTML = `<option value="">${opts ? '— pick from coding bank —' : '— no coding questions for this module / language —'}</option>${opts}`;
 }
 function tbAddBankCode() {
   const id = document.getElementById('tbCodeBankSel').value;
@@ -6410,7 +6441,10 @@ function tbParseCodeJson() {
 // question; the test only stores a reference to them.
 async function _tbSaveToBank(qd, marks) {
   try {
-    const r = await CGstaff('admin_save_question', { question: Object.assign({ hidden: true, difficulty: 'medium', maxScore: marks }, qd) });
+    const modSel = (document.getElementById('tbCodeModuleFilter') || {}).value || '';
+    const moduleId = /^\d+$/.test(modSel) ? +modSel : null;   // new questions join the module picked above
+    const r = await CGstaff('admin_save_question', { question: Object.assign({ hidden: true, difficulty: 'medium', maxScore: marks, moduleId }, qd) });
+    (_tbBank.coding = _tbBank.coding || []).push({ id: r.id, title: qd.title, language: qd.language, moduleId, hidden: true, description: qd.description || '' });
     _testBuilder.codingQuestions.push({ source:'bank', refId:r.id, marks, title:qd.title, language:qd.language, description:qd.description||'', schema:qd.schema||'', seedData:qd.seedData||'', starterCode:qd.starterCode||'' });
     return r.id;
   } catch (e) { toast('Could not save "' + qd.title + '": ' + e.message, 'error'); return null; }
@@ -9531,7 +9565,7 @@ async function renderStudentCodingTests() {
   try {
     const { data } = await SB.from('coding_questions').select('*').order('createdAt', { ascending: true });
     window._allCodingQuestions = (data || []).filter(x => !x.hidden);   // exam-only questions stay out of practice
-    const { data: subs } = await SB.from('coding_submissions').select('*').eq('studentId', currentUser.id);
+    const { data: subs } = await SB.from('coding_submissions').select(CS_COLS).eq('studentId', currentUser.id);
     window._codingRawSubs = subs || [];
     (subs || []).forEach(s => {
       if (!window._codingSubMap[s.questionId] || s.score > window._codingSubMap[s.questionId].score)
@@ -9626,7 +9660,7 @@ async function renderAdminCodingTests() {
   try {
     const { data } = await SB.from('coding_questions').select('*').order('createdAt', { ascending: false });
     questions = data || [];
-    submissions = await fetchAllRows(() => SB.from('coding_submissions').select('*'));
+    submissions = await fetchAllRows(() => SB.from('coding_submissions').select(CS_COLS));
   } catch(e) {}
 
   const subCount = id => submissions.filter(s => s.questionId === id).length;
