@@ -2505,6 +2505,63 @@ async function insertDefensive(table, record, optionalKeys) {
   return res;
 }
 
+// ── Server-side coding grader ────────────────────────────────────
+// Reference answers and hidden tests never reach the browser: the Supabase
+// Edge Function "coding-grader" keeps them in a locked table and grades on
+// the server. Python/Java still run here (no safe server runtime), so only
+// their raw outputs are sent; SQL/MongoDB/Cassandra run on the server.
+async function CG(action, body) {
+  let resp, data = null;
+  try {
+    resp = await fetch(SUPABASE_URL + '/functions/v1/coding-grader', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY },
+      body: JSON.stringify(Object.assign({ action }, body || {}))
+    });
+  } catch (e) { throw new Error('Could not reach the grading server. Check your internet connection and try again.'); }
+  try { data = await resp.json(); } catch (e) {}
+  if (!resp.ok || !data || data.error) {
+    const err = new Error((data && data.error) || ('Grading server error (HTTP ' + resp.status + ')'));
+    err.status = resp.status; throw err;
+  }
+  return data;
+}
+// Staff actions need the session token issued at login.
+function staffToken() { return (currentUser && currentUser.token) || ''; }
+async function CGstaff(action, body) {
+  if (!staffToken()) { const e = new Error('Please log out and log in again to continue (staff session missing).'); e.status = 401; throw e; }
+  try { return await CG(action, Object.assign({ token: staffToken() }, body || {})); }
+  catch (e) { if (e.status === 401) toast('Your staff session has expired — please log out and log in again.', 'error'); throw e; }
+}
+// {$date:"…"} values sent by the server → real Date objects (for MongoDB display)
+function _cgRevive(x) {
+  if (Array.isArray(x)) return x.map(_cgRevive);
+  if (x && typeof x === 'object') {
+    const k = Object.keys(x);
+    if (k.length === 1 && k[0] === '$date') return x.$date ? new Date(x.$date) : null;
+    const o = {}; k.forEach(key => o[key] = _cgRevive(x[key])); return o;
+  }
+  return x;
+}
+// Runs Python/Java locally on every test input and returns raw outputs only.
+async function _cgLocalOutputs(q, code, onProgress) {
+  const tcs = _parseTestCases(q.testCases).map(t => ({ stdin: t.stdin == null ? null : t.stdin, expected: '', description: t.description || '' }));
+  if (!tcs.length) return [];
+  let res;
+  try { res = q.language === 'java' ? await runJavaTests(code, tcs, onProgress) : await runPythonTests(code, tcs, onProgress); }
+  catch (e) { if (e && e.javaDisabled) return []; throw e; }   // Java auto-run off → saved for instructor review
+  return res.map(r => ({ out: r.output == null ? '' : String(r.output), error: !!r.error }));
+}
+// action: 'run' | 'submit' | 'exam_run' | 'exam_grade'. Returns the server reply.
+async function serverGrade(action, q, code, extra, onProgress) {
+  const body = Object.assign({ code }, extra || {});
+  if (q.language === 'python' || q.language === 'java') body.outputs = await _cgLocalOutputs(q, code, onProgress);
+  const data = await CG(action, body);
+  if (Array.isArray(data.results)) data.results = data.results.map(_cgRevive);
+  return data;
+}
+// "Hidden test" note used by the result renderers
+const _CG_HIDDEN_NOTE = '<div style="font-size:11px;color:#9089bd;margin-top:4px">🔒 Hidden test — the expected output is not shown.</div>';
+
 // Try to enter fullscreen (best-effort; browsers require a user gesture).
 function requestTestFullscreen() {
   const el = document.documentElement;
@@ -2711,48 +2768,27 @@ async function doLogin() {
     const id   = document.getElementById('adminId').value.trim();
     const pass = document.getElementById('adminPass').value.trim();
     if (!id || !pass) return showErr('Enter admin ID and password');
-
-    const { data } = await SB.from('config').select('value').eq('key','adminPass').single();
-    const storedPass = data?.value || 'admin123';
-
-    // Support both hashed (64-char hex SHA-256) and legacy plaintext during transition
-    const enteredHash = await sha256(pass);
-    const isHash      = storedPass.length === 64 && /^[0-9a-f]+$/.test(storedPass);
-    const passOk      = isHash ? (enteredHash === storedPass) : (pass === storedPass);
-
-    if ((id === '0000' || id === 'admin') && passOk) {
-      // Opportunistically upgrade plaintext to hash in config
-      if (!isHash) {
-        SB.from('config').update({ value: enteredHash }).eq('key','adminPass').then(() => {});
-      }
-      currentUser = { id:'admin', name:'Administrator', role:'admin' };
-      localStorage.setItem('pgcp_user', JSON.stringify(currentUser));
-      launchAdmin();
-      return;
+    // Checked on the server; the browser never sees the stored password hash.
+    let r;
+    try { r = await CG('login', { id, pass }); }
+    catch (e) { return showErr(e.message || 'Invalid ID or password'); }
+    if (r.role === 'admin') {
+      currentUser = { id:'admin', name:'Administrator', role:'admin', token: r.token };
+    } else {
+      let batches = [], courses = [];
+      try {
+        const { data: cb } = await SB.from('coordinator_batches').select('batch_id').eq('coordinator_id', r.id);
+        batches = (cb || []).map(x => x.batch_id);
+      } catch(e) {}
+      try {
+        const { data: cc } = await SB.from('coordinator_courses').select('course_id').eq('coordinator_id', r.id);
+        courses = (cc || []).map(x => x.course_id);
+      } catch(e) {}
+      currentUser = { id: r.id, name: r.name, role: 'coordinator', batches, courses, token: r.token };
     }
-
-    // Not the platform admin → try a Course Coordinator account (same form)
-    const { data: coord } = await SB.from('coordinators').select('*').eq('id', id).single();
-    if (coord && coord.status !== 'inactive') {
-      const ok = coord.passHash ? (enteredHash === coord.passHash) : (pass === (coord.pass || ''));
-      if (ok) {
-        if (!coord.passHash) SB.from('coordinators').update({ passHash: enteredHash }).eq('id', id).then(() => {});
-        let batches = [], courses = [];
-        try {
-          const { data: cb } = await SB.from('coordinator_batches').select('batch_id').eq('coordinator_id', id);
-          batches = (cb || []).map(r => r.batch_id);
-        } catch(e) {}
-        try {
-          const { data: cc } = await SB.from('coordinator_courses').select('course_id').eq('coordinator_id', id);
-          courses = (cc || []).map(r => r.course_id);
-        } catch(e) {}
-        currentUser = { id: coord.id, name: coord.name, role: 'coordinator', batches, courses };
-        localStorage.setItem('pgcp_user', JSON.stringify(currentUser));
-        launchAdmin();
-        return;
-      }
-    }
-    showErr('Invalid ID or password');
+    localStorage.setItem('pgcp_user', JSON.stringify(currentUser));
+    launchAdmin();
+    if (r.weakPassword) setTimeout(() => toast('⚠️ Your admin password is weak or the default. Change it now from the key icon / Change Password.', 'error'), 800);
     return;
   }
 
@@ -2823,6 +2859,7 @@ async function submitForgotPassword(){
 }
 
 function doLogout() {
+  try { if (currentUser && currentUser.token) CG('logout', { token: currentUser.token }).catch(() => {}); } catch(e) {}
   localStorage.removeItem('pgcp_user');
   currentUser = null;
   stopTest();
@@ -3396,13 +3433,9 @@ async function saveNewPassword(){
     const { error } = await SB.from('coordinators').update({ passHash: newHash, pass: null }).eq('id', currentUser.id);
     if (error) return toast('Error: ' + error.message, 'error');
   } else if (currentUser.role === 'admin') {
-    const { data } = await SB.from('config').select('value').eq('key','adminPass').single();
-    const stored = data?.value || 'admin123';
-    const isHash = stored.length === 64 && /^[0-9a-f]+$/.test(stored);
-    const ok = isHash ? (curHash === stored) : (cur === stored);
-    if (!ok) return toast('Current password is incorrect', 'error');
-    const { error } = await SB.from('config').update({ value: newHash }).eq('key','adminPass');
-    if (error) return toast('Error: ' + error.message, 'error');
+    if (nw.length < 8) return toast('Admin password must be at least 8 characters', 'error');
+    try { await CGstaff('admin_change_password', { current: cur, next: nw }); }
+    catch (e) { return toast(e.message, 'error'); }
   } else if (currentUser.role === 'student') {
     const { data: s } = await SB.from('students').select('*').eq('id', currentUser.id).single();
     if (!s) return toast('Account not found', 'error');
@@ -5938,7 +5971,9 @@ async function renderApprovalTable() {
 
 async function approveSubmission(table, id, btn) {
   if (btn) btn.disabled = true;
-  const { error } = await SB.from(table).update({ approved: true }).eq('id', id);
+  let error = null;
+  if (table === 'coding_submissions') { try { await CGstaff('admin_approve', { id }); } catch (e) { error = e; } }
+  else ({ error } = await SB.from(table).update({ approved: true }).eq('id', id));
   if (error) { toast('Approve failed: ' + error.message + ' — run the migration to add the "approved" column', 'error'); if (btn) btn.disabled = false; return; }
   toast('✅ Approved', 'success');
   renderApprovalTable();
@@ -6335,7 +6370,7 @@ function tbAddBankCode() {
   const marks = +document.getElementById('tbCodeBankMarks').value || 10;
   if (!id) { toast('Pick a problem', 'error'); return; }
   const q = _tbBank.coding.find(x => String(x.id) === String(id)); if (!q) return;
-  _testBuilder.codingQuestions.push({ source:'bank', refId:q.id, marks, title:q.title, language:q.language, description:q.description, testCases:_parseTestCases(q.testCases), schema:q.schema||'', seedData:q.seedData||'', starterCode:q.starterCode||'' });
+  _testBuilder.codingQuestions.push({ source:'bank', refId:q.id, marks, title:q.title, language:q.language, description:q.description, schema:q.schema||'', seedData:q.seedData||'', starterCode:q.starterCode||'' });
   _tbRenderCodeList();
 }
 // Bulk-import coding questions pasted as JSON, mirroring the MCQ Paste-JSON
@@ -6357,17 +6392,28 @@ function tbParseCodeJson() {
   const valid = results.filter(Boolean);
   const bad = arr.length - valid.length;
   if (!valid.length) { msg.textContent = '❌ No valid questions found (need title, language; SQL also needs schema)'; msg.style.color = 'var(--red)'; return; }
-  valid.forEach(item => {
-    _testBuilder.codingQuestions.push({
-      source:'inline', refId:null, marks, title:item.title, language:item.language,
-      description:item.description||'', testCases:_parseTestCases(item.testCases||[]),
-      schema:item.schema||'', seedData:item.seedData||'', starterCode:item.starterCode||''
-    });
-  });
-  msg.textContent = `✅ ${valid.length} staged${bad?' | ❌ '+bad+' skipped (invalid)':''}`;
-  msg.style.color = bad ? 'var(--yellow)' : 'var(--green)';
-  document.getElementById('tbCodeJsonInput').value = '';
-  _tbRenderCodeList();
+  (async () => {
+    let ok = 0, fail = 0;
+    for (const item of valid) {
+      const r = await _tbSaveToBank({ title:item.title, language:item.language, description:item.description||'',
+        testCases:_parseTestCases(item.testCases||[]), schema:item.schema||'', seedData:item.seedData||'', starterCode:item.starterCode||'' }, marks);
+      if (r) ok++; else fail++;
+    }
+    msg.textContent = `✅ ${ok} staged${bad||fail?' | ❌ '+(bad+fail)+' skipped (invalid)':''}`;
+    msg.style.color = (bad||fail) ? 'var(--yellow)' : 'var(--green)';
+    document.getElementById('tbCodeJsonInput').value = '';
+    _tbRenderCodeList();
+  })();
+}
+// Questions written inside a test are saved to the coding bank (hidden from
+// the Practice Arena) so their answers live on the server like every other
+// question; the test only stores a reference to them.
+async function _tbSaveToBank(qd, marks) {
+  try {
+    const r = await CGstaff('admin_save_question', { question: Object.assign({ hidden: true, difficulty: 'medium', maxScore: marks }, qd) });
+    _testBuilder.codingQuestions.push({ source:'bank', refId:r.id, marks, title:qd.title, language:qd.language, description:qd.description||'', schema:qd.schema||'', seedData:qd.seedData||'', starterCode:qd.starterCode||'' });
+    return r.id;
+  } catch (e) { toast('Could not save "' + qd.title + '": ' + e.message, 'error'); return null; }
 }
 // Show the inline "New question" form and initialise it for the current language.
 function tbShowNewCode() {
@@ -6413,7 +6459,7 @@ function tbAddTcRow() {
   list.appendChild(div);
 }
 
-function tbAddInlineCode() {
+async function tbAddInlineCode() {
   const title = document.getElementById('tbCodeTitle').value.trim();
   const language = document.getElementById('tbCodeLang').value;
   const description = document.getElementById('tbCodeDesc').value.trim();
@@ -6448,10 +6494,8 @@ function tbAddInlineCode() {
     if (!testCases.length) { toast('Add at least one test case with expected output', 'error'); return; }
   }
 
-  _testBuilder.codingQuestions.push({
-    source:'inline', refId:null, marks:+document.getElementById('tbCodeNewMarks').value||10,
-    title, language, description, testCases, schema, seedData, starterCode:''
-  });
+  const saved = await _tbSaveToBank({ title, language, description, testCases, schema, seedData, starterCode:'' }, +document.getElementById('tbCodeNewMarks').value||10);
+  if (!saved) return;
   // reset form
   ['tbCodeTitle','tbCodeDesc','tbCodeSchema','tbCodeSeed'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('tbTcList').innerHTML=''; tbAddTcRow();
@@ -6478,7 +6522,7 @@ async function saveTest(publish) {
     mcqDuration: +document.getElementById('tbMcqDur').value || 30,
     codingDuration: +document.getElementById('tbCodeDur').value || 45,
     mcqQuestions: JSON.stringify(_testBuilder.mcqQuestions),
-    codingQuestions: JSON.stringify(_testBuilder.codingQuestions),
+    codingQuestions: JSON.stringify(_testBuilder.codingQuestions.map(({ testCases, ...rest }) => rest)),   // answers never stored in the test
     assignedTo: JSON.stringify(assignedTo),
     totalMarks, createdBy: 'admin'
   };
@@ -6648,6 +6692,20 @@ async function startExam(testId) {
 
   const mcqQ  = resume ? resume.mcqQuestions   : shuffle(_pj(test.mcqQuestions, []));
   const codeQ = resume ? resume.codingQuestions : shuffle(_pj(test.codingQuestions, []));
+  // Load each coding question's student-safe data from the bank (answers stay on the server).
+  try {
+    const ids = codeQ.map(x => x.refId).filter(Boolean);
+    let byId = {};
+    if (ids.length) {
+      const { data } = await SB.from('coding_questions').select('id,title,language,description,schema,seedData,starterCode,testCases').in('id', ids);
+      (data || []).forEach(r => byId[r.id] = r);
+    }
+    codeQ.forEach(x => {
+      const b = x.refId ? byId[x.refId] : null;
+      if (b) { x.testCases = b.testCases; x.schema = b.schema || ''; x.seedData = b.seedData || ''; x.language = b.language; }
+      else x.testCases = [];
+    });
+  } catch (e) {}
   examState = {
     test, attemptId: (resume && resume.attemptId) || existing?.id || `TA_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,
     isNew: !(resume || existing),
@@ -7037,11 +7095,9 @@ async function examRunCode() {
   const rp = document.getElementById('examCodeResults'); if(rp){ rp.style.paddingTop='30px'; rp.textContent='⏳ Running…'; }
   let results=[], runErr=null;
   try {
-    results = q.language==='python' ? await runPythonTests(code, tc)
-            : q.language==='java'   ? await runJavaTests(code, tc)
-            : q.language==='mongodb' ? await runMongoTests(q.schema||'', code, tc)
-            : q.language==='cassandra' ? await runCqlTests(q.schema||'', q.seedData||'', code, tc)
-            : await runSQLTests(q.schema||'', q.seedData||'', code, tc);
+    if (!q.refId) throw new Error('This question is marked by the instructor — your code is saved.');
+    if (q.language === 'java' && !(await _javaExecEnabled())) { const je = new Error('java off'); je.javaDisabled = true; throw je; }
+    results = (await serverGrade('exam_run', q, code, { attemptId: examState.attemptId, studentId: currentUser.id, refId: q.refId })).results || [];
   } catch(e){
     results=[];
     runErr = (e && e.javaDisabled) ? 'Java auto-run is turned off — your code is saved and will be reviewed by the instructor.' : ((e && e.message) || String(e));
@@ -7076,32 +7132,23 @@ async function _examSubmitAll() {
   const c = examState.coding;
   _examSaveCurrentCode();
   toast('Grading your answers… please wait', 'info');
+  // Each answer is graded and stored on the server; the browser never sees
+  // the answers or computes its own coding marks.
+  const runErrors = {};
   for (let i=0;i<c.questions.length;i++){
     const q=c.questions[i]; const code=c.answers[i]||'';
-    const tc = _parseTestCases(q.testCases);
-    let results=[], runError=null;
-    const _grade = () => q.language==='python' ? runPythonTests(code,tc)
-                       : q.language==='java'   ? runJavaTests(code,tc)
-                       : q.language==='mongodb' ? runMongoTests(q.schema||'',code,tc)
-                       : q.language==='cassandra' ? runCqlTests(q.schema||'',q.seedData||'',code,tc)
-                       : runSQLTests(q.schema||'',q.seedData||'',code,tc);
-    try{ results = await _grade(); }
+    if (!q.refId) continue;
+    const _grade = () => serverGrade('exam_grade', q, code, { attemptId: examState.attemptId, studentId: currentUser.id, refId: q.refId });
+    try { await _grade(); }
     catch(e){
-      if (e && e.javaDisabled) { results=[]; runError=null; }   // Java off → instructor review, not an error
-      else {
-        // One retry — a transient runtime/CDN failure should not silently zero a
-        // student who actually wrote code. Flag it if it still fails.
-        try { await new Promise(r=>setTimeout(r,800)); results = await _grade(); }
-        catch(e2){ results=[]; runError = (e2 && e2.message) || String(e2); }
-      }
+      if (e && e.status === 409) break;   // already submitted
+      // One retry — a transient runtime/network failure should not silently zero
+      // a student who actually wrote code. Flag it if it still fails.
+      try { await new Promise(r=>setTimeout(r,800)); await _grade(); }
+      catch(e2){ if ((code||'').trim()) runErrors[q.refId] = (e2 && e2.message) || String(e2); }
     }
-    const passed=results.filter(r=>r.passed).length;
-    // Step / partial marks: sum of per-test-case fractions (SQL uses row-overlap)
-    const gained=results.reduce((a,r)=>a+(typeof r.partial==='number'?r.partial:(r.passed?1:0)),0);
-    const score=tc.length?Math.round(gained/tc.length*(+q.marks||0)):0;
-    c.results[i]={ title:q.title, language:q.language, score, passed, total:tc.length, marks:q.marks, runError:(runError&&(code||'').trim())?runError:null };
   }
-  c.score = c.results.reduce((a,r)=>a+(r?.score||0),0);
+  c.runErrors = runErrors;
   _examFinish();
 }
 
@@ -7112,21 +7159,27 @@ async function _examFinish() {
   _examStopAutosave();
   teardownExamAntiCheat();
   const mcqScore=examState.mcq.score, mcqMax=examState.mcq.max;
-  const codingScore=examState.coding.score, codingMax=examState.coding.max;
-  const totalScore=mcqScore+codingScore, totalMax=mcqMax+codingMax;
-  const pct = totalMax?Math.round(totalScore/totalMax*100):0;
+  // Coding marks, totals and the "submitted" status are set by the server
+  // (exam_finalize) from its own grading — not by the browser.
   const payload = {
-    status:'submitted', mcqScore, mcqMax, codingScore, codingMax, totalScore, totalMax, pct,
+    mcqScore, mcqMax,
     mcqAnswers: JSON.stringify(examState.mcq.answers),
-    codingResults: JSON.stringify(examState.coding.results),
     violations: JSON.stringify(examState.violations),
-    mcqSubmittedAt: examState.mcqSubmittedAt || null,
-    submittedAt: new Date().toISOString()
+    mcqSubmittedAt: examState.mcqSubmittedAt || null
   };
-  let res = await SB.from('test_attempts').update(payload).eq('id', examState.attemptId);
-  if (res.error) {
-    // Row may not exist (insert failed earlier) — upsert-style insert
-    res = await insertDefensive('test_attempts', { id: examState.attemptId, testId: examState.test.id, studentId: currentUser.id, studentName: currentUser.name, startedAt: examState.startedAt, ...payload }, ['studentName']);
+  let res = await SB.from('test_attempts').update(payload).eq('id', examState.attemptId).select('id');
+  if (res.error || !res.data || !res.data.length) {
+    // Row may not exist (insert failed earlier) — insert it
+    res = await insertDefensive('test_attempts', { id: examState.attemptId, testId: examState.test.id, studentId: currentUser.id, studentName: currentUser.name, startedAt: examState.startedAt, status: 'in_progress', ...payload }, ['studentName']);
+  }
+  if (!res || !res.error) {
+    try { await CG('exam_finalize', { attemptId: examState.attemptId, studentId: currentUser.id, runErrors: examState.coding.runErrors || {} }); }
+    catch (e) { res = { error: e }; }
+  }
+  if (res && res.error) {
+    _examFinishing = false;
+    toast('Could not submit your test: ' + (res.error.message || res.error) + ' — your answers are saved. Check your connection and press Submit again.', 'error');
+    return;
   }
   // Only clear the local saved copy once the result is safely stored — so a
   // failed submit still lets the student resume instead of losing everything.
@@ -8525,6 +8578,7 @@ function _mongoCaseResultHTML(r, caseLabel) {
   let inner = '';
   if (r.hint) inner += `<div style="font-size:11.5px;color:#fbbf24;margin-bottom:8px">💡 ${escHtml(r.hint)}</div>`;
   if (r.mode === 'state') {
+    if (r.hidden && !r.diffs) inner += _CG_HIDDEN_NOTE;
     (r.diffs || []).forEach(d => {
       inner += `<div style="font-size:11.5px;color:#cdd6f4;margin-bottom:6px"><b>📦 ${escHtml(d.collection)}</b> — expected ${d.expectedCount} document(s), yours has ${d.actualCount}</div>`;
       if (d.missing.length) inner += `<div style="font-size:10px;color:#50fa7b;font-weight:700;letter-spacing:.08em;margin:6px 0 3px">EXPECTED BUT NOT FOUND</div><pre class="sa-mongo-out" style="color:#a6e3a1">${escHtml(d.missing.map(x => _mongoFmt(x, 400)).join('\n'))}</pre>`;
@@ -8533,7 +8587,7 @@ function _mongoCaseResultHTML(r, caseLabel) {
     inner += `<div style="font-size:10.5px;color:#6272a4;margin-top:6px">Write questions are graded on the final contents of the collection(s). &lt;auto_id&gt; = an _id generated automatically.</div>`;
   } else {
     inner += `<div style="font-size:10px;color:#6272a4;font-weight:700;letter-spacing:.08em;margin-bottom:4px">YOUR OUTPUT</div>${r.actualDisplay == null ? '<div style="color:#9089bd;font-size:12px">(nothing)</div>' : _mongoValueHTML(r.actualDisplay, 8)}`;
-    inner += `<div style="font-size:10px;color:#50fa7b;font-weight:700;letter-spacing:.08em;margin:10px 0 4px">EXPECTED</div>${_mongoValueHTML(r.expectedDisplay, 8)}`;
+    inner += r.hidden || r.expectedDisplay === undefined ? _CG_HIDDEN_NOTE : `<div style="font-size:10px;color:#50fa7b;font-weight:700;letter-spacing:.08em;margin:10px 0 4px">EXPECTED</div>${_mongoValueHTML(r.expectedDisplay, 8)}`;
   }
   return box(inner);
 }
@@ -8542,6 +8596,9 @@ async function _mongoFillExamples(q, visibleTests) {
   for (let i = 0; i < visibleTests.length; i++) {
     const el = document.getElementById('saMongoEg_' + i); if (!el) continue;
     const tc = visibleTests[i];
+    if (tc.hidden) { el.innerHTML = '<div style="color:#d7d2f0">🔒 Hidden check — your code is run again on a <b>different version of the data</b>, so write a general query (don\'t hard-code the answer).</div>'; continue; }
+    if (tc.kind === 'write') { el.innerHTML = '<div style="color:#d7d2f0">✏️ This task changes data. You are graded on the <b>final contents</b> of the collection(s) after your code runs.</div>'; continue; }
+    if (tc.kind === 'output') { el.innerHTML = tc.expectedDisplay !== undefined ? `<div style="font-size:11px;color:#9089bd;margin-bottom:5px">Expected output:</div>${_mongoValueHTML(_cgRevive(tc.expectedDisplay), 5)}` : ''; continue; }
     if (!tc.refQuery) { el.innerHTML = ''; continue; }
     if (tc.seed) { el.innerHTML = '<div style="color:#d7d2f0">🔒 Hidden check — your code is run again on a <b>different version of the data</b>, so write a general query (don\'t hard-code the answer).</div>'; continue; }
     const isWrite = tc.mode === 'state' || (tc.mode !== 'output' && /\.(insert(One|Many)?|update(One|Many)?|replaceOne|delete(One|Many)|remove|findOneAnd\w+|drop|renameCollection|bulkWrite|save)\s*\(|\$out\b|\$merge\b/.test(tc.refQuery));
@@ -8765,6 +8822,7 @@ function _cqlCaseResultHTML(r, caseLabel) {
   let inner = '';
   if (r.hint) inner += `<div style="font-size:11.5px;color:#fbbf24;margin-bottom:8px">💡 ${escHtml(r.hint)}</div>`;
   if (r.mode === 'state') {
+    if (r.hidden && !r.diffs) inner += _CG_HIDDEN_NOTE;
     (r.diffs || []).forEach(d => {
       inner += `<div style="font-size:11.5px;color:#cdd6f4;margin-bottom:6px"><b>🗂️ ${escHtml(d.table)}</b>${d.note ? ' — ' + escHtml(d.note) : ` — expected ${d.expectedCount} row(s), yours has ${d.actualCount}`}</div>`;
       if (d.expectedSchema && !d.schemaOk) inner += `<div style="font-size:11px;color:#ff9a9a;margin-bottom:4px">Table definition differs.</div><div style="font:11px/1.5 'JetBrains Mono',monospace;color:#a6e3a1">expected: ${escHtml(d.expectedSchema)}</div>${d.actualSchema ? `<div style="font:11px/1.5 'JetBrains Mono',monospace;color:#ff9a9a;margin-bottom:6px">yours: &nbsp;&nbsp;${escHtml(d.actualSchema)}</div>` : ''}`;
@@ -8775,6 +8833,7 @@ function _cqlCaseResultHTML(r, caseLabel) {
   } else {
     inner += `<div style="font-size:10px;color:#6272a4;font-weight:700;letter-spacing:.08em;margin-bottom:4px">YOUR RESULT</div>${r.actualDisplay ? _cqlTable(r.actualDisplay.columns, r.actualDisplay.rows, 8) : '<div style="color:#9089bd;font-size:12px">(no rows)</div>'}`;
     if (r.expectedDisplay) inner += `<div style="font-size:10px;color:#50fa7b;font-weight:700;letter-spacing:.08em;margin:10px 0 4px">EXPECTED</div>${_cqlTable(r.expectedDisplay.columns, r.expectedDisplay.rows, 8)}`;
+    else if (r.hidden) inner += _CG_HIDDEN_NOTE;
   }
   return box(inner);
 }
@@ -8783,6 +8842,10 @@ async function _cqlFillExamples(q, visibleTests) {
   for (let i = 0; i < visibleTests.length; i++) {
     const el = document.getElementById('saMongoEg_' + i); if (!el) continue;
     const tc = visibleTests[i];
+    if (tc.hidden) { el.innerHTML = '<div style="color:#d7d2f0">🔒 Hidden check — your CQL is run again on a <b>different part of the data</b>, so write a general query (don\'t hard-code the answer).</div>'; continue; }
+    if (tc.kind === 'probe') { el.innerHTML = `<div style="color:#d7d2f0">🧪 Your tables are checked by inserting test rows and running:</div><pre class="sa-mongo-out" style="color:#8be9fd;margin-top:6px">${escHtml(tc.probeHint || '')};</pre>`; continue; }
+    if (tc.kind === 'write') { el.innerHTML = '<div style="color:#d7d2f0">✏️ This task changes data. You are graded on the <b>final contents</b> (and definition) of the tables after your CQL runs.</div>'; continue; }
+    if (tc.kind === 'output') { el.innerHTML = tc.expectedDisplay ? `<div style="font-size:11px;color:#9089bd;margin-bottom:5px">Expected output:</div>${_cqlTable(tc.expectedDisplay.columns, tc.expectedDisplay.rows, 5)}` : ''; continue; }
     if (!tc.refQuery) { el.innerHTML = ''; continue; }
     if (tc.seed) { el.innerHTML = '<div style="color:#d7d2f0">🔒 Hidden check — your CQL is run again on a <b>different part of the data</b>, so write a general query (don\'t hard-code the answer).</div>'; continue; }
     if (tc.probe && String(tc.probe).trim()) {
@@ -9212,12 +9275,8 @@ async function runCodingTests() {
 
   try {
     let results;
-    if (q.language === 'java') {
-      results = await runJavaTests(code, testCases, (current, total) => {
-        if (statusEl) statusEl.innerHTML = `<span style="color:#ffb86c">${current}/${total} running…</span>`;
-      });
-    } else if (q.language === 'python') {
-      results = await runPythonTests(code, testCases, (current, total) => {
+    if (q.language === 'java' || q.language === 'python') {
+      results = (await serverGrade('run', q, code, { questionId: q.id }, (current, total) => {
         // Live progress update — worker sends this between test cases
         if (statusEl) statusEl.innerHTML = `<span style="color:#ffb86c">${current}/${total} running…</span>`;
         if (resultsEl) resultsEl.innerHTML = `
@@ -9228,13 +9287,10 @@ async function runCodingTests() {
               <div style="width:${Math.round(current/total*100)}%;background:linear-gradient(90deg,#1746c8,#1e5eff);height:100%;border-radius:99px;transition:width 0.3s"></div>
             </div>
           </div>`;
-      });
-    } else if (q.language === 'mongodb') {
-      results = await runMongoTests(q.schema || '', code, testCases);
-    } else if (q.language === 'cassandra') {
-      results = await runCqlTests(q.schema || '', q.seedData || '', code, testCases);
+      })).results;
     } else {
-      results = await runSQLTests(q.schema || '', q.seedData || '', code, testCases);
+      // SQL / MongoDB / Cassandra: graded on the server against the hidden answers
+      results = (await serverGrade('run', q, code, { questionId: q.id })).results;
     }
     const passed = results.filter(r => r.passed).length;
     const allPass = passed === results.length;
@@ -9265,7 +9321,7 @@ async function runCodingTests() {
                 ${r.actualResult ? renderSQLTable(r.actualResult.columns, r.actualResult.rows, null, 6) : '<div style="color:#6272a4;font-size:12px">No result</div>'}
                 ${!r.passed && r.expectedResult ? `
                   <div style="font-size:10px;color:#50fa7b;font-weight:700;letter-spacing:.08em;margin:10px 0 5px">EXPECTED <span style="font-weight:400">(${r.expectedResult.rows.length} rows)</span></div>
-                  ${renderSQLTable(r.expectedResult.columns, r.expectedResult.rows, null, 6)}` : ''}
+                  ${renderSQLTable(r.expectedResult.columns, r.expectedResult.rows, null, 6)}` : (!r.passed && r.hidden ? _CG_HIDDEN_NOTE : '')}
               </div>`;
           }
           // Python / Java
@@ -9278,10 +9334,10 @@ async function runCodingTests() {
               <span style="color:#6272a4">Got: </span>
               <code style="background:rgba(255,85,85,0.15);color:#ff8080;padding:2px 7px;border-radius:4px;font-family:'JetBrains Mono',monospace;word-break:break-all;white-space:pre-wrap">${escHtml(errText)}</code>
             </div>
-            <div style="font-size:11px">
+            ${r.hidden || r.expected === undefined ? _CG_HIDDEN_NOTE : `<div style="font-size:11px">
               <span style="color:#6272a4">Expected: </span>
               <code style="background:rgba(80,250,123,0.12);color:#a6e3a1;padding:2px 7px;border-radius:4px;font-family:'JetBrains Mono',monospace;white-space:pre-wrap">${escHtml(String(r.expected))}</code>
-            </div>` : ''}
+            </div>`}` : ''}
           </div>`;
         }).join('');
     }
@@ -9306,34 +9362,18 @@ async function submitCodingQuestion() {
   const testCases = _parseTestCases(q.testCases);
 
   document.getElementById('codingSubmitBtn').disabled = true;
-  let results;
-  try {
-    if (q.language === 'python') results = await runPythonTests(code, testCases);
-    else if (q.language === 'java') results = await runJavaTests(code, testCases);
-    else if (q.language === 'mongodb') results = await runMongoTests(q.schema || '', code, testCases);
-    else if (q.language === 'cassandra') results = await runCqlTests(q.schema || '', q.seedData || '', code, testCases);
-    else results = await runSQLTests(q.schema || '', q.seedData || '', code, testCases);
-  } catch(e) { results = []; }
-
-  const passed = results.filter(r=>r.passed).length;
-  const gained = results.reduce((a,r)=>a+(typeof r.partial==='number'?r.partial:(r.passed?1:0)),0);
-  const score  = testCases.length ? Math.round((gained / testCases.length) * (q.maxScore || 10)) : 0;
-
   const ac = _codingAC || {};
-  const { error } = await insertDefensive('coding_submissions', {
-    questionId: q.id, studentId: currentUser.id, studentName: currentUser.name, code,
-    passed, total: testCases.length, score,
-    submittedAt: new Date().toISOString(),
-    tabSwitches: ac.tabSwitches || 0,
-    pasteAttempts: ac.pasteAttempts || 0,
-    aiFlags: ac.aiFlags || 0,
-    violations: JSON.stringify(ac.violations || []),
-    approved: false
-  }, ['studentName','tabSwitches','pasteAttempts','aiFlags','violations','approved']);
+  // Graded and saved by the server — the browser cannot set its own score.
+  let passed = 0, score = 0, error = null;
+  try {
+    const r = await serverGrade('submit', q, code, { questionId: q.id, studentId: currentUser.id,
+      ac: { tabSwitches: ac.tabSwitches || 0, pasteAttempts: ac.pasteAttempts || 0, aiFlags: ac.aiFlags || 0, violations: ac.violations || [] } });
+    passed = r.passed; score = r.score;
+  } catch (e) { error = e; }
+  if (error) { document.getElementById('codingSubmitBtn').disabled = false; toast('Submit error: ' + error.message, 'error'); return; }
   teardownCodingAntiCheat();
   document.getElementById('codingSubmitBtn').disabled = false;
 
-  if (error) { toast('Submit error: ' + error.message, 'error'); return; }
   const flagged = (ac.pasteAttempts||0) + (ac.aiFlags||0) + (ac.tabSwitches||0);
   toast(`✅ Submitted! Score: ${score}/${q.maxScore||10} (${passed}/${testCases.length} tests passed)` + (flagged ? ` · ${flagged} integrity flag(s) logged` : ''), 'success');
 
@@ -9490,7 +9530,7 @@ async function renderStudentCodingTests() {
 
   try {
     const { data } = await SB.from('coding_questions').select('*').order('createdAt', { ascending: true });
-    window._allCodingQuestions = data || [];
+    window._allCodingQuestions = (data || []).filter(x => !x.hidden);   // exam-only questions stay out of practice
     const { data: subs } = await SB.from('coding_submissions').select('*').eq('studentId', currentUser.id);
     window._codingRawSubs = subs || [];
     (subs || []).forEach(s => {
@@ -9812,10 +9852,10 @@ INSERT INTO employees VALUES
       description: q.desc,
       schema: SCHEMA.trim(),
       seedData: SEED.trim(),
-      testCases: JSON.stringify(testCases),
-      createdAt: new Date().toISOString()
+      testCases
     };
-    const { error } = await SB.from('coding_questions').insert(record);
+    let error = null;
+    try { await CGstaff('admin_save_question', { question: record }); } catch (e) { error = e; }
     if (error) { console.error(error); failed++; } else created++;
   }
 
@@ -9830,8 +9870,8 @@ async function openCodingQuestionEditor(editId) {
   await loadModulesCache();
   let existing = null;
   if (editId) {
-    const { data } = await SB.from('coding_questions').select('*').eq('id', editId).single();
-    existing = data;
+    try { existing = (await CGstaff('admin_get_question', { id: editId })).question; }
+    catch (e) { toast('Could not load the question: ' + e.message, 'error'); return; }
   }
   const lang = existing?.language || 'python';
   const tc = existing ? _parseTestCases(existing.testCases) : [];
@@ -10188,13 +10228,13 @@ async function saveCodingQuestion(editId) {
     }).filter(t => t.expected !== '');
   }
 
-  const record = { title, language: lang, description: desc, schema, seedData, starterCode: starter,
-    difficulty: diff, maxScore: score, moduleId: mod,
-    testCases: JSON.stringify(testCases), createdAt: new Date().toISOString() };
+  const record = { id: editId || null, title, language: lang, description: desc, schema, seedData, starterCode: starter,
+    difficulty: diff, maxScore: score, moduleId: mod, testCases };
 
-  let error;
-  if (editId) ({ error } = await SB.from('coding_questions').update(record).eq('id', editId));
-  else ({ error } = await SB.from('coding_questions').insert(record));
+  // Saved through the server: the answers go into a locked table and only a
+  // student-safe copy of the test cases is stored with the question.
+  let error = null;
+  try { await CGstaff('admin_save_question', { question: record }); } catch (e) { error = e; }
 
   if (error) { toast('Error: ' + error.message, 'error'); return; }
   toast(editId ? '💾 Problem updated!' : '✅ Problem created!', 'success');
@@ -10204,8 +10244,8 @@ async function saveCodingQuestion(editId) {
 
 async function deleteCodingQuestion(id) {
   if (!confirm('Delete this coding problem and all submissions?')) return;
-  await SB.from('coding_submissions').delete().eq('questionId', id);
-  const { error } = await SB.from('coding_questions').delete().eq('id', id);
+  let error = null;
+  try { await CGstaff('admin_delete_question', { id }); } catch (e) { error = e; }
   if (error) { toast('Error: ' + error.message, 'error'); return; }
   toast('Deleted', 'success');
   adminNav('coding');
@@ -10727,10 +10767,7 @@ async function renderAdminSettings() {
       <div class="card">
         <div class="card-inner">
           <div class="chart-title" style="margin-bottom:20px">🔒 Admin Credentials</div>
-          <div class="fgroup">
-            <label>Admin Password</label>
-            <input type="text" id="cfgAdminPass" value="${cfg.adminPass||'admin'}">
-          </div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:6px">The admin password is stored only on the server. Change it with <b>Change Password</b> (key icon in the top bar).</div>
           <div class="chart-title" style="margin-bottom:16px;margin-top:24px">⚙️ Default Test Settings</div>
           <div class="frow">
             <div class="fgroup">
@@ -10821,7 +10858,6 @@ async function renderAdminSettings() {
 
 async function saveSettings() {
   const updates = [
-    { key:'adminPass', value: document.getElementById('cfgAdminPass').value.trim() },
     { key:'timer', value: document.getElementById('cfgTimer').value },
     { key:'qCount', value: document.getElementById('cfgQCount').value },
     { key:'passmark', value: document.getElementById('cfgPassmark').value },
