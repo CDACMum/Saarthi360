@@ -1493,6 +1493,9 @@ table tbody tr:hover{background:rgba(30,94,255,0.06)!important}
         <div class="sidebar-item" onclick="adminNav('coding')">
           <span class="si-icon">💻</span> Coding Tests
         </div>
+        <div class="sidebar-item" onclick="adminNav('contests')">
+          <span class="si-icon">🏆</span> Contests
+        </div>
         <div class="sidebar-item" onclick="adminNav('tests')">
           <span class="si-icon">📄</span> Tests
         </div>
@@ -1569,6 +1572,10 @@ table tbody tr:hover{background:rgba(30,94,255,0.06)!important}
       <button class="sdsb-btn student-nav-btn" data-section="coding" onclick="studentNav('coding')">
         <span class="sdsb-icon">💻</span>
         <span class="sdsb-lbl">Code</span>
+      </button>
+      <button class="sdsb-btn student-nav-btn" data-section="contests" onclick="studentNav('contests')">
+        <span class="sdsb-icon">🏆</span>
+        <span class="sdsb-lbl">Contest</span>
       </button>
       <button class="sdsb-btn student-nav-btn" data-section="flashcards" onclick="studentNav('flashcards')">
         <span class="sdsb-icon">🃏</span>
@@ -2888,7 +2895,7 @@ function doLogout() {
 // LAUNCH
 // ════════════════════════════════════════════════════════════════
 // Sections a Course Coordinator may see (everything else is admin-only)
-const COORD_SECTIONS = ['dashboard','leaderboard','students','certs','modules','assignments'];
+const COORD_SECTIONS = ['dashboard','leaderboard','students','certs','modules','assignments','contests'];
 function applyRoleUI(){
   const isCoord = currentUser?.role === 'coordinator';
   document.querySelectorAll('#adminPage .sidebar-item').forEach(el => {
@@ -3164,6 +3171,7 @@ async function adminNav(section) {
     questions:     renderAdminQuestions,
     assignments:   renderAdminAssignments,
     coding:        renderAdminCodingTests,
+    contests:      renderAdminContests,
     tests:         renderAdminTests,
     gradebook:     renderAdminGradebook,
     announcements: renderAdminAnnouncements,
@@ -7998,11 +8006,11 @@ const _PY_WORKER_SRC = [
   "      try{",
   "        if(spark){ const fp=py.toPy(tc.files||{}); py.globals.set('_spk_files',fp); try{ py.runPython('_spk_prepare(_spk_files)'); }finally{ py.globals.delete('_spk_files'); fp.destroy(); } ns.set('__name__','__main__'); }",
   // Setup stdout capture
-  "        py.runPython('import sys,io\\n_out=io.StringIO()\\nsys.stdout=_out',{globals:ns});",
+  "        py.runPython('import sys,io\\n_out=io.StringIO()\\nsys.stdout=_out\\nsys.stdin=io.StringIO(\"\")',{globals:ns});",
   // Setup stdin mock if test case has input
   "        if(tc.stdin!=null){",
   "          const il=JSON.stringify(String(tc.stdin).replace(/\\\\n/g,'\\n').split('\\n'));",
-  "          py.runPython('import builtins\\n_il='+il+'\\n_ii=0\\ndef _fi(p=\"\"):\\n global _ii\\n v=_il[_ii] if _ii<len(_il) else \"\"\\n _ii+=1\\n return v\\nbuiltins.input=_fi',{globals:ns});",
+  "          py.runPython('import builtins\\n_il='+il+'\\n_ii=0\\ndef _fi(p=\"\"):\\n global _ii\\n v=_il[_ii] if _ii<len(_il) else \"\"\\n _ii+=1\\n return v\\nbuiltins.input=_fi\\nsys.stdin=io.StringIO(chr(10).join(_il)+chr(10))',{globals:ns});",
   "        }",
   // ── EXEC compiled bytecode (no re-parse!) ──
   "        ns.set('_compiled_bc', py.globals.get('_compiled_bc'));",
@@ -10756,7 +10764,7 @@ async function openCodingQuestion(qId) {
   page.innerHTML = `
   <div class="sa-solve">
     <div class="sa-topbar">
-      <button class="sa-tb-back" onclick="if(window._saTimerInt)clearInterval(window._saTimerInt);teardownCodingAntiCheat();showPage('studentPage');studentNav('coding')">← Arena</button>
+      <button class="sa-tb-back" onclick="if(window._saTimerInt)clearInterval(window._saTimerInt);teardownCodingAntiCheat();showPage('studentPage');_saBackFromSolve()">← Arena</button>
       <div class="sa-tb-sep"></div>
       <span class="sa-tb-title">${escHtml(q.title)}</span>
       <span class="sa-tb-meta" style="background:${diffMeta.bg};color:${diffMeta.fg}">${diffMeta.ico} ${diffMeta.t}</span>
@@ -11110,7 +11118,7 @@ async function submitCodingQuestion() {
         <div style="color:#a6adc8;font-size:12px;margin-top:4px">${passed}/${testCases.length} tests passed${flagged?` · ${flagged} integrity flag(s) logged`:''}</div>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px">
           ${next ? `<button class="btn btn-accent" onclick="openCodingQuestion(${next.id})">Submit &amp; Next → ${q.language.toUpperCase()}</button>` : ''}
-          <button class="btn btn-outline" onclick="teardownCodingAntiCheat();showPage('studentPage');studentNav('coding')">Back to list</button>
+          <button class="btn btn-outline" onclick="teardownCodingAntiCheat();showPage('studentPage');_saBackFromSolve()">Back to list</button>
         </div>
         <div style="color:#6272a4;font-size:11px;margin-top:8px">${next ? 'Next: '+escHtml(String(next.title)) : `🎉 All ${q.language.toUpperCase()} questions attempted!`}</div>
       </div>`;
@@ -11236,6 +11244,7 @@ function _renderCodingList() {
 }
 
 async function renderStudentCodingTests() {
+  window._saReturn = null;   // opened from the arena, so "back" returns to the arena
   const el = document.getElementById('studentContent');
   window._allCodingQuestions = [];
   window._codingSubMap = {};
@@ -11328,6 +11337,480 @@ async function renderStudentCodingTests() {
     _renderCodingList();
     if (!_pyWorker) setTimeout(()=>_getPyWorker(), 500);
   }
+}
+
+// ════════════════════════════════════════════════════════════════
+// CONTESTS — monthly coding challenges
+// Admin / coordinator pick questions module-wise (a whole module or specific
+// questions). Students solve them in the normal coding editor; a contest only
+// counts submissions made between start_at and end_at (RPC contest_leaderboard).
+// Writes go through security-definer RPCs (contest_save / contest_delete) that
+// check the staff session token — the browser can only READ the contests table.
+// ════════════════════════════════════════════════════════════════
+function _ctArr(v){ if (Array.isArray(v)) return v; try { const x = JSON.parse(v); return Array.isArray(x) ? x : []; } catch(e) { return []; } }
+function _ctState(c){ const n = Date.now(); return n < new Date(c.start_at).getTime() ? 'upcoming' : n > new Date(c.end_at).getTime() ? 'ended' : 'live'; }
+function _ctFmt(iso){ return new Date(iso).toLocaleString('en-IN', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }); }
+function _ctLeft(ms){ if (ms <= 0) return '0m'; const d = Math.floor(ms/86400000), h = Math.floor(ms%86400000/3600000), m = Math.floor(ms%3600000/60000), s = Math.floor(ms%60000/1000); return d ? `${d}d ${h}h ${m}m` : h ? `${h}h ${m}m` : `${m}m ${s}s`; }
+function _ctErr(e){
+  const m = (e && e.message) || String(e || '');
+  const notSetup = ['42P01','PGRST205','PGRST202','42883'].includes(e && e.code) || /does not exist|schema cache|Could not find the (table|function)/i.test(m);
+  return notSetup ? 'Contests are not set up in the database yet. Run saarthi_contests_setup.sql once in Supabase → SQL Editor, then refresh this page.' : (m || 'Something went wrong');
+}
+function _ctPill(st){ return st === 'live' ? '<span class="ct-pill live">● LIVE</span>' : st === 'upcoming' ? '<span class="ct-pill up">⏳ UPCOMING</span>' : '<span class="ct-pill end">ENDED</span>'; }
+function _ctTier(d){ const t = (window.SA_TIER_MAP || {})[d || 'medium']; return t ? `${t.ico} ${t.name.charAt(0)}${t.name.slice(1).toLowerCase()}` : (d || 'medium'); }
+function _ctLang(l){ const m = (typeof _SA_SUBJ !== 'undefined' && _SA_SUBJ[l]) || { icon:'📄', label:l }; return `${m.icon} ${m.label}`; }
+async function _ctLoadAll(){ const { data, error } = await SB.from('contests').select('*').order('start_at', { ascending:false }); if (error) throw error; return data || []; }
+async function _ctLoadQuestions(){ const { data, error } = await SB.from('coding_questions').select('id,title,language,difficulty,maxScore,moduleId,hidden').order('createdAt', { ascending:true }); if (error) throw error; return data || []; }
+function _ctStaffCanSee(c){
+  if (currentUser?.role !== 'coordinator') return true;
+  const cs = coordCourseSet(); if (!cs) return true;
+  const cc = _ctArr(c.course_ids).map(String);
+  return !cc.length || cc.some(x => cs.has(x));
+}
+// Same rule as assignments: no programs = everyone; batches narrow only the programs they belong to.
+function _ctStudentCanSee(c){
+  if (c.status === 'draft') return false;
+  const cid = currentUser.course_id != null ? currentUser.course_id : batchCourseId(currentUser.batch_id);
+  const cc = _ctArr(c.course_ids).map(String), bb = _ctArr(c.batch_ids).map(String);
+  if (cc.length && !cc.includes(String(cid))) return false;
+  if (bb.length && bb.some(b => String(batchCourseId(b)) === String(cid)) && !bb.includes(String(currentUser.batch_id))) return false;
+  return true;
+}
+function _ctCss(){
+  if (document.getElementById('ctCss')) return;
+  const st = document.createElement('style'); st.id = 'ctCss';
+  st.textContent = `
+  .ct-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.8px;white-space:nowrap}
+  .ct-pill.live{background:rgba(34,197,94,.16);color:#4ade80}
+  .ct-pill.up{background:rgba(59,130,246,.18);color:#7aa7ff}
+  .ct-pill.end{background:rgba(148,163,184,.14);color:#a8b0c2}
+  .ct-pill.draft{background:rgba(245,158,11,.16);color:#fbbf24}
+  .ct-lbl{font-size:12px;color:var(--text3);font-weight:600;display:block;margin-bottom:6px}
+  .ct-mod{border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden}
+  .ct-mod-h{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3)}
+  .ct-mod-h input{width:16px;height:16px;flex-shrink:0;cursor:pointer}
+  .ct-mod-t{flex:1;font-weight:700;font-size:13.5px;cursor:pointer;user-select:none}
+  .ct-mod-c{font-weight:500;font-size:11.5px;color:var(--text3);margin-left:8px}
+  .ct-mod-chev{cursor:pointer;color:var(--text3);width:16px;text-align:center}
+  .ct-mod-l{padding:6px 12px 10px 38px;display:flex;flex-direction:column;gap:2px;max-height:260px;overflow-y:auto}
+  .ct-q{display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 0;cursor:pointer;border-bottom:1px dashed rgba(255,255,255,.05)}
+  .ct-q-t{flex:1;min-width:0}
+  .ct-q-m{font-size:11px;color:var(--text3);white-space:nowrap}
+  .ct-board{width:100%;border-collapse:collapse;font-size:13px}
+  .ct-board th{text-align:left;font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);padding:8px 10px;border-bottom:1px solid var(--border)}
+  .ct-board td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.05)}
+  .ct-board tr.me td{background:rgba(30,94,255,.14)}
+  .ct-rank{font-weight:800;width:44px}
+  .ct-wrap{max-width:1150px;margin:0 auto}
+  .ct-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+  .ct-head h2{font-size:24px;font-weight:800}
+  .ct-head p{color:var(--text3);font-size:13px;margin-top:4px}
+  .ct-sec{font-size:11px;font-weight:800;letter-spacing:1.4px;color:var(--text3);text-transform:uppercase;margin:22px 0 10px}
+  .ct-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+  .ct-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 16px 14px;display:flex;flex-direction:column;gap:9px;position:relative;overflow:hidden}
+  .ct-card.live{border-color:rgba(34,197,94,.45);box-shadow:0 0 0 1px rgba(34,197,94,.15),0 8px 30px rgba(34,197,94,.08)}
+  .ct-card-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .ct-when{font-size:11.5px;color:var(--text3);font-weight:600}
+  .ct-card-title{font-size:16px;font-weight:800;line-height:1.3}
+  .ct-card-desc{font-size:12.5px;color:var(--text2);line-height:1.45}
+  .ct-meta{font-size:11.5px;color:var(--text3)}
+  .ct-prog{height:6px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden}
+  .ct-prog i{display:block;height:100%;background:linear-gradient(90deg,#22c55e,#a3e635)}
+  .ct-btn{margin-top:4px;align-self:flex-start}
+  .ct-empty{text-align:center;padding:48px 20px;color:var(--text3);background:var(--card);border:1px dashed var(--border);border-radius:14px}
+  .ct-hero{background:linear-gradient(135deg,rgba(30,94,255,.18),rgba(34,197,94,.10));border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin-bottom:16px}
+  .ct-hero h2{font-size:22px;font-weight:800;margin:8px 0 4px}
+  .ct-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:14px}
+  .ct-stat{background:rgba(0,0,0,.22);border:1px solid var(--border);border-radius:12px;padding:10px 12px}
+  .ct-stat b{display:block;font-size:20px;font-weight:800}
+  .ct-stat span{font-size:10.5px;letter-spacing:1px;color:var(--text3);text-transform:uppercase;font-weight:700}
+  .ct-cols{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px}
+  @media (max-width:900px){ .ct-cols{grid-template-columns:1fr} }
+  .ct-panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px}
+  .ct-panel h3{font-size:14px;font-weight:800;margin-bottom:10px}
+  .ct-qrow{display:flex;align-items:center;gap:10px;padding:10px 8px;border-bottom:1px solid rgba(255,255,255,.05)}
+  .ct-qrow:last-child{border-bottom:none}
+  .ct-qn{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;background:rgba(255,255,255,.06);flex-shrink:0}
+  .ct-qrow.done .ct-qn{background:rgba(34,197,94,.2);color:#4ade80}
+  .ct-qrow.part .ct-qn{background:rgba(245,158,11,.2);color:#fbbf24}
+  .ct-qi{flex:1;min-width:0}
+  .ct-qi div:first-child{font-weight:700;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ct-qi div:last-child{font-size:11px;color:var(--text3);margin-top:2px}
+  .ct-qs{font-weight:800;font-size:13px;white-space:nowrap}
+  `;
+  document.head.appendChild(st);
+}
+
+// ── Admin / coordinator: list ──────────────────────────────────
+async function renderAdminContests(){
+  const el = document.getElementById('adminContent');
+  _ctCss();
+  const head = `<div class="section-header"><div><h2>🏆 Contests</h2><p>Monthly coding challenges — pick questions module-wise, set the window, track the leaderboard</p></div>
+    <div class="hd-right"><button class="btn btn-accent" onclick="openContestEditor()">+ New Contest</button></div></div>`;
+  let list = [], qs = [];
+  try { [list, qs] = await Promise.all([_ctLoadAll(), _ctLoadQuestions()]); }
+  catch(e) { el.innerHTML = head.replace('<button class="btn btn-accent" onclick="openContestEditor()">+ New Contest</button>', '') + `<div class="card" style="text-align:center;padding:44px"><div style="font-size:42px;margin-bottom:10px">🛠️</div><p style="color:var(--text2);max-width:520px;margin:0 auto">${escHtml(_ctErr(e))}</p></div>`; return; }
+  if (!(cache.courses||[]).length) await loadCoursesCache();
+  if (!(cache.batches||[]).length) await loadBatchesCache();
+  window._ctQs = qs;
+  const qmap = {}; qs.forEach(q => qmap[q.id] = q);
+  const rank = { live:0, upcoming:1, ended:2 };
+  list = list.filter(_ctStaffCanSee).sort((a,b) => (rank[_ctState(a)] - rank[_ctState(b)]) || (new Date(b.start_at) - new Date(a.start_at)));
+  const scope = c => {
+    const cc = _ctArr(c.course_ids), bb = _ctArr(c.batch_ids);
+    if (!cc.length && !bb.length) return '<span class="badge badge-gray">All programs</span>';
+    return cc.map(id => `<span class="badge badge-blue">${escHtml(courseCode(id)||courseName(id)||('#'+id))}</span>`).join(' ')
+      + ' ' + bb.map(id => `<span class="badge badge-gray">${escHtml(batchName(id)||('#'+id))}</span>`).join(' ');
+  };
+  el.innerHTML = head + (list.length === 0 ? `
+    <div class="card" style="text-align:center;padding:48px">
+      <div style="font-size:48px;margin-bottom:12px">🏆</div>
+      <h3>No contests yet</h3>
+      <p style="color:var(--text3)">Create a monthly challenge — pick a whole module or hand-pick questions.</p>
+      <button class="btn btn-accent" style="margin-top:16px" onclick="openContestEditor()">+ New Contest</button>
+    </div>` : `
+    <div class="card"><div class="tbl-wrap"><table>
+      <thead><tr><th>Contest</th><th>Window</th><th>Status</th><th>Questions</th><th>Program / Batch</th><th>Actions</th></tr></thead>
+      <tbody>${list.map(c => {
+        const ids = _ctArr(c.question_ids).map(Number);
+        const pts = ids.reduce((a,i) => a + ((qmap[i]||{}).maxScore || 10), 0);
+        const langs = [...new Set(ids.map(i => (qmap[i]||{}).language).filter(Boolean))].map(_ctLang).join(' ');
+        return `<tr>
+          <td style="max-width:260px"><div style="font-weight:700">${escHtml(c.title)}</div>${c.description ? `<div style="font-size:11.5px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(c.description)}</div>` : ''}</td>
+          <td style="font-size:12px;color:var(--text2);white-space:nowrap">${_ctFmt(c.start_at)}<br>→ ${_ctFmt(c.end_at)}</td>
+          <td>${c.status === 'draft' ? '<span class="ct-pill draft">DRAFT</span>' : _ctPill(_ctState(c))}</td>
+          <td><b>${ids.length}</b> <span style="color:var(--text3);font-size:12px">· ${pts} pts</span><div style="font-size:11px;color:var(--text3);margin-top:2px">${langs}</div></td>
+          <td style="max-width:200px"><div style="display:flex;flex-wrap:wrap;gap:4px">${scope(c)}</div></td>
+          <td><div style="display:flex;gap:6px">
+            <button class="btn btn-outline btn-sm" onclick="openContestLeaderboard(${c.id})" title="Leaderboard">🏅 Results</button>
+            <button class="btn btn-outline btn-sm" onclick="openContestEditor(${c.id})" title="Edit">✏️</button>
+            <button class="btn btn-outline btn-sm" onclick="deleteContest(${c.id})" title="Delete" style="color:var(--red)">🗑</button>
+          </div></td></tr>`;
+      }).join('')}</tbody></table></div></div>`);
+}
+
+// ── Admin / coordinator: create / edit ─────────────────────────
+async function openContestEditor(id){
+  _ctCss();
+  try { if (!window._ctQs) window._ctQs = await _ctLoadQuestions(); } catch(e) { toast(_ctErr(e), 'error'); return; }
+  await loadModulesCache();
+  if (!cache.moduleCourses) await loadModuleCoursesCache();
+  if (!(cache.courses||[]).length) await loadCoursesCache();
+  if (!(cache.batches||[]).length) await loadBatchesCache();
+  const isCoord = currentUser?.role === 'coordinator';
+  const coordCourses = isCoord ? [...(coordCourseSet() || [])] : null;
+  if (isCoord && (!coordCourses || !coordCourses.length)) { toast('You have no program assigned — ask an admin to give you one before creating contests.', 'error'); return; }
+  let c = null;
+  if (id != null) {
+    const { data, error } = await SB.from('contests').select('*').eq('id', id).single();
+    if (error || !data) { toast(error ? _ctErr(error) : 'Contest not found', 'error'); return; }
+    c = data;
+  }
+  window._ctEditId = c ? c.id : null;
+  window._ctSel = new Set(c ? _ctArr(c.question_ids).map(Number) : []);
+  window._ctOpenMods = {};
+  const p = n => String(n).padStart(2, '0');
+  const toLocal = d => `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  const now = new Date();
+  const defStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0);
+  let defEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59);   // last day of this month
+  if (defEnd - defStart < 86400000) defEnd = new Date(defStart.getTime() + 7 * 86400000);
+  const monthName = defStart.toLocaleString('en-IN', { month:'long', year:'numeric' });
+  const langs = [...new Set(window._ctQs.map(q => q.language).filter(Boolean))];
+  const selCourses = c ? _ctArr(c.course_ids) : [], selBatches = c ? _ctArr(c.batch_ids) : [];
+
+  document.getElementById('modalGenericInner').innerHTML = `
+    <div class="modal-box" style="max-height:88vh;overflow-y:auto">
+      <div class="modal-header"><h3>🏆 ${c ? 'Edit' : 'New'} Contest</h3></div>
+      <div class="modal-body" style="padding:20px;display:flex;flex-direction:column;gap:14px">
+        <div><label class="ct-lbl">TITLE *</label>
+          <input id="ctTitle" type="text" class="filter-select" style="width:100%" placeholder="e.g. ${escHtml(monthName)} Coding Challenge" value="${escHtml(c?.title || '')}"></div>
+        <div><label class="ct-lbl">DESCRIPTION / RULES</label>
+          <textarea id="ctDesc" rows="2" class="filter-select" style="width:100%;resize:vertical" placeholder="Shown to students on the contest card">${escHtml(c?.description || '')}</textarea></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 150px;gap:12px">
+          <div><label class="ct-lbl">STARTS *</label><input id="ctStart" type="datetime-local" class="filter-select" style="width:100%" value="${toLocal(c ? new Date(c.start_at) : defStart)}"></div>
+          <div><label class="ct-lbl">ENDS *</label><input id="ctEnd" type="datetime-local" class="filter-select" style="width:100%" value="${toLocal(c ? new Date(c.end_at) : defEnd)}"></div>
+          <div><label class="ct-lbl">VISIBILITY</label><select id="ctStatus" class="filter-select" style="width:100%">
+            <option value="published" ${c?.status !== 'draft' ? 'selected' : ''}>Published</option>
+            <option value="draft" ${c?.status === 'draft' ? 'selected' : ''}>Draft (hidden)</option></select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><label class="ct-lbl">PROGRAM(S) ${isCoord ? '' : '— none ticked = every program'}</label>
+            <div style="display:flex;flex-direction:column;gap:4px;max-height:110px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:8px">${_asnCourseCheckboxes(selCourses, coordCourses)}</div></div>
+          <div><label class="ct-lbl">BATCH(ES) — none ticked = all batches</label>
+            <div style="display:flex;flex-direction:column;gap:8px;max-height:110px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:8px">${_asnBatchCheckboxes(selBatches, coordCourses)}</div></div>
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;flex-wrap:wrap">
+            <label class="ct-lbl" style="margin:0">QUESTIONS * — tick a module for all its questions, or open it to pick specific ones</label>
+            <span id="ctSelCount" class="badge badge-blue"></span>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <input id="ctQSearch" type="text" class="filter-select" style="flex:1" placeholder="🔍 Search questions…" oninput="_ctRenderPicker()">
+            <select id="ctQLang" class="filter-select" onchange="_ctRenderPicker()"><option value="">All languages</option>${langs.map(l => `<option value="${l}">${_ctLang(l)}</option>`).join('')}</select>
+            <select id="ctQDiff" class="filter-select" onchange="_ctRenderPicker()"><option value="">All levels</option>${(window.SA_TIERS||[]).map(t => `<option value="${t.key}">${t.ico} ${t.name.charAt(0)}${t.name.slice(1).toLowerCase()}</option>`).join('')}</select>
+          </div>
+          <div id="ctQPick"></div>
+        </div>
+      </div>
+      <div class="modal-footer" style="display:flex;gap:10px;justify-content:flex-end;padding:16px 20px;border-top:1px solid var(--border)">
+        <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-accent" id="ctSaveBtn" onclick="saveContest()">✅ ${c ? 'Save Changes' : 'Create Contest'}</button>
+      </div>
+    </div>`;
+  openModal('modalGeneric');
+  _ctRenderPicker();
+}
+// Module groups for the picker, after the search / language / level filters.
+function _ctGroups(){
+  const term = ((document.getElementById('ctQSearch') || {}).value || '').trim().toLowerCase();
+  const lang = (document.getElementById('ctQLang') || {}).value || '';
+  const diff = (document.getElementById('ctQDiff') || {}).value || '';
+  const isAdmin = currentUser?.role !== 'coordinator';
+  const mods = visibleModules();
+  const byKey = {}; const order = [];
+  mods.forEach(m => { byKey[String(m.id)] = { key:String(m.id), name:m.name, icon:m.icon || '📚', qs:[] }; order.push(String(m.id)); });
+  byKey._other = { key:'_other', name:'Other / no module', icon:'📋', qs:[] }; order.push('_other');
+  (window._ctQs || []).forEach(q => {
+    if (term && !(q.title || '').toLowerCase().includes(term)) return;
+    if (lang && q.language !== lang) return;
+    if (diff && (q.difficulty || 'medium') !== diff) return;
+    const k = q.moduleId != null && byKey[String(q.moduleId)] ? String(q.moduleId) : (isAdmin ? '_other' : null);
+    if (k) byKey[k].qs.push(q);
+  });
+  return order.map(k => byKey[k]).filter(g => g.qs.length);
+}
+function _ctRenderPicker(){
+  const box = document.getElementById('ctQPick'); if (!box) return;
+  const filtering = !!(((document.getElementById('ctQSearch') || {}).value || '').trim());
+  const groups = _ctGroups(); const sel = window._ctSel;
+  box.innerHTML = groups.length ? groups.map(g => {
+    const ids = g.qs.map(q => q.id); const n = ids.filter(i => sel.has(i)).length;
+    const all = n === ids.length, some = n > 0 && !all;
+    const open = filtering || !!window._ctOpenMods[g.key];
+    return `<div class="ct-mod">
+      <div class="ct-mod-h">
+        <input type="checkbox" ${all ? 'checked' : ''} data-some="${some ? 1 : 0}" title="Select all ${ids.length} questions in this module" onclick="_ctToggleModule('${g.key}', this.checked)">
+        <div class="ct-mod-t" onclick="_ctToggleOpen('${g.key}')">${g.icon} ${escHtml(g.name)}<span class="ct-mod-c">${n} / ${ids.length} selected</span></div>
+        <span class="ct-mod-chev" onclick="_ctToggleOpen('${g.key}')">${open ? '▾' : '▸'}</span>
+      </div>
+      ${open ? `<div class="ct-mod-l">${g.qs.map(q => `<label class="ct-q"><input type="checkbox" ${sel.has(q.id) ? 'checked' : ''} onchange="_ctToggleQ(${q.id}, this.checked)">
+        <span class="ct-q-t">${escHtml(q.title)}</span>
+        <span class="ct-q-m">${_ctLang(q.language)} · ${_ctTier(q.difficulty)} · ${q.maxScore || 10} pts${q.hidden ? ' · 🔒 exam-only' : ''}</span></label>`).join('')}</div>` : ''}
+    </div>`;
+  }).join('') : '<div style="color:var(--text3);font-size:13px;padding:14px;text-align:center">No questions match these filters.</div>';
+  box.querySelectorAll('input[data-some="1"]').forEach(i => { i.indeterminate = true; });
+  const qmap = {}; (window._ctQs || []).forEach(q => qmap[q.id] = q);
+  const pts = [...sel].reduce((a,i) => a + ((qmap[i] || {}).maxScore || 10), 0);
+  const cnt = document.getElementById('ctSelCount');
+  if (cnt) cnt.textContent = `${sel.size} question${sel.size !== 1 ? 's' : ''} · ${pts} pts`;
+}
+function _ctToggleOpen(k){ window._ctOpenMods[k] = !window._ctOpenMods[k]; _ctRenderPicker(); }
+function _ctToggleModule(k, on){
+  const g = _ctGroups().find(x => x.key === k); if (!g) return;
+  g.qs.forEach(q => on ? window._ctSel.add(q.id) : window._ctSel.delete(q.id));
+  _ctRenderPicker();
+}
+function _ctToggleQ(id, on){ on ? window._ctSel.add(id) : window._ctSel.delete(id); _ctRenderPicker(); }
+async function saveContest(){
+  const v = id => ((document.getElementById(id) || {}).value || '').trim();
+  const title = v('ctTitle'), s = v('ctStart'), e = v('ctEnd');
+  if (!title) { toast('Give the contest a title', 'error'); document.getElementById('ctTitle').focus(); return; }
+  if (!s || !e) { toast('Set both the start and end time', 'error'); return; }
+  const sd = new Date(s), ed = new Date(e);
+  if (!(ed > sd)) { toast('End time must be after the start time', 'error'); return; }
+  if (!window._ctSel.size) { toast('Pick at least one question', 'error'); return; }
+  const scope = sel => [...document.querySelectorAll('#modalGenericInner ' + sel + ':checked')].map(x => Number(x.value));
+  const order = (window._ctQs || []).map(q => q.id).filter(i => window._ctSel.has(i));   // keep question-bank order
+  const payload = { id: window._ctEditId, title, description: v('ctDesc'), start_at: sd.toISOString(), end_at: ed.toISOString(),
+                    question_ids: order, course_ids: scope('.asn-course'), batch_ids: scope('.asn-batch'), status: v('ctStatus') || 'published' };
+  const btn = document.getElementById('ctSaveBtn'); if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  const { error } = await SB.rpc('contest_save', { p_token: staffToken(), p_contest: payload });
+  if (btn) { btn.disabled = false; btn.textContent = window._ctEditId ? '✅ Save Changes' : '✅ Create Contest'; }
+  if (error) { toast(_ctErr(error), 'error'); return; }
+  closeModal();
+  toast(window._ctEditId ? 'Contest updated' : 'Contest created 🏆', 'success');
+  renderAdminContests();
+}
+async function deleteContest(id){
+  if (!confirm('Delete this contest? Students’ submissions stay in their practice history.')) return;
+  const { error } = await SB.rpc('contest_delete', { p_token: staffToken(), p_id: id });
+  if (error) { toast(_ctErr(error), 'error'); return; }
+  toast('Contest deleted', 'success');
+  renderAdminContests();
+}
+
+// ── Leaderboard (staff modal; students see it inside the contest page) ──
+function _ctBoardHTML(rows, maxPts, nQ, meId, limit){
+  if (!rows.length) return '<div style="color:var(--text3);font-size:13px;padding:18px;text-align:center">No submissions in the contest window yet.</div>';
+  const medal = i => i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
+  let shown = limit ? rows.slice(0, limit) : rows;
+  const meIdx = rows.findIndex(r => r.student_id === meId);
+  if (limit && meIdx >= limit) shown = shown.concat([rows[meIdx]]);
+  return `<table class="ct-board"><thead><tr><th>#</th><th>Student</th><th>Solved</th><th>Score</th></tr></thead><tbody>
+    ${shown.map(r => { const i = rows.indexOf(r); return `<tr class="${r.student_id === meId ? 'me' : ''}">
+      <td class="ct-rank">${medal(i)}</td>
+      <td><div style="font-weight:600">${escHtml(r.student_name || r.student_id)}${r.student_id === meId ? ' <span style="font-size:11px;color:var(--accent2)">(you)</span>' : ''}</div></td>
+      <td>${r.solved}<span style="color:var(--text3)">/${nQ}</span></td>
+      <td style="font-weight:800">${r.score}<span style="color:var(--text3);font-weight:500">/${maxPts}</span></td></tr>`; }).join('')}
+  </tbody></table>`;
+}
+async function openContestLeaderboard(id){
+  _ctCss();
+  const [cr, lb] = await Promise.all([SB.from('contests').select('*').eq('id', id).single(), SB.rpc('contest_leaderboard', { p_id: id })]);
+  if (cr.error || lb.error) { toast(_ctErr(cr.error || lb.error), 'error'); return; }
+  const c = cr.data, rows = lb.data || [];
+  const qs = window._ctQs || await _ctLoadQuestions();
+  const ids = _ctArr(c.question_ids).map(Number);
+  const maxPts = ids.reduce((a,i) => a + ((qs.find(q => q.id === i) || {}).maxScore || 10), 0);
+  window._ctBoardExport = { c, rows, maxPts, n: ids.length };
+  document.getElementById('modalGenericInner').innerHTML = `
+    <div class="modal-box" style="max-height:88vh;overflow-y:auto">
+      <div class="modal-header"><h3>🏅 ${escHtml(c.title)}</h3></div>
+      <div class="modal-body" style="padding:16px 20px">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;font-size:12px;color:var(--text3)">
+          ${_ctPill(_ctState(c))} <span>${_ctFmt(c.start_at)} → ${_ctFmt(c.end_at)}</span> <span>· ${ids.length} questions · ${maxPts} pts</span> <span>· ${rows.length} participant${rows.length !== 1 ? 's' : ''}</span>
+        </div>
+        ${_ctBoardHTML(rows, maxPts, ids.length, null, 0)}
+        <div style="font-size:11px;color:var(--text3);margin-top:10px">Only submissions made inside the contest window count. Each question counts the student's best score; ties go to whoever got there first.</div>
+      </div>
+      <div class="modal-footer" style="display:flex;gap:10px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--border)">
+        ${rows.length ? '<button class="btn btn-outline" onclick="_ctExportCsv()">⬇ Export CSV</button>' : ''}
+        <button class="btn btn-accent" onclick="closeModal()">Close</button>
+      </div>
+    </div>`;
+  openModal('modalGeneric');
+}
+function _ctExportCsv(){
+  const x = window._ctBoardExport; if (!x) return;
+  const q = s => '"' + String(s == null ? '' : s).replace(/"/g, '""') + '"';
+  const lines = [['Rank','Student ID','Name','Solved','Questions','Score','Max'].map(q).join(',')]
+    .concat(x.rows.map((r,i) => [i + 1, r.student_id, r.student_name, r.solved, x.n, r.score, x.maxPts].map(q).join(',')));
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type:'text/csv' }));
+  a.download = (x.c.title || 'contest').replace(/[^\w-]+/g, '_') + '_results.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+// ── Student: contest list ──────────────────────────────────────
+async function renderStudentContests(){
+  const el = document.getElementById('studentContent');
+  _ctCss();
+  if (window._ctTimer) { clearInterval(window._ctTimer); window._ctTimer = null; }
+  let list = [];
+  try { list = await _ctLoadAll(); }
+  catch(e) { el.innerHTML = `<div class="ct-wrap"><div class="ct-head"><div><h2>🏆 Contests</h2></div></div><div class="ct-empty"><div style="font-size:40px;margin-bottom:8px">🛠️</div>Contests are not available yet — please check back soon.</div></div>`; console.warn('contests:', e); return; }
+  if (!(cache.batches||[]).length) await loadBatchesCache();
+  list = list.filter(_ctStudentCanSee);
+  const allQ = [...new Set(list.flatMap(c => _ctArr(c.question_ids).map(Number)))];
+  let subs = [];
+  if (allQ.length) { const { data } = await SB.from('coding_submissions').select(CS_COLS).eq('studentId', currentUser.id).in('questionId', allQ); subs = data || []; }
+  const prog = c => {
+    const ids = _ctArr(c.question_ids).map(Number), s = new Date(c.start_at), e = new Date(c.end_at), best = {};
+    subs.forEach(x => { const t = new Date(x.submittedAt); if (ids.includes(Number(x.questionId)) && t >= s && t <= e && (!best[x.questionId] || x.score > best[x.questionId].score)) best[x.questionId] = x; });
+    const b = Object.values(best);
+    return { n: ids.length, solved: b.filter(x => x.total > 0 && x.passed === x.total).length, pts: b.reduce((a,x) => a + (x.score || 0), 0) };
+  };
+  const now = Date.now();
+  const card = c => {
+    const st = _ctState(c), p = prog(c), s = new Date(c.start_at).getTime(), e = new Date(c.end_at).getTime();
+    const when = st === 'live' ? `⏱ Ends in ${_ctLeft(e - now)}` : st === 'upcoming' ? `Starts in ${_ctLeft(s - now)}` : `Ended ${new Date(c.end_at).toLocaleDateString('en-IN', { day:'numeric', month:'short' })}`;
+    return `<div class="ct-card ${st}">
+      <div class="ct-card-top">${_ctPill(st)}<span class="ct-when">${when}</span></div>
+      <div class="ct-card-title">🏆 ${escHtml(c.title)}</div>
+      ${c.description ? `<div class="ct-card-desc">${escHtml(c.description)}</div>` : ''}
+      <div class="ct-meta">🧩 ${p.n} question${p.n !== 1 ? 's' : ''} · 📅 ${_ctFmt(c.start_at)} → ${_ctFmt(c.end_at)}</div>
+      ${st !== 'upcoming' ? `<div><div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--text3);margin-bottom:5px"><span>${p.solved}/${p.n} solved</span><span>⚡ ${p.pts} pts</span></div><div class="ct-prog"><i style="width:${p.n ? Math.round(p.solved / p.n * 100) : 0}%"></i></div></div>` : ''}
+      <button class="btn ${st === 'live' ? 'btn-accent' : 'btn-outline'} ct-btn" ${st === 'upcoming' ? 'disabled' : `onclick="openStudentContest(${c.id})"`}>${st === 'live' ? 'Enter contest ▸' : st === 'ended' ? 'View results' : '🔒 Opens soon'}</button>
+    </div>`;
+  };
+  const live = list.filter(c => _ctState(c) === 'live').sort((a,b) => new Date(a.end_at) - new Date(b.end_at));
+  const up = list.filter(c => _ctState(c) === 'upcoming').sort((a,b) => new Date(a.start_at) - new Date(b.start_at));
+  const past = list.filter(c => _ctState(c) === 'ended').slice(0, 12);
+  const sec = (t, arr) => arr.length ? `<div class="ct-sec">${t}</div><div class="ct-grid">${arr.map(card).join('')}</div>` : '';
+  el.innerHTML = `<div class="ct-wrap">
+    <div class="ct-head"><div><h2>🏆 Contests</h2><p>Monthly coding challenges — solve inside the window to climb the contest leaderboard</p></div></div>
+    ${list.length ? sec('● Live now', live) + sec('Coming up', up) + sec('Past contests', past)
+      : `<div class="ct-empty"><div style="font-size:44px;margin-bottom:8px">🏆</div><b>No contests yet</b><div style="margin-top:6px">Your coordinator will announce the next monthly challenge here.</div></div>`}
+  </div>`;
+}
+
+// ── Student: one contest ───────────────────────────────────────
+async function openStudentContest(id){
+  const el = document.getElementById('studentContent');
+  _ctCss();
+  if (window._ctTimer) { clearInterval(window._ctTimer); window._ctTimer = null; }
+  el.innerHTML = '<div class="spinner"></div>';
+  const { data: c, error } = await SB.from('contests').select('*').eq('id', id).single();
+  if (!(cache.batches||[]).length) await loadBatchesCache();
+  if (error || !c || !_ctStudentCanSee(c)) { toast('This contest is not available', 'error'); return renderStudentContests(); }
+  const st = _ctState(c);
+  if (st === 'upcoming') { toast('This contest has not started yet', 'info'); return renderStudentContests(); }
+  const ids = _ctArr(c.question_ids).map(Number);
+  const [qr, sr, lb] = await Promise.all([
+    SB.from('coding_questions').select('id,title,language,difficulty,maxScore').in('id', ids),
+    SB.from('coding_submissions').select(CS_COLS).eq('studentId', currentUser.id).in('questionId', ids).gte('submittedAt', c.start_at).lte('submittedAt', c.end_at),
+    SB.rpc('contest_leaderboard', { p_id: id })
+  ]);
+  const qmap = {}; (qr.data || []).forEach(q => qmap[q.id] = q);
+  const qs = ids.map(i => qmap[i]).filter(Boolean);
+  const best = {}; (sr.data || []).forEach(x => { if (!best[x.questionId] || x.score > best[x.questionId].score) best[x.questionId] = x; });
+  const rows = lb.data || [];
+  const maxPts = qs.reduce((a,q) => a + (q.maxScore || 10), 0);
+  const myPts = qs.reduce((a,q) => a + ((best[q.id] || {}).score || 0), 0);
+  const solved = qs.filter(q => best[q.id] && best[q.id].total > 0 && best[q.id].passed === best[q.id].total).length;
+  const myRank = rows.findIndex(r => r.student_id === currentUser.id);
+  const live = st === 'live';
+  el.innerHTML = `<div class="ct-wrap">
+    <button class="btn btn-outline btn-sm" style="margin-bottom:12px" onclick="studentNav('contests')">← All contests</button>
+    <div class="ct-hero">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">${_ctPill(st)}
+        <span style="font-weight:800;font-size:14px" id="ctTimer">${live ? '⏱ ' + _ctLeft(new Date(c.end_at) - Date.now()) + ' left' : 'Ended ' + _ctFmt(c.end_at)}</span></div>
+      <h2>🏆 ${escHtml(c.title)}</h2>
+      ${c.description ? `<div style="color:var(--text2);font-size:13px;line-height:1.5">${escHtml(c.description)}</div>` : ''}
+      <div class="ct-stats">
+        <div class="ct-stat"><b>${myRank >= 0 ? '#' + (myRank + 1) : '—'}</b><span>Your rank</span></div>
+        <div class="ct-stat"><b>${myPts}<small style="font-size:12px;color:var(--text3)">/${maxPts}</small></b><span>Contest score</span></div>
+        <div class="ct-stat"><b>${solved}<small style="font-size:12px;color:var(--text3)">/${qs.length}</small></b><span>Solved</span></div>
+        <div class="ct-stat"><b>${rows.length}</b><span>Participants</span></div>
+      </div>
+    </div>
+    <div class="ct-cols">
+      <div class="ct-panel"><h3>🧩 Questions</h3>
+        ${qs.map((q,i) => { const b = best[q.id]; const done = b && b.total > 0 && b.passed === b.total; return `
+          <div class="ct-qrow ${done ? 'done' : b ? 'part' : ''}">
+            <div class="ct-qn">${done ? '✓' : i + 1}</div>
+            <div class="ct-qi"><div>${escHtml(q.title)}</div><div>${_ctLang(q.language)} · ${_ctTier(q.difficulty)}</div></div>
+            <span class="ct-qs">${b ? b.score : 0}<span style="color:var(--text3);font-weight:500">/${q.maxScore || 10}</span></span>
+            <button class="btn ${live && !done ? 'btn-accent' : 'btn-outline'} btn-sm" onclick="_ctSolve(${q.id}, ${c.id})">${live ? (done ? 'Improve' : b ? 'Retry' : 'Solve') : 'Practice'}</button>
+          </div>`; }).join('')}
+        ${!live ? '<div style="font-size:11.5px;color:var(--text3);margin-top:10px">This contest has ended — you can still practise these questions, but new submissions do not change the contest score.</div>' : ''}
+      </div>
+      <div class="ct-panel"><h3>🏅 Leaderboard</h3>${_ctBoardHTML(rows, maxPts, qs.length, currentUser.id, 15)}</div>
+    </div>
+  </div>`;
+  if (live) {
+    const end = new Date(c.end_at).getTime();
+    window._ctTimer = setInterval(() => {
+      const t = document.getElementById('ctTimer');
+      if (!t) { clearInterval(window._ctTimer); window._ctTimer = null; return; }
+      const left = end - Date.now();
+      if (left <= 0) { clearInterval(window._ctTimer); window._ctTimer = null; openStudentContest(id); return; }
+      t.textContent = '⏱ ' + _ctLeft(left) + ' left';
+    }, 1000);
+  }
+}
+// Open a contest question in the normal editor; "back" returns to this contest.
+function _ctSolve(qid, contestId){
+  if (window._ctTimer) { clearInterval(window._ctTimer); window._ctTimer = null; }
+  window._saReturn = { sec:'contests', contestId };
+  openCodingQuestion(qid);
+}
+// Used by the coding editor's back buttons.
+function _saBackFromSolve(){
+  const r = window._saReturn; window._saReturn = null;
+  if (r && r.sec === 'contests') studentNav('contests').then(() => openStudentContest(r.contestId));
+  else studentNav('coding');
 }
 
 // ── Admin: Coding Tests Management ──
@@ -12688,6 +13171,7 @@ async function studentNav(section) {
     assignments: renderStudentAssignments,
     tests:       renderStudentTests,
     coding:      renderStudentCodingTests,
+    contests:    renderStudentContests,
     history:     renderStudentHistory,
     badges:      renderStudentBadges,
     certs:       renderStudentCertifications,
@@ -13098,16 +13582,10 @@ async function renderStudentNotes() {
     { title: 'dbt & Data Pipelines', file: 'dbt_revision.html',    icon: '🔧', color: '#FF694B', desc: 'Transformations, Models, Tests, Documentation' },
     { title: 'Linux & Cloud, Animated', file: 'linux-cloud-animated.html', icon: '🐧', color: '#14B8A6', desc: 'Linux, shell scripting, Git, AWS, Azure, DevOps & Docker: animations + labs' },
   ];
-
-  el.innerHTML = `
-    <div class="section-header">
-      <div><h2>Study Notes</h2><p>Revision material for all modules</p></div>
-    </div>
-    <div style="background:rgba(30,94,255,0.07);border:1px solid rgba(30,94,255,0.2);border-radius:var(--r2);padding:10px 16px;margin-bottom:20px;font-size:13px;color:var(--text2);display:flex;align-items:center;gap:8px">
-      <span style="font-size:16px">💡</span> Notes open in a new browser tab — use them alongside your practice tests!
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px">
-      ${notes.map(n => `
+  const awsNotes = [
+    { title: 'AWS, Animated', file: 'aws-animated.html', icon: '☁️', color: '#FF9900', desc: '26 modules: Cloud Practitioner → Solutions Architect (Associate & Pro) → CI/CD & data pipelines. Animations, console walkthroughs, CLI labs, quizzes' },
+  ];
+  const _noteCard = n => `
         <div class="note-card" onclick="window.open('${n.file}','_blank')"
              style="border-top:2px solid ${n.color}99">
           <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
@@ -13121,7 +13599,26 @@ async function renderStudentNotes() {
             <span>📖 Open in New Tab</span>
             <span style="margin-left:auto;font-size:16px">↗</span>
           </div>
-        </div>`).join('')}
+        </div>`;
+
+  el.innerHTML = `
+    <div class="section-header">
+      <div><h2>Study Notes</h2><p>Revision material for all modules</p></div>
+    </div>
+    <div style="background:rgba(30,94,255,0.07);border:1px solid rgba(30,94,255,0.2);border-radius:var(--r2);padding:10px 16px;margin-bottom:20px;font-size:13px;color:var(--text2);display:flex;align-items:center;gap:8px">
+      <span style="font-size:16px">💡</span> Notes open in a new browser tab — use them alongside your practice tests!
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px">
+      ${notes.map(_noteCard).join('')}
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin:30px 0 14px">
+      <span style="font-size:20px">☁️</span>
+      <div><div style="font-weight:800;font-size:17px;color:var(--text)">AWS</div>
+        <div style="font-size:12px;color:var(--text3)">Amazon Web Services: certification-path notes with labs</div></div>
+      <div style="flex:1;height:1px;background:linear-gradient(90deg,#FF990066,transparent);margin-left:8px"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px">
+      ${awsNotes.map(_noteCard).join('')}
     </div>
     <div style="margin-top:28px;padding:14px 20px;background:rgba(255,255,255,0.02);border-radius:var(--r);border:1px dashed rgba(255,255,255,0.08);color:var(--text3);font-size:13px;text-align:center">
       📚 More notes will be added as the course progresses. Check back regularly!
@@ -15180,7 +15677,545 @@ student  pts/0    10.0.2.2         09:45    0.00s  0.04s  0.00s w
 `):t=1;return t};A.whereis=n=>{for(let t of n.args)n.out(`${t}:${we[t]?" /usr/bin/"+t:""}
 `);return 0};A.env=A.printenv=n=>{let t=[];for(let e of n.sh.scopes)for(let[s,r]of e)r.x&&!r.unset&&t.push([s,r.v??""]);if(n.name==="env"&&n.args.length){let e=0,s={};for(;e<n.args.length&&/^[A-Za-z_]\w*=/.test(n.args[e]);){let[r,...i]=n.args[e].split("=");s[r]=i.join("="),e++}if(e<n.args.length){let r={};for(let[i,o]of Object.entries(s))r[i]=n.sh.findVar(i),n.sh.scopes[0].set(i,{v:o,x:!0});try{return n.exec(n.args.slice(e))}finally{for(let[i,o]of Object.entries(r))o?n.sh.scopes[0].set(i,o):n.sh.scopes[0].delete(i)}}for(let[r,i]of Object.entries(s))t.push([r,i])}if(n.name==="printenv"&&n.args.length){let e=0;for(let s of n.args){let r=t.find(i=>i[0]===s);r?n.out(r[1]+`
 `):e=1}return e}return n.out(t.map(([e,s])=>`${e}=${s}
-`).join("")),0};A.seq=n=>{n={...n,args:n.args.map(w=>/^-\d/.test(w)?"\0"+w:w)};let t=w=>w.replace(/^\u0000/,""),e=q(n,{flags:"w",vals:"sf",long:{separator:"s:","equal-width":"w",format:"f:"}},{}),s=e?{f:e.f,rest:e.rest.map(t)}:null;if(!s)return 1;let r=s.f,i=s.rest;if(!i.length)return n.error("missing operand"),n.err(`Try 'seq --help' for more information.
+`).join("")),0};{/* ── HDFS shell (hdfs dfs / hadoop fs) — simulated, single-node, inside ShellLab ──
+   The HDFS namespace lives in the hidden folder /.hdfs of the same virtual disk, so the
+   grader's file-state check covers HDFS too, and questions can pre-load HDFS files with
+   "=== /.hdfs/user/student/sales.csv" lines. Default HDFS home: /user/student. */
+const HR = "/.hdfs", HHOME = "/user/student", HBLOCK = 134217728;
+function hBoot(fs) {
+  let r = fs.root.c.get(".hdfs");
+  if (r && r._hb) return r;
+  if (!r || r.t !== "d") { r = fs._mk("d", U, 493); r.mt = 0; fs.root.c.set(".hdfs", r); }
+  for (const p of ["user", "user/student", "tmp"]) {
+    const parts = p.split("/"), name = parts.pop();
+    let par = r; for (const q of parts) par = par.c.get(q);
+    if (par && par.t === "d" && !par.c.has(name)) { const d = fs._mk("d", U, p === "tmp" ? 1023 : 493); d.mt = 0; par.c.set(name, d); }
+  }
+  r._hb = 1;
+  return r;
+}
+function hAbs(fs, p) {
+  p = String(p).replace(/^hdfs:\/\/[^/]*/, "");
+  if (p === "") p = ".";
+  return "/" + fs.norm("/", p.startsWith("/") ? p : HHOME + "/" + p).join("/");
+}
+function hNode(fs, hp) {
+  let n = hBoot(fs);
+  for (const s of hp.split("/").filter(Boolean)) { if (n.t !== "d") return null; n = n.c.get(s); if (!n) return null; }
+  return n;
+}
+function hParent(fs, hp) {
+  const parts = hp.split("/").filter(Boolean), name = parts.pop();
+  return [hNode(fs, "/" + parts.join("/")), name];
+}
+function hSize(n) { if (n.t !== "d") return n.data.length; let s = 0; for (const c of n.c.values()) s += hSize(c); return s; }
+function hUsed(n) { if (n.t !== "d") return n.data.length * (n.rep || 3); let s = 0; for (const c of n.c.values()) s += hUsed(c); return s; }
+function hMarkRep(n, rep) { if (n.t === "d") { n.mode = n.mode & 1023; for (const c of n.c.values()) hMarkRep(c, rep); } else if (!n.rep) n.rep = rep || 3; }
+function hClone(fs, src) { const c = fs.clone(src, !1); hMarkRep(c, 3); return c; }
+function hPut(fs, hp, node) {
+  const [par, name] = hParent(fs, hp);
+  node.mt = fs.tick(); par.c.set(name, node); par.mt = node.mt; return node;
+}
+function hDel(fs, hp) {
+  const [par, name] = hParent(fs, hp), n = par.c.get(name);
+  par.c.delete(name); par.mt = fs.tick(); fs.count -= fs.size(n); return n;
+}
+function hPerm(n) {
+  const m = n.mode, b = (x) => (x & 4 ? "r" : "-") + (x & 2 ? "w" : "-") + (x & 1 ? "x" : "-");
+  let s = (n.t === "d" ? "d" : "-") + b(m >> 6) + b(m >> 3) + b(m);
+  if (m & 512) s = s.slice(0, 9) + (m & 1 ? "t" : "T");
+  return s;
+}
+function hDate(fs) {   // fixed listing time keeps -ls output identical for every correct answer
+  const d = new Date(fs.timeOf({ mt: 0 }).getTime() + 198e5), z = (x) => String(x).padStart(2, "0");
+  return `${d.getUTCFullYear()}-${z(d.getUTCMonth() + 1)}-${z(d.getUTCDate())} ${z(d.getUTCHours())}:${z(d.getUTCMinutes())}`;
+}
+function hHuman(b) {
+  if (b < 1024) return String(b);
+  const u = ["K", "M", "G", "T", "P"]; let v = b, i = -1;
+  do { v /= 1024; i++; } while (v >= 1024 && i < u.length - 1);
+  return v.toFixed(1) + " " + u[i];
+}
+function hGlob(fs, pat) {   // expand * ? [..] inside HDFS paths
+  const abs = hAbs(fs, pat);
+  if (!/[*?[]/.test(abs)) return [abs];
+  const segs = abs.split("/").filter(Boolean);
+  const rx = (g) => new RegExp("^" + g.replace(/[.+^${}()|\\]/g, "\\$&").replace(/\*/g, "[^/]*").replace(/\?/g, "[^/]") + "$");
+  let cur = [["", hBoot(fs)]];
+  for (const s of segs) {
+    const nxt = [];
+    for (const [p, n] of cur) {
+      if (n.t !== "d") continue;
+      if (/[*?[]/.test(s)) { const r = rx(s); for (const k of [...n.c.keys()].sort()) if (r.test(k) && !(k[0] === "." && s[0] !== ".")) nxt.push([p + "/" + k, n.c.get(k)]); }
+      else if (n.c.has(s)) nxt.push([p + "/" + s, n.c.get(s)]);
+    }
+    cur = nxt;
+  }
+  return cur.map((x) => x[0]);
+}
+function hOpts(args, letters) {   // leading single-dash flags, e.g. -r -f -skipTrash
+  const f = {}, rest = [];
+  let i = 0;
+  for (; i < args.length; i++) {
+    const a = args[i];
+    if (a === "--") { i++; break; }
+    if (a === "-skipTrash" || a === "-ignore-crc" || a === "-crc" || a === "--ignore-fail-on-non-empty") { f[a.replace(/^-+/, "")] = !0; continue; }
+    if (/^-[A-Za-z]+$/.test(a) && [...a.slice(1)].every((c) => letters.includes(c))) { for (const c of a.slice(1)) f[c] = !0; continue; }
+    break;
+  }
+  for (; i < args.length; i++) rest.push(args[i]);
+  return { f, rest };
+}
+const HCMDS = {
+  ls(n, a, E) {
+    const { f, rest } = hOpts(a, "RdhCSrtqu");
+    const fs = n.fs, items = rest.length ? rest : ["."];
+    const rows = [], lines = [];
+    const fmtAll = () => {
+      const w = { r: 3, o: 0, g: 0, s: 10 };
+      for (const r of rows) { if (r.found != null) continue; w.r = Math.max(w.r, r.rep.length); w.o = Math.max(w.o, U.length); w.g = Math.max(w.g, 10); w.s = Math.max(w.s, r.size.length); }
+      for (const r of rows) lines.push(r.found != null ? r.found : f.C ? r.path :
+        `${r.perm} ${r.rep.padStart(w.r)} ${U.padEnd(w.o)} ${"supergroup".padEnd(w.g)} ${r.size.padStart(w.s)} ${r.date} ${r.path}`);
+      rows.length = 0;
+    };
+    const row = (node, path) => rows.push({ perm: hPerm(node), rep: node.t === "d" ? "-" : String(node.rep || 3),
+      size: f.h ? hHuman(node.t === "d" ? 0 : node.data.length) : String(node.t === "d" ? 0 : node.data.length), date: hDate(fs), path });
+    const kids = (node) => {
+      let k = [...node.c.keys()].filter((x) => x !== "").map((x) => [x, node.c.get(x)]);
+      k.sort((x, y) => (x[0] < y[0] ? -1 : x[0] > y[0] ? 1 : 0));
+      if (f.S) k.sort((x, y) => hSize(y[1]) - hSize(x[1]));
+      if (f.t) k.sort((x, y) => y[1].mt - x[1].mt);
+      if (f.r) k.reverse();
+      return k;
+    };
+    const join = (p, k) => (p.endsWith("/") ? p + k : p + "/" + k);
+    const walk = (node, p) => { for (const [k, c] of kids(node)) { row(c, join(p, k)); if (c.t === "d") walk(c, join(p, k)); } };
+    let st = 0;
+    for (const it of items) {
+      const paths = hGlob(fs, it), shown = /[*?[]/.test(it);
+      if (!paths.length || (!shown && !hNode(fs, paths[0]))) { E(`\`${it}': No such file or directory`); st = 1; continue; }
+      for (const hp of paths) {
+        const node = hNode(fs, hp);
+        const disp = it.startsWith("/") || it.startsWith("hdfs:") || shown ? hp : (it === "." ? "" : it.replace(/\/+$/, ""));
+        if (node.t !== "d" || f.d) { row(node, node.t === "d" && disp === "" ? "." : disp || hp); continue; }
+        if (f.R) walk(node, disp === "" ? "" : disp);
+        else {
+          const k = kids(node);
+          if (k.length && !f.C) rows.push({ found: `Found ${k.length} items` });
+          for (const [nm, c] of k) row(c, disp === "" ? nm : join(disp, nm));
+        }
+      }
+    }
+    fmtAll(); if (lines.length) n.out(lines.join("\n") + "\n");
+    return st;
+  },
+  mkdir(n, a, E) {
+    const { f, rest } = hOpts(a, "p"), fs = n.fs;
+    if (!rest.length) return E("Not enough arguments: expected 1 but got 0"), 1;
+    let st = 0;
+    for (const p of rest) {
+      const hp = hAbs(fs, p), ex = hNode(fs, hp);
+      if (ex) { if (!f.p || ex.t !== "d") { E(ex.t === "d" ? `\`${p}': File exists` : `\`${p}': Is not a directory`); st = 1; } continue; }
+      const segs = hp.split("/").filter(Boolean);
+      let cur = "";
+      for (let i = 0; i < segs.length; i++) {
+        cur += "/" + segs[i];
+        const nd = hNode(fs, cur);
+        if (nd) { if (nd.t !== "d") { E(`\`${p}': Is not a directory`); st = 1; break; } continue; }
+        if (!f.p && i < segs.length - 1) { E(`\`${p}': No such file or directory`); st = 1; break; }
+        hPut(fs, cur, fs._mk("d", U, 493)); fs.count++;
+      }
+    }
+    return st;
+  },
+  touchz(n, a, E) {
+    const fs = n.fs; let st = 0;
+    if (!a.length) return E("Not enough arguments: expected 1 but got 0"), 1;
+    for (const p of a) {
+      const hp = hAbs(fs, p), ex = hNode(fs, hp);
+      if (ex) { if (ex.t === "d") { E(`\`${p}': Is a directory`); st = 1; } else if (ex.data.length) { E(`\`${p}': Not a zero-length file`); st = 1; } continue; }
+      const [par] = hParent(fs, hp);
+      if (!par || par.t !== "d") { E(`\`${p}': No such file or directory`); st = 1; continue; }
+      const nd = fs._mk("f", U, 420); nd.rep = 3; hPut(fs, hp, nd); fs.count++;
+    }
+    return st;
+  },
+  touch(n, a, E) { return HCMDS.touchz(n, a.filter((x) => !/^-[acm]$/.test(x)), (m) => E(m.replace("Not a zero-length file", "File exists"))) && 0; },
+  put(n, a, E, name) {
+    const { f, rest } = hOpts(a, "fpdl"), fs = n.fs, sh = n.sh;
+    if (rest.length < 2) return E(rest.length ? `Not enough arguments: expected 2 but got 1` : "Not enough arguments: expected 1 but got 0"), 1;
+    const dst = rest.pop(), hd = hAbs(fs, dst), dn = hNode(fs, hd);
+    if (rest.length > 1 && (!dn || dn.t !== "d")) return E(dn ? `\`${dst}': Is not a directory` : `\`${dst}': No such file or directory`), 1;
+    let st = 0;
+    for (const src of rest) {
+      let node;
+      if (src === "-") { node = fs._mk("f", U, 420); node.data = n.stdin ? n.stdin.readAll() : ""; fs.count++; }
+      else {
+        const ln = fs.tryGet(sh.cwd, src);
+        if (!ln) { E(`\`${src}': No such file or directory`); st = 1; continue; }
+        node = hClone(fs, ln);
+      }
+      const target = dn && dn.t === "d" ? (hd === "/" ? "" : hd) + "/" + (src === "-" ? "-" : fs.norm(sh.cwd, src).pop()) : hd;
+      const tn = hNode(fs, target);
+      if (tn) { if (!f.f || tn.t === "d") { E(`\`${target !== hd ? target : dst}': File exists`); st = 1; fs.count -= fs.size(node); continue; } hDel(fs, target); }
+      const [par] = hParent(fs, target);
+      if (!par || par.t !== "d") { E(`\`${dst}': No such file or directory`); st = 1; fs.count -= fs.size(node); continue; }
+      hMarkRep(node, 3); hPut(fs, target, node);
+      if (name === "moveFromLocal" && src !== "-") { try { fs.unlink(sh.cwd, src); } catch (e) { /* ignore */ } }
+    }
+    return st;
+  },
+  get(n, a, E) {
+    const { f, rest } = hOpts(a, "fpcrc"), fs = n.fs, sh = n.sh;
+    if (rest.length < 1) return E("Not enough arguments: expected 1 but got 0"), 1;
+    const dst = rest.length > 1 ? rest.pop() : ".";
+    const ld = fs.tryGet(sh.cwd, dst);
+    let st = 0;
+    for (const src of rest) {
+      const paths = hGlob(fs, src);
+      if (!paths.length || !hNode(fs, paths[0])) { E(`\`${src}': No such file or directory`); st = 1; continue; }
+      for (const hp of paths) {
+        const node = hNode(fs, hp), base = hp.split("/").pop();
+        const lt = ld && ld.t === "d" ? fs.abs(sh.cwd, dst) + "/" + base : fs.abs(sh.cwd, dst);
+        const ex = fs.tryGet("/", lt);
+        if (ex && !f.f) { E(`\`${ld && ld.t === "d" ? (dst === "." ? base : dst.replace(/\/+$/, "") + "/" + base) : dst}': File exists`); st = 1; continue; }
+        try {
+          if (node.t === "d") { const c = fs.clone(node, !1); const [par, nm] = fs.parentOf("/", lt); if (ex) fs.unlink("/", lt); par.c.set(nm, c); par.mt = fs.tick(); }
+          else fs.writeFile("/", lt, node.data);
+        } catch (e) { if (!(e instanceof j)) throw e; E(`\`${dst}': ${P[e.code] || e.code}`); st = 1; }
+      }
+    }
+    return st;
+  },
+  cat(n, a, E, name) {
+    const fs = n.fs; let st = 0;
+    const { rest } = hOpts(a, "");
+    if (!rest.length) return E("Not enough arguments: expected 1 but got 0"), 1;
+    for (const p of rest) {
+      const paths = hGlob(fs, p);
+      if (!paths.length || !hNode(fs, paths[0])) { E(`\`${p}': No such file or directory`); st = 1; continue; }
+      for (const hp of paths) {
+        const node = hNode(fs, hp);
+        if (node.t === "d") { E(`\`${/[*?[]/.test(p) ? hp : p}': Is a directory`); st = 1; continue; }
+        let d = node.data;
+        if (name === "head") d = d.slice(0, 1024); else if (name === "tail") d = d.slice(-1024);
+        n.out(d);
+      }
+    }
+    return st;
+  },
+  rm(n, a, E) {
+    const { f, rest } = hOpts(a, "rRf"), fs = n.fs; let st = 0;
+    if (!rest.length) return f.f ? 0 : (E("Not enough arguments: expected 1 but got 0"), 1);
+    for (const p of rest) {
+      const paths = hGlob(fs, p);
+      if (!paths.length || !hNode(fs, paths[0])) { if (!f.f) { E(`\`${p}': No such file or directory`); st = 1; } continue; }
+      for (const hp of paths) {
+        const node = hNode(fs, hp), disp = /[*?[]/.test(p) ? hp : p;
+        if (hp === "/") { E(`Input/output error`); st = 1; continue; }
+        if (node.t === "d" && !(f.r || f.R)) { E(`\`${disp}': Is a directory`); st = 1; continue; }
+        hDel(fs, hp); n.out(`Deleted ${disp}\n`);
+      }
+    }
+    return st;
+  },
+  rmr(n, a, E) { return HCMDS.rm(n, ["-r", ...a], E); },
+  rmdir(n, a, E) {
+    const { f, rest } = hOpts(a, ""), fs = n.fs; let st = 0;
+    for (const p of rest) {
+      const hp = hAbs(fs, p), node = hNode(fs, hp);
+      if (!node) { E(`\`${p}': No such file or directory`); st = 1; continue; }
+      if (node.t !== "d") { E(`\`${p}': Is not a directory`); st = 1; continue; }
+      if (node.c.size) { if (!f["ignore-fail-on-non-empty"]) { E(`\`${p}': Directory is not empty`); st = 1; } continue; }
+      hDel(fs, hp);
+    }
+    return st;
+  },
+  cp(n, a, E, name) {
+    const { f, rest } = hOpts(a, "fpd"), fs = n.fs;
+    if (rest.length < 2) return E(`Not enough arguments: expected 2 but got ${rest.length}`), 1;
+    const dst = rest.pop(), hd = hAbs(fs, dst), dn = hNode(fs, hd);
+    const srcs = []; let st = 0;
+    for (const s of rest) { const ps = hGlob(fs, s); if (!ps.length || !hNode(fs, ps[0])) { E(`\`${s}': No such file or directory`); st = 1; } else srcs.push(...ps.map((p) => [s, p])); }
+    if (srcs.length > 1 && (!dn || dn.t !== "d")) return E(`\`${dst}': ${dn ? "Is not a directory" : "No such file or directory"}`), 1;
+    for (const [s, hp] of srcs) {
+      const node = hNode(fs, hp);
+      const target = dn && dn.t === "d" ? (hd === "/" ? "" : hd) + "/" + hp.split("/").pop() : hd;
+      if (target === hp) { E(`\`${s}': ${name === "mv" ? "Input/output error" : "File exists"}`); st = 1; continue; }
+      if (name === "mv" && (target + "/").startsWith(hp + "/")) { E(`\`${s}' to \`${dst}': is a subdirectory of itself`); st = 1; continue; }
+      const tn = hNode(fs, target);
+      if (tn) { if (name === "mv" || !f.f || tn.t === "d") { E(`\`${target !== hd ? target : dst}': File exists`); st = 1; continue; } hDel(fs, target); }
+      const [par] = hParent(fs, target);
+      if (!par || par.t !== "d") { E(`\`${dst}': No such file or directory`); st = 1; continue; }
+      if (name === "mv") { const nd = hDel(fs, hp); fs.count += fs.size(nd); hPut(fs, target, nd); }
+      else { const c = fs.clone(node, !1); hMarkRep(c, node.rep || 3); if (c.t !== "d") c.rep = node.rep || 3; hPut(fs, target, c); }
+    }
+    return st;
+  },
+  appendToFile(n, a, E) {
+    const fs = n.fs, sh = n.sh;
+    if (a.length < 2) return E(`Not enough arguments: expected 2 but got ${a.length}`), 1;
+    const dst = a[a.length - 1], hp = hAbs(fs, dst);
+    let node = hNode(fs, hp);
+    if (node && node.t === "d") return E(`\`${dst}': Is a directory`), 1;
+    let add = "";
+    for (const s of a.slice(0, -1)) {
+      if (s === "-") { add += n.stdin ? n.stdin.readAll() : ""; continue; }
+      try { add += fs.readFile(sh.cwd, s); } catch (e) { if (!(e instanceof j)) throw e; return E(`\`${s}': No such file or directory`), 1; }
+    }
+    if (!node) {
+      const [par] = hParent(fs, hp);
+      if (!par || par.t !== "d") return E(`\`${dst}': No such file or directory`), 1;
+      node = fs._mk("f", U, 420); node.rep = 3; hPut(fs, hp, node); fs.count++;
+    }
+    node.data += add; node.mt = fs.tick();
+    return 0;
+  },
+  getmerge(n, a, E) {
+    const { f, rest } = hOpts(a, "n"), fs = n.fs, sh = n.sh;
+    const nl = f.n || a.includes("-nl");
+    const r = rest.filter((x) => x !== "-nl");
+    if (r.length < 2) return E(`Not enough arguments: expected 2 but got ${r.length}`), 1;
+    const dst = r.pop(); let out = "";
+    for (const s of r) {
+      const ps = hGlob(fs, s);
+      if (!ps.length || !hNode(fs, ps[0])) return E(`\`${s}': No such file or directory`), 1;
+      for (const hp of ps) {
+        const node = hNode(fs, hp);
+        const files = node.t === "d" ? [...node.c.keys()].sort().map((k) => node.c.get(k)).filter((x) => x.t !== "d") : [node];
+        for (const x of files) out += x.data + (nl ? "\n" : "");
+      }
+    }
+    try { fs.writeFile(sh.cwd, dst, out); } catch (e) { if (!(e instanceof j)) throw e; return E(`\`${dst}': ${P[e.code] || e.code}`), 1; }
+    return 0;
+  },
+  du(n, a, E) {
+    const { f, rest } = hOpts(a, "shvx"), fs = n.fs, items = rest.length ? rest : ["."];
+    const rows = []; let st = 0;
+    const fm = (b) => (f.h ? hHuman(b) : String(b));
+    for (const it of items) {
+      const ps = hGlob(fs, it);
+      if (!ps.length || !hNode(fs, ps[0])) { E(`\`${it}': No such file or directory`); st = 1; continue; }
+      for (const hp of ps) {
+        const node = hNode(fs, hp), disp = it.startsWith("/") || /[*?[]/.test(it) ? hp : (it === "." ? hp : it.replace(/\/+$/, ""));
+        if (f.s || node.t !== "d") rows.push([fm(hSize(node)), fm(hUsed(node)), disp]);
+        else for (const k of [...node.c.keys()].sort()) { const c = node.c.get(k); rows.push([fm(hSize(c)), fm(hUsed(c)), (disp === "/" ? "" : disp) + "/" + k]); }
+      }
+    }
+    if (rows.length) {
+      const w0 = Math.max(...rows.map((r) => r[0].length)), w1 = Math.max(...rows.map((r) => r[1].length));
+      if (f.v) n.out(`${"SIZE".padEnd(w0)}  ${"DISK_SPACE_CONSUMED_WITH_ALL_REPLICAS".padEnd(w1)}  FULL_PATH_NAME\n`);
+      n.out(rows.map((r) => `${r[0].padEnd(w0)}  ${r[1].padEnd(w1)}  ${r[2]}`).join("\n") + "\n");
+    }
+    return st;
+  },
+  count(n, a, E) {
+    const { f, rest } = hOpts(a, "qhvu"), fs = n.fs; let st = 0;
+    if (!rest.length) return E("Not enough arguments: expected 1 but got 0"), 1;
+    if (f.v) n.out(`${"DIR_COUNT".padStart(12)}${"FILE_COUNT".padStart(12)}${"CONTENT_SIZE".padStart(18)} PATHNAME\n`);
+    for (const it of rest) {
+      const ps = hGlob(fs, it);
+      if (!ps.length || !hNode(fs, ps[0])) { E(`\`${it}': No such file or directory`); st = 1; continue; }
+      for (const hp of ps) {
+        const node = hNode(fs, hp); let d = 0, fl = 0;
+        const w = (x) => { if (x.t === "d") { d++; for (const c of x.c.values()) w(c); } else fl++; };
+        w(node);
+        const sz = f.h ? hHuman(hSize(node)) : String(hSize(node));
+        n.out(`${String(d).padStart(12)}${String(fl).padStart(12)}${sz.padStart(18)} ${/[*?[]/.test(it) || it.startsWith("/") ? hp : it}\n`);
+      }
+    }
+    return st;
+  },
+  stat(n, a, E) {
+    const fs = n.fs;
+    let fmt = "%y", paths = a;
+    if (a.length > 1 && a[0].includes("%")) { fmt = a[0]; paths = a.slice(1); }
+    if (!paths.length) return E("Not enough arguments: expected 1 but got 0"), 1;
+    let st = 0;
+    for (const p of paths) {
+      const hp = hAbs(fs, p), node = hNode(fs, hp);
+      if (!node) { E(`\`${p}': No such file or directory`); st = 1; continue; }
+      const out = fmt.replace(/%([bFgnorRuyY%])/g, (m, c) => ({
+        b: String(node.t === "d" ? 0 : node.data.length), F: node.t === "d" ? "directory" : node.data.length ? "regular file" : "regular empty file",
+        g: "supergroup", n: hp.split("/").pop() || "/", o: String(node.t === "d" ? 0 : HBLOCK), r: String(node.t === "d" ? 0 : node.rep || 3),
+        R: String(node.t === "d" ? 0 : node.rep || 3), u: U, y: hDate(fs) + ":00", Y: String(fs.timeOf({ mt: 0 }).getTime()), "%": "%",
+      })[c]);
+      n.out(out.replace(/\\n/g, "\n") + "\n");
+    }
+    return st;
+  },
+  test(n, a, E) {
+    if (a.length !== 2 || !/^-[defsz]$/.test(a[0])) return E("Usage: hadoop fs [generic options] -test -[defswrz] <path>"), 1;
+    const node = hNode(n.fs, hAbs(n.fs, a[1])), o = a[0][1];
+    if (!node) return 1;
+    return ({ e: !0, d: node.t === "d", f: node.t !== "d", s: hSize(node) > 0, z: node.t !== "d" && node.data.length === 0 })[o] ? 0 : 1;
+  },
+  setrep(n, a, E) {
+    const { f, rest } = hOpts(a, "Rw"), fs = n.fs;
+    if (rest.length < 2 || !/^\d+$/.test(rest[0])) return E("Usage: hadoop fs [generic options] -setrep [-R] [-w] <rep> <path> ..."), 1;
+    const rep = parseInt(rest[0], 10); let st = 0;
+    if (rep < 1 || rep > 512) return E(`illegal replication, ${rep}`), 1;
+    for (const p of rest.slice(1)) {
+      const ps = hGlob(fs, p);
+      if (!ps.length || !hNode(fs, ps[0])) { E(`\`${p}': No such file or directory`); st = 1; continue; }
+      for (const hp of ps) {
+        const set = (node, path) => {
+          if (node.t === "d") { for (const k of [...node.c.keys()].sort()) set(node.c.get(k), (path === "/" ? "" : path) + "/" + k); return; }
+          node.rep = rep; n.out(`Replication ${rep} set: ${path}\n`);
+        };
+        set(hNode(fs, hp), hp);
+        if (f.w) n.out(`Waiting for ${hp} ... done\n`);
+      }
+    }
+    return st;
+  },
+  chmod(n, a, E) {
+    const { f, rest } = hOpts(a, "R"), fs = n.fs;
+    if (rest.length < 2) return E("Not enough arguments: expected 2 but got " + rest.length), 1;
+    const mode = rest[0]; let st = 0;
+    const apply = (node) => {
+      if (/^[0-7]{3,4}$/.test(mode)) node.mode = parseInt(mode, 8);
+      else for (const part of mode.split(",")) {
+        const m = /^([ugoa]*)([+\-=])([rwxt]*)$/.exec(part);
+        if (!m) throw new Error("bad");
+        const who = m[1] || "a", bits = { r: 4, w: 2, x: 1 };
+        let v = 0; for (const c of m[3]) if (bits[c]) for (const w of who === "a" ? "ugo" : who) v |= bits[c] << ({ u: 6, g: 3, o: 0 })[w];
+        if (m[3].includes("t")) v |= 512;
+        if (m[2] === "+") node.mode |= v; else if (m[2] === "-") node.mode &= ~v;
+        else { let mask = 0; for (const w of who === "a" ? "ugo" : who) mask |= 7 << ({ u: 6, g: 3, o: 0 })[w]; node.mode = (node.mode & ~mask) | v; }
+      }
+      if (f.R && node.t === "d") for (const c of node.c.values()) apply(c);
+    };
+    for (const p of rest.slice(1)) {
+      const node = hNode(fs, hAbs(fs, p));
+      if (!node) { E(`\`${p}': No such file or directory`); st = 1; continue; }
+      try { apply(node); } catch (e) { return E(`chmod : mode '${mode}' does not match the expected pattern.`), 1; }
+    }
+    return st;
+  },
+  find(n, a, E) {
+    const fs = n.fs, paths = [];
+    let i = 0; for (; i < a.length && !a[i].startsWith("-"); i++) paths.push(a[i]);
+    if (!paths.length) paths.push(".");
+    let rx = null, typ = null;
+    for (; i < a.length; i++) {
+      if ((a[i] === "-name" || a[i] === "-iname") && a[i + 1] != null) {
+        const g = a[++i]; rx = new RegExp("^" + g.replace(/[.+^${}()|\\]/g, "\\$&").replace(/\*/g, ".*").replace(/\?/g, ".") + "$", a[i - 1] === "-iname" ? "i" : "");
+      } else if (a[i] === "-type" && a[i + 1] != null) typ = a[++i];
+      else if (a[i] === "-print" || a[i] === "-print0") continue;
+      else return E(`Unexpected argument: ${a[i]}`), 1;
+    }
+    let st = 0;
+    for (const p of paths) {
+      const hp = hAbs(fs, p), node = hNode(fs, hp);
+      if (!node) { E(`\`${p}': No such file or directory`); st = 1; continue; }
+      const disp = p.startsWith("/") ? hp : p === "." ? "." : p.replace(/\/+$/, "");
+      const w = (x, path, nm) => {
+        if ((!rx || rx.test(nm)) && (!typ || (typ === "d") === (x.t === "d"))) n.out(path + "\n");
+        if (x.t === "d") for (const k of [...x.c.keys()].sort()) w(x.c.get(k), (path === "/" ? "" : path) + "/" + k, k);
+      };
+      w(node, disp, hp.split("/").pop() || "/");
+    }
+    return st;
+  },
+  df(n, a) {
+    const h = a.includes("-h"), used = hUsed(hBoot(n.fs)), cap = 10737418240;
+    const v = (b) => (h ? hHuman(b) : String(b));
+    const row = ["hdfs://localhost:9000", v(cap), v(used), v(cap - used), Math.round((used / cap) * 100) + "%"];
+    const head = ["Filesystem", "Size", "Used", "Available", "Use%"];
+    const w = head.map((x, i) => Math.max(x.length, row[i].length));
+    n.out(head.map((x, i) => (i === 0 ? x.padEnd(w[i]) : x.padStart(w[i]))).join("  ") + "\n" + row.map((x, i) => (i === 0 ? x.padEnd(w[i]) : x.padStart(w[i]))).join("  ") + "\n");
+    return 0;
+  },
+  expunge() { return 0; },
+  checksum(n, a, E) {
+    const fs = n.fs; let st = 0;
+    for (const p of a) {
+      const node = hNode(fs, hAbs(fs, p));
+      if (!node || node.t === "d") { E(`\`${p}': ${node ? "Is a directory" : "No such file or directory"}`); st = 1; continue; }
+      let h = 2166136261; for (let i = 0; i < node.data.length; i++) { h ^= node.data.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+      n.out(`${p}\tMD5-of-0MD5-of-512CRC32C\t${("0000000200000000000000000000000000000000" + h.toString(16).padStart(8, "0")).padEnd(56, "0")}\n`);
+    }
+    return st;
+  },
+};
+const HALIAS = { copyFromLocal: "put", moveFromLocal: "put", copyToLocal: "get", text: "cat", head: "cat", tail: "cat", mv: "cp", lsr: "ls" };
+const HHELP = `Usage: hadoop fs [generic options]
+	[-appendToFile <localsrc> ... <dst>]
+	[-cat [-ignoreCrc] <src> ...]
+	[-checksum <src> ...]
+	[-chmod [-R] <MODE[,MODE]... | OCTALMODE> PATH...]
+	[-copyFromLocal [-f] <localsrc> ... <dst>]
+	[-copyToLocal [-f] <src> ... <localdst>]
+	[-count [-q] [-h] [-v] <path> ...]
+	[-cp [-f] <src> ... <dst>]
+	[-df [-h] [<path> ...]]
+	[-du [-s] [-h] [-v] <path> ...]
+	[-expunge]
+	[-find <path> ... <expression> ...]
+	[-get [-f] <src> ... <localdst>]
+	[-getmerge [-nl] <src> <localdst>]
+	[-head <file>]
+	[-help [cmd ...]]
+	[-ls [-C] [-d] [-h] [-r] [-t] [-S] [-R] [<path> ...]]
+	[-mkdir [-p] <path> ...]
+	[-moveFromLocal <localsrc> ... <dst>]
+	[-mv <src> ... <dst>]
+	[-put [-f] <localsrc> ... <dst>]
+	[-rm [-f] [-r|-R] [-skipTrash] <src> ...]
+	[-rmdir [--ignore-fail-on-non-empty] <dir> ...]
+	[-setrep [-R] [-w] <rep> <path> ...]
+	[-stat [format] <path> ...]
+	[-tail [-f] <file>]
+	[-test -[defsz] <path>]
+	[-text [-ignoreCrc] <src> ...]
+	[-touchz <path> ...]
+	[-usage [cmd ...]]
+`;
+function hDfs(n, args, tool) {
+  hBoot(n.fs);
+  if (!args.length) return n.err(HHELP), 255;
+  const raw = args[0], cmd = raw.replace(/^-/, "");
+  if (raw === "-help" || raw === "-usage") return n.out(HHELP), 0;
+  if (!raw.startsWith("-") || !(HCMDS[cmd] || HALIAS[cmd])) {
+    n.err(`${raw}: Unknown command\nUsage: ${tool} [generic options]\n`);
+    return 255;
+  }
+  const impl = HCMDS[HALIAS[cmd] || cmd];
+  let rest = args.slice(1);
+  if (cmd === "tail") rest = rest.filter((x) => x !== "-f");
+  if (cmd === "lsr") rest = ["-R", ...rest];
+  const E = (m) => n.err(`${cmd}: ${m}\n`);
+  return impl(n, rest, E, cmd === "mv" ? "mv" : cmd);
+}
+A.hdfs = (n) => {
+  const a = n.args;
+  if (a[0] === "dfs") return hDfs(n, a.slice(1), "hdfs dfs");
+  if (a[0] === "version") return n.out("Hadoop 3.3.6\nSource code repository https://github.com/apache/hadoop.git -r 1be78238728da9266a4f88195058f08fd012bf9c\nThis command was run using /opt/hadoop/share/hadoop/common/hadoop-common-3.3.6.jar\n"), 0;
+  if (a[0] === "dfsadmin" && a[1] === "-report") {
+    const used = hUsed(hBoot(n.fs));
+    return n.out(`Configured Capacity: 10737418240 (10 GB)\nPresent Capacity: 10737418240 (10 GB)\nDFS Remaining: ${10737418240 - used}\nDFS Used: ${used}\nReplicated Blocks:\n\tUnder replicated blocks: 0\n\tMissing blocks: 0\n\n-------------------------------------------------\nLive datanodes (1):\n\nName: 127.0.0.1:9866 (localhost)\nDecommission Status : Normal\n`), 0;
+  }
+  if (a[0] === "fsck") {
+    const fs = n.fs, p = a[1] || "/", hp = hAbs(fs, p), node = hNode(fs, hp);
+    if (!node) return n.out(`FSCK started by student for path ${p}\nFSCK ended\n\n\nPath '${p}' does not exist\n`), 1;
+    let files = 0, dirs = 0, size = 0, blocks = 0;
+    const w = (x) => { if (x.t === "d") { dirs++; for (const c of x.c.values()) w(c); } else { files++; size += x.data.length; blocks += Math.max(1, Math.ceil(x.data.length / HBLOCK)); } };
+    w(node);
+    return n.out(`Status: HEALTHY\n Number of data-nodes:\t1\n Total size:\t${size} B\n Total dirs:\t${dirs}\n Total files:\t${files}\n Total blocks (validated):\t${blocks}\n Default replication factor:\t3\n Corrupt blocks:\t\t0\n Missing replicas:\t\t0\n\nThe filesystem under path '${p}' is HEALTHY\n`), 0;
+  }
+  n.err("Usage: hdfs [OPTIONS] SUBCOMMAND [SUBCOMMAND OPTIONS]\n\n    dfs          run a filesystem command on the file systems supported in Hadoop.\n    dfsadmin     run a DFS admin client\n    fsck         run a DFS filesystem checking utility\n    version      print the version\n");
+  return a.length ? 1 : 0;
+};
+A.hadoop = (n) => {
+  const a = n.args;
+  if (a[0] === "fs" || a[0] === "dfs") return hDfs(n, a.slice(1), "hadoop fs");
+  if (a[0] === "version") return A.hdfs(n);
+  n.err("Usage: hadoop [OPTIONS] SUBCOMMAND [SUBCOMMAND OPTIONS]\n\n    fs           run a generic filesystem user client\n    version      print the version\n");
+  return a.length ? 1 : 0;
+};
+
+}A.seq=n=>{n={...n,args:n.args.map(w=>/^-\d/.test(w)?"\0"+w:w)};let t=w=>w.replace(/^\u0000/,""),e=q(n,{flags:"w",vals:"sf",long:{separator:"s:","equal-width":"w",format:"f:"}},{}),s=e?{f:e.f,rest:e.rest.map(t)}:null;if(!s)return 1;let r=s.f,i=s.rest;if(!i.length)return n.error("missing operand"),n.err(`Try 'seq --help' for more information.
 `),1;for(let w of i)if(!/^[+-]?(\d+\.?\d*|\.\d+)$/.test(w))return n.error(`invalid floating point argument: ${ge(w)}`),n.err(`Try 'seq --help' for more information.
 `),1;let[o,a,c]=i.length===1?["1","1",i[0]]:i.length===2?[i[0],"1",i[1]]:i,l=w=>(w.split(".")[1]||"").length,f=Math.max(l(o),l(a)),u=parseFloat(o),d=parseFloat(a),g=parseFloat(c);if(d===0)return n.error(`invalid Zero increment value: ${ge(a)}`),1;let p=[];for(let w=0;;w++){let v=u+w*d;if((d>0?v>g+1e-9:v<g-1e-9)||(p.push(v),p.length>2e5))break}let h=p.map(w=>r.f?pe(Ne(r.f).find(v=>typeof v=="object")||{flags:"",conv:"g"},w,{num:Number}):w.toFixed(f));if(r.f){let w=Ne(r.f);h=p.map(v=>w.map($=>typeof $=="string"?$:pe({...$,width:$.width?+$.width:null,prec:$.prec!==void 0?+$.prec:null},v,{num:Number})).join(""))}if(r.w){let w=Math.max(...h.map(v=>v.length));h=h.map(v=>v.startsWith("-")?"-"+v.slice(1).padStart(w-1,"0"):v.padStart(w,"0"))}let m=r.s!==void 0?se(r.s,{printf:!0})[0]:`
 `;return h.length&&n.out(h.join(m)+`
@@ -15417,7 +16452,7 @@ ${r} director${r===1?"y":"ies"}${t.f.d?"":`, ${i} file${i===1?"":"s"}`}
 `),n&&!n.endsWith(`
 `)?n+`
 `:n);function on(n,t){let e=String(n).replace(/\r/g,"").split(`
-`);for(let i=0;i<e.length;i++){let o=e[i].replace(/#.*$/,"");if(/^\s*(if|elif)\b/.test(o)&&/[^;\s]\s+then\b/.test(o)&&!/;\s*then\b/.test(o))return`line ${i+1}: put a ; (or a newline) before then \u2014 e.g.  if [ "$x" -gt 5 ]; then`;if(/^\s*(while|until|for)\b/.test(o)&&/[^;\s]\s+do\b/.test(o)&&!/;\s*do\b/.test(o))return`line ${i+1}: put a ; (or a newline) before do \u2014 e.g.  for f in *.txt; do`;if(/^\s*if\s*\[[^ \]]/.test(o)||/\S\]\s*;?\s*then/.test(o)&&/\[/.test(o)&&!/\s\]/.test(o))return`line ${i+1}: [ ] need spaces inside \u2014 e.g.  if [ "$a" -gt 5 ]; then`}let s=e[t.line-2]||"";if(/near unexpected token/.test(t.message)&&/^\s*(for|while|until)\b/.test(s)&&!/\bdo\b/.test(s))return`line ${t.line-1}: the loop needs "do" \u2014 e.g.  for i in 1 2 3; do`;if(/near unexpected token/.test(t.message)&&/^\s*(if|elif)\b/.test(s)&&!/\bthen\b/.test(s))return`line ${t.line-1}: the if needs "then" \u2014 e.g.  if [ "$x" -gt 5 ]; then`;let r=/unexpected token `(\w+)'/.exec(t.message);if(r&&r[1]==="fi")return"check that every if has a matching then (with ; before it) and a non-empty body";if(r&&r[1]==="done")return'check that every loop has "do" (with ; before it) and a non-empty body';if(r&&r[1]==="else")return"if \u2026 then \u2026 else \u2026 fi \u2014 the then-part must not be empty";if(/unexpected end of file/.test(t.message)){let i=String(n),o=a=>(i.match(a)||[]).length;if(o(/(^|[\s;])if\s/g)>o(/(^|[\s;])fi\b/g))return"an if is missing its closing fi";if(o(/(^|[\s;])(for|while|until)\s/g)>o(/(^|[\s;])done\b/g))return"a loop is missing its closing done";if(o(/(^|[\s;])case\s/g)>o(/(^|[\s;])esac\b/g))return"a case is missing its closing esac";if(o(/\{/g)>o(/\}/g))return"a { is missing its closing }"}return/matching `"'/.test(t.message)?'a double quote " is not closed':/matching `''/.test(t.message)?"a single quote ' is not closed":null}function Et(n){let t=n.snapshot(),e=new Map;for(let[s,r]of t)(s===_||s.startsWith(_+"/")||s==="/tmp"||s.startsWith("/tmp/"))&&e.set(s,r);return e}var qe=n=>n===_?"~":n.startsWith(_+"/")?n.slice(_.length+1):n,ee=n=>String(n??"").replace(/\r/g,"").split(`
+`);for(let i=0;i<e.length;i++){let o=e[i].replace(/#.*$/,"");if(/^\s*(if|elif)\b/.test(o)&&/[^;\s]\s+then\b/.test(o)&&!/;\s*then\b/.test(o))return`line ${i+1}: put a ; (or a newline) before then \u2014 e.g.  if [ "$x" -gt 5 ]; then`;if(/^\s*(while|until|for)\b/.test(o)&&/[^;\s]\s+do\b/.test(o)&&!/;\s*do\b/.test(o))return`line ${i+1}: put a ; (or a newline) before do \u2014 e.g.  for f in *.txt; do`;if(/^\s*if\s*\[[^ \]]/.test(o)||/\S\]\s*;?\s*then/.test(o)&&/\[/.test(o)&&!/\s\]/.test(o))return`line ${i+1}: [ ] need spaces inside \u2014 e.g.  if [ "$a" -gt 5 ]; then`}let s=e[t.line-2]||"";if(/near unexpected token/.test(t.message)&&/^\s*(for|while|until)\b/.test(s)&&!/\bdo\b/.test(s))return`line ${t.line-1}: the loop needs "do" \u2014 e.g.  for i in 1 2 3; do`;if(/near unexpected token/.test(t.message)&&/^\s*(if|elif)\b/.test(s)&&!/\bthen\b/.test(s))return`line ${t.line-1}: the if needs "then" \u2014 e.g.  if [ "$x" -gt 5 ]; then`;let r=/unexpected token `(\w+)'/.exec(t.message);if(r&&r[1]==="fi")return"check that every if has a matching then (with ; before it) and a non-empty body";if(r&&r[1]==="done")return'check that every loop has "do" (with ; before it) and a non-empty body';if(r&&r[1]==="else")return"if \u2026 then \u2026 else \u2026 fi \u2014 the then-part must not be empty";if(/unexpected end of file/.test(t.message)){let i=String(n),o=a=>(i.match(a)||[]).length;if(o(/(^|[\s;])if\s/g)>o(/(^|[\s;])fi\b/g))return"an if is missing its closing fi";if(o(/(^|[\s;])(for|while|until)\s/g)>o(/(^|[\s;])done\b/g))return"a loop is missing its closing done";if(o(/(^|[\s;])case\s/g)>o(/(^|[\s;])esac\b/g))return"a case is missing its closing esac";if(o(/\{/g)>o(/\}/g))return"a { is missing its closing }"}return/matching `"'/.test(t.message)?'a double quote " is not closed':/matching `''/.test(t.message)?"a single quote ' is not closed":null}function Et(n){let t=n.snapshot(),e=new Map;for(let[s,r]of t)(s===_||s.startsWith(_+"/")||s==="/tmp"||s.startsWith("/tmp/")||s.startsWith("/.hdfs/")&&s!=="/.hdfs/user"&&s!=="/.hdfs/user/student"&&s!=="/.hdfs/tmp")&&e.set(s,r);return e}var qe=n=>n===_?"~":n.startsWith(_+"/")?n.slice(_.length+1):n===HDFS_DIR||n.startsWith(HDFS_DIR+"/")?"hdfs:"+(n.slice(6)||"/"):n,HDFS_DIR="/.hdfs",ee=n=>String(n??"").replace(/\r/g,"").split(`
 `).map(t=>t.replace(/[ \t]+$/,"")).join(`
 `).replace(/\n+$/,""),st=(n,t)=>!n||!t?!n&&!t:n.t!==t.t?!1:n.t==="l"?n.real===t.real:(n.mode&511)!==(t.mode&511)||n.t==="f"&&(n.nl||1)!==(t.nl||1)?!1:n.t==="d"||ee(n.data)===ee(t.data),Fe=(n,t=12)=>{if(!n)return null;if(n.t==="d")return{type:"dir",mode:me({t:"d",mode:n.mode})};if(n.t==="l")return{type:"link",mode:"lrwxrwxrwx",size:re(n.data),lines:1,text:"\u2192 "+n.data};if(n.data.startsWith("SAARTHI-ARCHIVE ")||n.data.startsWith(`SAARTHI-GZIP
 `)){let s=n.data.split(`
