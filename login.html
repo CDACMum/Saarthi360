@@ -3385,7 +3385,7 @@ function _coordBatchCheckboxes(selectedIds){
   return Object.keys(byCourse).map(cid => {
     const rows = byCourse[cid].map(b =>
       `<label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" class="coord-batch" value="${b.id}" ${sel.has(String(b.id))?'checked':''}> ${escHtml(b.name)}</label>`).join('');
-    return `<div><div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;margin:4px 0">${escHtml(courseName(cid)||'No course')}</div>${rows}</div>`;
+    return `<div><div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;margin:4px 0">${escHtml(courseCode(cid) && courseCode(cid) !== courseName(cid) ? courseCode(cid) + ' — ' + courseName(cid) : (courseName(cid) || 'No course'))}</div>${rows}</div>`;
   }).join('') || '<div style="color:var(--text3);font-size:12px">No batches yet — create batches first.</div>';
 }
 let coordEditId = null;
@@ -11380,6 +11380,13 @@ function _ctCss(){
   if (document.getElementById('ctCss')) return;
   const st = document.createElement('style'); st.id = 'ctCss';
   st.textContent = `
+  .ct-dt{color-scheme:dark;cursor:pointer}
+  .ct-dt::-webkit-calendar-picker-indicator{filter:invert(1) brightness(1.5);opacity:.95;cursor:pointer;width:18px;height:18px}
+  .ct-quick{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+  .ct-quick button{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text2);border-radius:999px;padding:3px 9px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
+  .ct-quick button:hover{border-color:var(--accent);color:var(--text);background:rgba(255,255,255,.09)}
+  .ct-dur{font-size:11.5px;color:var(--text3);margin-top:8px}
+  .ct-dur b{color:var(--text)}
   .ct-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.8px;white-space:nowrap}
   .ct-pill.live{background:rgba(34,197,94,.16);color:#4ade80}
   .ct-pill.up{background:rgba(59,130,246,.18);color:#7aa7ff}
@@ -11528,12 +11535,15 @@ async function openContestEditor(id){
         <div><label class="ct-lbl">DESCRIPTION / RULES</label>
           <textarea id="ctDesc" rows="2" class="filter-select" style="width:100%;resize:vertical" placeholder="Shown to students on the contest card">${escHtml(c?.description || '')}</textarea></div>
         <div style="display:grid;grid-template-columns:1fr 1fr 150px;gap:12px">
-          <div><label class="ct-lbl">STARTS *</label><input id="ctStart" type="datetime-local" class="filter-select" style="width:100%" value="${toLocal(c ? new Date(c.start_at) : defStart)}"></div>
-          <div><label class="ct-lbl">ENDS *</label><input id="ctEnd" type="datetime-local" class="filter-select" style="width:100%" value="${toLocal(c ? new Date(c.end_at) : defEnd)}"></div>
+          <div><label class="ct-lbl">STARTS *</label><input id="ctStart" type="datetime-local" class="filter-select ct-dt" style="width:100%" value="${toLocal(c ? new Date(c.start_at) : defStart)}" onclick="try{this.showPicker()}catch(e){}" oninput="_ctDur()">
+            <div class="ct-quick"><button type="button" onclick="_ctDt('start','now')">Now</button><button type="button" onclick="_ctDt('start','tom9')">Tomorrow 9 AM</button><button type="button" onclick="_ctDt('start','-1d')">− 1 day</button><button type="button" onclick="_ctDt('start','+1d')">+ 1 day</button></div></div>
+          <div><label class="ct-lbl">ENDS *</label><input id="ctEnd" type="datetime-local" class="filter-select ct-dt" style="width:100%" value="${toLocal(c ? new Date(c.end_at) : defEnd)}" onclick="try{this.showPicker()}catch(e){}" oninput="_ctDur()">
+            <div class="ct-quick"><button type="button" onclick="_ctDt('end','d1')" title="Start + 1 day">1 day</button><button type="button" onclick="_ctDt('end','d7')" title="Start + 1 week">1 week</button><button type="button" onclick="_ctDt('end','d14')" title="Start + 2 weeks">2 weeks</button><button type="button" onclick="_ctDt('end','eom')" title="Last day of the start month, 11:59 PM">Month end</button><button type="button" onclick="_ctDt('end','-1d')">− 1 day</button><button type="button" onclick="_ctDt('end','+1d')" title="Extend by one day">+ 1 day</button></div></div>
           <div><label class="ct-lbl">VISIBILITY</label><select id="ctStatus" class="filter-select" style="width:100%">
             <option value="published" ${c?.status !== 'draft' ? 'selected' : ''}>Published</option>
             <option value="draft" ${c?.status === 'draft' ? 'selected' : ''}>Draft (hidden)</option></select></div>
         </div>
+        <div id="ctDur" class="ct-dur" style="margin-top:-6px"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div><label class="ct-lbl">PROGRAM(S) ${isCoord ? '' : '— none ticked = every program'}</label>
             <div style="display:flex;flex-direction:column;gap:4px;max-height:110px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:8px">${_asnCourseCheckboxes(selCourses, coordCourses)}</div></div>
@@ -11559,6 +11569,7 @@ async function openContestEditor(id){
       </div>
     </div>`;
   openModal('modalGeneric');
+  _ctDur();
   _ctRenderPicker();
 }
 // Module groups for the picker, after the search / language / level filters.
@@ -11612,6 +11623,40 @@ function _ctToggleModule(k, on){
   _ctRenderPicker();
 }
 function _ctToggleQ(id, on){ on ? window._ctSel.add(id) : window._ctSel.delete(id); _ctRenderPicker(); }
+// Date helpers for the contest editor: click opens the calendar, quick buttons shift/set times.
+function _ctDtGet(id){ const v = (document.getElementById(id) || {}).value; const d = v ? new Date(v) : null; return d && !isNaN(d) ? d : null; }
+function _ctDtSet(id, d){ const p = n => String(n).padStart(2, '0'); const el = document.getElementById(id); if (el) el.value = `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; }
+function _ctDt(which, op){
+  const DAY = 86400000, now = new Date();
+  let s = _ctDtGet('ctStart') || now, e = _ctDtGet('ctEnd');
+  if (which === 'start') {
+    const len = e ? e - s : 7 * DAY;
+    if (op === 'now') s = new Date(Math.ceil(now.getTime() / 300000) * 300000);
+    else if (op === 'tom9') s = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 9, 0);
+    else if (op === '+1d') s = new Date(s.getTime() + DAY);
+    else if (op === '-1d') s = new Date(s.getTime() - DAY);
+    _ctDtSet('ctStart', s);
+    if (!e || e <= s) _ctDtSet('ctEnd', new Date(s.getTime() + (len > 0 ? len : 7 * DAY)));
+  } else {
+    if (op === 'd1') e = new Date(s.getTime() + DAY);
+    else if (op === 'd7') e = new Date(s.getTime() + 7 * DAY);
+    else if (op === 'd14') e = new Date(s.getTime() + 14 * DAY);
+    else if (op === 'eom') e = new Date(s.getFullYear(), s.getMonth() + 1, 0, 23, 59);
+    else if (op === '+1d') e = new Date((e || s).getTime() + DAY);
+    else if (op === '-1d') e = new Date((e || s).getTime() - DAY);
+    _ctDtSet('ctEnd', e);
+  }
+  _ctDur();
+}
+function _ctDur(){
+  const el = document.getElementById('ctDur'); if (!el) return;
+  const s = _ctDtGet('ctStart'), e = _ctDtGet('ctEnd');
+  if (!s || !e) { el.innerHTML = ''; return; }
+  if (e <= s) { el.innerHTML = '<span style="color:var(--red)">⚠ End time must be after the start time</span>'; return; }
+  const m = Math.round((e - s) / 60000), d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60), mi = m % 60;
+  const fmt = x => x.toLocaleString('en-IN', { weekday:'short', day:'numeric', month:'short', hour:'numeric', minute:'2-digit' });
+  el.innerHTML = `🗓 Runs <b>${fmt(s)}</b> → <b>${fmt(e)}</b> · ${[d && d + ' day' + (d > 1 ? 's' : ''), h && h + ' h', mi && mi + ' min'].filter(Boolean).join(' ') || '0 min'}`;
+}
 async function saveContest(){
   const v = id => ((document.getElementById(id) || {}).value || '').trim();
   const title = v('ctTitle'), s = v('ctStart'), e = v('ctEnd');
@@ -12741,7 +12786,7 @@ function _asnBatchCheckboxes(selectedIds, restrictCourseIds){
   return Object.keys(byCourse).map(cid => {
     const rows = byCourse[cid].map(b =>
       `<label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" class="asn-batch" value="${b.id}" ${sel.has(String(b.id))?'checked':''}> ${escHtml(b.name)}</label>`).join('');
-    return `<div><div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;margin:4px 0">${escHtml(courseName(cid)||'No course')}</div>${rows}</div>`;
+    return `<div><div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;margin:4px 0">${escHtml(courseCode(cid) && courseCode(cid) !== courseName(cid) ? courseCode(cid) + ' — ' + courseName(cid) : (courseName(cid) || 'No course'))}</div>${rows}</div>`;
   }).join('') || '<div style="color:var(--text3);font-size:12px">No batches yet — create batches first.</div>';
 }
 // Program/batch scope as chips for the admin/coordinator list table.
@@ -14329,6 +14374,16 @@ async function renderStudentFlashcards() {
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:#7878a0;font-family:'Inter',sans-serif;font-weight:700">Total Cards</div>
       </div>
     </div>
+
+    <!-- Upvanta: external Data Engineering interview prep -->
+    <a href="https://cdacmum.github.io/Upvanta/" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:16px;margin:16px 0 18px;padding:16px 20px;border-radius:14px;text-decoration:none;background:linear-gradient(135deg,rgba(13,148,136,0.18),rgba(34,201,245,0.10));border:1px solid rgba(45,212,191,0.35);transition:transform .15s,border-color .15s" onmouseover="this.style.transform='translateY(-2px)';this.style.borderColor='rgba(45,212,191,0.7)'" onmouseout="this.style.transform='';this.style.borderColor='rgba(45,212,191,0.35)'">
+      <div style="font-size:30px;line-height:1">🚀</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-family:'Inter',sans-serif;font-size:16px;font-weight:800;color:#f0f0ff">Upvanta <span style="font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#2dd4bf;background:rgba(45,212,191,0.12);border:1px solid rgba(45,212,191,0.3);border-radius:20px;padding:2px 8px;margin-left:6px;vertical-align:middle">Interview Prep</span></div>
+        <div style="font-size:12.5px;color:#9a9ac0;margin-top:4px;font-family:'Inter',sans-serif">Data Engineering interview questions with worked answers — SQL, NoSQL, Spark, Kafka, Airflow, dbt, Snowflake &amp; ML</div>
+      </div>
+      <div style="font-family:'Inter',sans-serif;font-size:12.5px;font-weight:700;color:#0b1020;background:#2dd4bf;border-radius:9px;padding:9px 14px;white-space:nowrap">Open ↗</div>
+    </a>
 
     <!-- Module tile grid -->
     <div class="fc-module-grid">
