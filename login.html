@@ -8037,7 +8037,7 @@ function lbBuildRows(mcqScores, codingMap, maxCodingPts, studentsList){
     m[sid].tests++;
     m[sid].totalPct += s.pct||0;
     m[sid].best = Math.max(m[sid].best, s.pct||0);
-    if (s.moduleId) m[sid].modules.add(s.moduleId);
+    if (s.moduleId != null && s.moduleId !== '') m[sid].modules.add(String(s.moduleId)); // moduleId 0 (Python) is valid
     m[sid].pen += (s.tabSwitches||0)*LB_PENALTY.tabSwitch
                +  (s.pasteAttempts||0)*LB_PENALTY.paste
                +  (s.fullscreenExits||0)*LB_PENALTY.fullscreen
@@ -15769,11 +15769,12 @@ async function renderStudentLeaderboard(silent) {
   // Use a separate query that fetches aggregated data for ALL students
   let lbScores = [];
   try {
-    const { data, error } = await SB.from('scores')
+    // Page through ALL attempts (a fixed .limit() silently drops the oldest
+    // attempts once the table outgrows it). Stable order date+id for paging.
+    lbScores = await fetchAllRows(() => SB.from('scores')
       .select('*')
       .order('date', { ascending: false })
-      .limit(2000);
-    if (!error && data) lbScores = data;
+      .order('id', { ascending: true }));
   } catch(e) {
     console.warn('Leaderboard fetch failed:', e);
   }
