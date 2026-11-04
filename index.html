@@ -3,893 +3,319 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Saarthi 360 — CDAC Kharghar PGCP Courses</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<title>Saarthi 360 — C-DAC Mumbai PGCP Practice & Placement Platform</title>
+<meta name="description" content="Saarthi 360 is the practice, coding and placement-readiness platform for C-DAC Mumbai (Kharghar) PGCP students: exam-pattern MCQs, a live coding arena, Chakra AI study buddy and verifiable monthly credentials.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
-:root {
-  --bg:       #0a0606;
-  --bg2:      #110808;
-  --bg3:      #180d0d;
-  --card:     rgba(255,255,255,0.04);
-  --border:   rgba(255,255,255,0.08);
-  --text:     #fce8e8;
-  --muted:    #a68e94;
-  --crimson:  #1e5eff;
-  --cg:       rgba(30,94,255,0.3);
-  --gold:     #f59e0b;
-  --purple:   #5b8cff;
-  --green:    #10b981;
-  --blue:     #22c9f5;
-  --orange:   #f97316;
-  --mono:     'JetBrains Mono', monospace;
-}
-
-html { scroll-behavior: smooth; }
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Inter', system-ui, sans-serif;
-  line-height: 1.6;
-  overflow-x: hidden;
-}
-
-/* Noise */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* ─── NAV ─── */
-nav {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 100;
-  padding: 18px 64px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  backdrop-filter: blur(24px);
-  background: rgba(10,6,6,0.8);
-  border-bottom: 1px solid var(--border);
-}
-.nav-logo {
-  font-size: 22px;
-  font-weight: 900;
-  letter-spacing: -0.5px;
-  text-decoration: none;
-  color: var(--text);
-}
-.nav-logo span { color: var(--crimson); }
-.nav-links { display: flex; gap: 36px; list-style: none; }
-.nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
-.nav-links a:hover { color: var(--text); }
-.nav-cta { display: flex; gap: 10px; align-items: center; }
-
-.btn-outline { padding: 8px 20px; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--text); font-size: 14px; font-weight: 500; cursor: pointer; text-decoration: none; transition: all 0.2s; }
-.btn-outline:hover { border-color: rgba(255,255,255,0.25); }
-.btn-primary { padding: 8px 20px; border-radius: 8px; background: var(--crimson); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; border: none; text-decoration: none; transition: all 0.2s; box-shadow: 0 0 24px var(--cg); }
-.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 32px rgba(30,94,255,0.45); }
-
-/* ─── HERO ─── */
-.hero {
-  position: relative;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  padding: 130px 64px 80px;
-  gap: 60px;
-  overflow: hidden;
-}
-.glow-r { position: absolute; top: 0; right: -5%; width: 700px; height: 700px; background: radial-gradient(circle, rgba(30,94,255,0.1) 0%, transparent 65%); border-radius: 50%; pointer-events: none; }
-.glow-l { position: absolute; bottom: -10%; left: 5%; width: 500px; height: 500px; background: radial-gradient(circle, rgba(91,140,255,0.08) 0%, transparent 65%); border-radius: 50%; pointer-events: none; }
-
-.hero-left { flex: 1; max-width: 600px; position: relative; z-index: 1; }
-
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 14px 6px 8px;
-  background: rgba(30,94,255,0.09);
-  border: 1px solid rgba(30,94,255,0.28);
-  border-radius: 100px;
-  font-size: 12.5px;
-  color: var(--crimson);
-  font-weight: 600;
-  margin-bottom: 32px;
-}
-.pulse { width: 7px; height: 7px; background: var(--crimson); border-radius: 50%; animation: pls 1.6s ease-in-out infinite; }
-@keyframes pls { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.45;transform:scale(1.4)} }
-
-.hero h1 { font-size: clamp(42px, 5.5vw, 68px); font-weight: 900; line-height: 1.05; letter-spacing: -2.5px; margin-bottom: 24px; }
-.grad { background: linear-gradient(130deg, #1e5eff 10%, #22c9f5 90%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.hero p { font-size: 17px; color: var(--muted); line-height: 1.75; max-width: 480px; margin-bottom: 42px; }
-.hero-btns { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 48px; }
-.btn-hero { padding: 14px 30px; border-radius: 12px; font-size: 15.5px; font-weight: 700; cursor: pointer; transition: all .25s; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
-.btn-hp { background: var(--crimson); color: #fff; border: none; box-shadow: 0 0 36px rgba(30,94,255,.38); }
-.btn-hp:hover { transform: translateY(-2px); box-shadow: 0 10px 48px rgba(30,94,255,.52); }
-.btn-hg { background: rgba(255,255,255,.05); color: var(--text); border: 1px solid var(--border); }
-.btn-hg:hover { background: rgba(255,255,255,.09); border-color: rgba(255,255,255,.2); }
-
-.social-proof { display: flex; align-items: center; gap: 14px; }
-.av-stack { display: flex; }
-.av-stack .av { width: 33px; height: 33px; border-radius: 50%; border: 2px solid var(--bg); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; margin-left: -10px; }
-.av-stack .av:first-child { margin-left: 0; }
-.social-proof p { font-size: 13.5px; color: var(--muted); }
-.social-proof strong { color: var(--text); }
-
-/* ─── HERO RIGHT: MOCK ─── */
-.hero-right { flex: 1; position: relative; z-index: 1; display: flex; justify-content: center; align-items: center; min-height: 480px; }
-.hero-mockup { position: relative; width: 100%; max-width: 480px; }
-
-.mock-card {
-  background: linear-gradient(145deg, #13131f, #0f0f1a);
-  border: 1px solid rgba(255,255,255,.1);
-  border-radius: 18px;
-  padding: 22px;
-  box-shadow: 0 40px 100px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.05), 0 0 60px rgba(30,94,255,.05);
-  position: relative;
-  z-index: 2;
-}
-.mock-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-.mock-module-tag {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.28);
-  padding: 4px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 600; color: var(--gold);
-}
-.mock-prog { font-size: 12px; color: var(--muted); font-weight: 500; }
-.mock-prog span { color: var(--text); font-weight: 700; }
-.mock-q-num { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 10px; font-weight: 600; }
-.mock-question { font-size: 14px; font-weight: 600; line-height: 1.55; margin-bottom: 16px; }
-.mock-opts { display: flex; flex-direction: column; gap: 7px; }
-.mock-opt {
-  padding: 9px 13px; border-radius: 9px; font-size: 13px;
-  border: 1px solid rgba(255,255,255,.07); background: rgba(255,255,255,.02);
-  display: flex; align-items: center; gap: 8px; font-weight: 500;
-}
-.opt-k { width: 20px; height: 20px; border-radius: 5px; background: rgba(255,255,255,.06); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
-.mock-opt.c-opt { background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.35); color: #34d399; }
-.mock-opt.c-opt .opt-k { background: rgba(16,185,129,.25); }
-.mock-opt.w-opt { background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.3); color: #fb7185; }
-.mock-opt.w-opt .opt-k { background: rgba(239,68,68,.2); }
-.mock-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.06); }
-.mock-timer { font-size: 22px; font-weight: 800; color: var(--gold); letter-spacing: -1px; }
-.mock-timer-lbl { font-size: 11px; color: var(--muted); }
-.mock-next { padding: 7px 16px; background: var(--crimson); border: none; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 700; cursor: default; }
-
-/* Float cards */
-.float-card { position: absolute; background: linear-gradient(145deg,#16162a,#111122); border: 1px solid rgba(255,255,255,.1); border-radius: 14px; padding: 14px 18px; box-shadow: 0 12px 40px rgba(0,0,0,.5); z-index: 3; }
-.fc-badge { top: -36px; right: -28px; display: flex; align-items: center; gap: 12px; animation: fy 4s ease-in-out infinite .5s; }
-.fc-badge .fc-emoji { font-size: 28px; line-height: 1; }
-.fc-badge .fc-unlocked { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
-.fc-badge .fc-name { font-size: 14px; font-weight: 700; margin-top: 1px; }
-.fc-badge .fc-pts { font-size: 12px; color: var(--gold); font-weight: 600; margin-top: 2px; }
-.fc-streak { bottom: -24px; left: -32px; animation: fy 4s ease-in-out infinite 1.2s; }
-.fc-streak .fs-hdr { font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 10px; }
-.fc-streak .fs-days { display: flex; gap: 5px; }
-.sd { width: 26px; height: 26px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
-.sd.done { background: rgba(245,158,11,.18); color: var(--gold); border: 1px solid rgba(245,158,11,.3); }
-.sd.today { background: var(--gold); color: #000; }
-.sd.miss { background: rgba(255,255,255,.04); color: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.06); }
-.fc-score { top: 50%; right: -42px; min-width: 90px; text-align: center; animation: fsy 4s ease-in-out infinite .6s; }
-.fc-score .score-ring { width: 56px; height: 56px; border-radius: 50%; border: 3px solid rgba(255,255,255,.06); border-top-color: var(--green); border-right-color: var(--green); display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-size: 14px; font-weight: 800; color: var(--green); }
-.fc-score .score-lbl { font-size: 11px; color: var(--muted); }
-@keyframes fy { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-9px)} }
-@keyframes fsy { 0%,100%{transform:translateY(-50%)} 50%{transform:translateY(calc(-50% - 9px))} }
-
-/* ─── STATS BAR ─── */
-.stats-bar { position: relative; z-index: 1; background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); display: grid; grid-template-columns: repeat(4,1fr); }
-.stat-item { padding: 40px 20px; text-align: center; border-right: 1px solid var(--border); }
-.stat-item:last-child { border-right: none; }
-.stat-num { font-size: 46px; font-weight: 900; letter-spacing: -2.5px; line-height: 1; margin-bottom: 8px; display: block; }
-.stat-sfx { font-size: 28px; font-weight: 900; vertical-align: super; }
-.stat-lbl { font-size: 13.5px; color: var(--muted); font-weight: 500; }
-
-/* ─── SECTION COMMONS ─── */
-.sec-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--crimson); margin-bottom: 16px; }
-.sec-h { font-size: clamp(30px,4vw,50px); font-weight: 900; letter-spacing: -2px; line-height: 1.08; margin-bottom: 16px; }
-.sec-sub { font-size: 16px; color: var(--muted); line-height: 1.75; }
-
-/* ─── MARQUEE ─── */
-.marquee-band { position: relative; z-index: 1; padding: 36px 0; background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); overflow: hidden; }
-.mq-track { display: flex; white-space: nowrap; animation: mq 22s linear infinite; }
-.mq-item { display: inline-flex; align-items: center; gap: 10px; padding: 0 30px; font-size: 14px; font-weight: 600; color: var(--muted); border-right: 1px solid var(--border); flex-shrink: 0; }
-.mq-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--crimson); }
-@keyframes mq { from{transform:translateX(0)} to{transform:translateX(-50%)} }
-
-/* ─── FEATURES ─── */
-.features { padding: 110px 64px; position: relative; z-index: 1; }
-.feat-intro { max-width: 560px; margin-bottom: 64px; }
-.feat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
-
-.feat-card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 30px; transition: all .3s; position: relative; overflow: hidden; }
-.feat-card::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 50% -20%, rgba(30,94,255,.08) 0%, transparent 70%); opacity: 0; transition: opacity .3s; }
-.feat-card:hover { border-color: rgba(30,94,255,.28); transform: translateY(-5px); }
-.feat-card:hover::after { opacity: 1; }
-.feat-icon { width: 50px; height: 50px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 22px; position: relative; z-index: 1; }
-.feat-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 10px; letter-spacing: -.4px; position: relative; z-index: 1; }
-.feat-card p { font-size: 14px; color: var(--muted); line-height: 1.65; position: relative; z-index: 1; }
-
-/* Large card: Coding Lab */
-.feat-card.large { grid-column: span 2; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: center; }
-.feat-visual { background: var(--bg3); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
-.code-mockup { font-family: var(--mono); font-size: 12.5px; line-height: 1.7; }
-.code-bar { background: #161b22; padding: 8px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2d3748; }
-.code-lang { font-size: 11px; font-weight: 700; color: var(--gold); letter-spacing: .5px; }
-.code-dots { display: flex; gap: 5px; }
-.code-dot { width: 10px; height: 10px; border-radius: 50%; }
-.code-body { padding: 16px; background: #0d1117; }
-.code-line { display: flex; gap: 14px; }
-.ln { color: #4a5568; min-width: 18px; text-align: right; user-select: none; }
-.kw { color: #ff7b72; }
-.fn { color: #d2a8ff; }
-.st { color: #a5d6ff; }
-.cm { color: #8b949e; font-style: italic; }
-.nm { color: #79c0ff; }
-.op { color: #ff7b72; }
-
-/* Analytics mini */
-.mini-analytics { display: flex; flex-direction: column; gap: 10px; padding: 18px; }
-.ma-row { display: flex; align-items: center; gap: 10px; font-size: 12.5px; }
-.ma-label { width: 90px; color: var(--muted); font-weight: 500; flex-shrink: 0; font-size: 11.5px; }
-.ma-track { flex: 1; height: 6px; background: rgba(255,255,255,.06); border-radius: 3px; overflow: hidden; }
-.ma-fill { height: 100%; border-radius: 3px; }
-.ma-pct { width: 36px; text-align: right; font-weight: 700; font-size: 12px; }
-
-/* ─── GAMIFICATION ─── */
-.gamification { padding: 100px 64px; background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); position: relative; z-index: 1; }
-.gami-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
-
-.badges-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
-.bdg { aspect-ratio: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: default; transition: all .25s; position: relative; overflow: hidden; }
-.bdg::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 50% 0%, rgba(245,158,11,.12) 0%, transparent 70%); opacity: 0; transition: opacity .3s; }
-.bdg:hover { transform: scale(1.06) rotate(1deg); border-color: rgba(245,158,11,.35); }
-.bdg:hover::before { opacity: 1; }
-.bdg.locked { filter: grayscale(1) brightness(.35); }
-.bdg .bi { font-size: 30px; line-height: 1; position: relative; z-index: 1; }
-.bdg .bl { font-size: 9px; font-weight: 700; text-align: center; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); position: relative; z-index: 1; padding: 0 4px; }
-.bdg.earned .bl { color: var(--gold); }
-.gami-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
-.gami-tag { padding: 8px 16px; border-radius: 100px; font-size: 13px; font-weight: 600; }
-
-/* ─── LEADERBOARD ─── */
-.leaderboard { padding: 100px 64px; position: relative; z-index: 1; }
-.lb-center { display: flex; flex-direction: column; align-items: center; text-align: center; }
-.lb-wrap { width: 100%; max-width: 700px; background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
-.lb-hdr { display: grid; grid-template-columns: 56px 1fr 110px 90px; padding: 13px 24px; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); border-bottom: 1px solid var(--border); background: rgba(255,255,255,.02); }
-.lb-row { display: grid; grid-template-columns: 56px 1fr 110px 90px; padding: 15px 24px; align-items: center; border-bottom: 1px solid rgba(255,255,255,.04); transition: background .2s; }
-.lb-row:last-child { border-bottom: none; }
-.lb-row:hover { background: rgba(255,255,255,.02); }
-.lb-row.you { background: rgba(30,94,255,.05); border-left: 2px solid var(--crimson); }
-.lb-rank { font-size: 16px; font-weight: 800; }
-.r-gold { color: var(--gold); }
-.r-silver { color: #94a3b8; }
-.r-bronze { color: #cd7c32; }
-.r-you { color: var(--crimson); font-size: 14px; }
-.lb-student { display: flex; align-items: center; gap: 11px; }
-.lb-av { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
-.lb-name { font-size: 14px; font-weight: 600; }
-.lb-you-tag { font-size: 10.5px; background: rgba(30,94,255,.15); color: var(--crimson); border-radius: 4px; padding: 1px 5px; font-weight: 700; }
-.lb-score { font-size: 14px; font-weight: 800; color: var(--green); }
-.lb-badges { font-size: 13px; color: var(--muted); font-weight: 600; }
-
-/* ─── CTA ─── */
-.cta-section { padding: 120px 64px; text-align: center; position: relative; z-index: 1; overflow: hidden; }
-.cta-glow { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 800px; height: 500px; background: radial-gradient(ellipse, rgba(30,94,255,.1) 0%, transparent 70%); pointer-events: none; }
-.cta-section .sec-h { font-size: clamp(36px,5vw,64px); max-width: 700px; margin: 0 auto 20px; }
-.cta-section .sec-sub { max-width: 520px; margin: 0 auto 44px; }
-
-/* ─── FOOTER ─── */
-footer { padding: 36px 64px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
-.foot-logo { font-size: 18px; font-weight: 900; letter-spacing: -.5px; }
-.foot-logo span { color: var(--crimson); }
-.foot-links { display: flex; gap: 24px; }
-.foot-links a { color: var(--muted); text-decoration: none; font-size: 13.5px; font-weight: 500; transition: color .2s; }
-.foot-links a:hover { color: var(--text); }
-.foot-copy { font-size: 13px; color: var(--muted); }
-
-/* ─── REVEAL ─── */
-.reveal { opacity: 0; transform: translateY(28px); transition: opacity .65s ease, transform .65s ease; }
-.reveal.in { opacity: 1; transform: translateY(0); }
-
-/* ─── RESPONSIVE ─── */
-@media (max-width: 1024px) {
-  nav, .hero, .features, .gamification, .leaderboard, .cta-section, footer { padding-left: 32px; padding-right: 32px; }
-  .feat-grid { grid-template-columns: 1fr 1fr; }
-  .feat-card.large { grid-column: span 2; }
-}
-@media (max-width: 768px) {
-  nav { padding: 15px 20px; }
-  .nav-links, .fc-badge, .fc-streak, .fc-score { display: none; }
-  .hero { flex-direction: column; padding: 110px 20px 60px; text-align: center; }
-  .hero p { margin: 0 auto 40px; }
-  .hero-btns { justify-content: center; }
-  .social-proof { justify-content: center; }
-  .hero-right { display: none; }
-  .stats-bar { grid-template-columns: repeat(2,1fr); }
-  .stat-item { border-right: none; border-bottom: 1px solid var(--border); }
-  .features, .gamification, .leaderboard, .cta-section, footer { padding-left: 20px; padding-right: 20px; }
-  .feat-grid { grid-template-columns: 1fr; }
-  .feat-card.large { grid-column: span 1; grid-template-columns: 1fr; }
-  .gami-layout { grid-template-columns: 1fr; gap: 40px; }
-  footer { flex-direction: column; gap: 16px; text-align: center; }
-}
-
-/* ===== SAARTHI 360 — ENHANCED ANIMATION + GLASS LAYER ===== */
-.hero{ position:relative; }
-.hero-left,.hero-right{ position:relative; z-index:2; }
-
-/* Aurora glow + floating particles */
-.hero-aurora{ position:absolute; inset:-20%; z-index:0; pointer-events:none;
-  background:
-   radial-gradient(40% 40% at 20% 30%, rgba(30,94,255,.20), transparent 60%),
-   radial-gradient(45% 45% at 82% 22%, rgba(91,140,255,.18), transparent 60%),
-   radial-gradient(50% 50% at 60% 82%, rgba(245,158,11,.14), transparent 60%);
-  filter:blur(30px); animation:auroraShift 20s ease-in-out infinite; }
-@keyframes auroraShift{ 0%,100%{transform:translate(0,0) rotate(0deg) scale(1)} 33%{transform:translate(4%,-3%) rotate(4deg) scale(1.05)} 66%{transform:translate(-3%,3%) rotate(-4deg) scale(1.02)} }
-.hero-particles{ position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:1; }
-.hero-particles .hp{ position:absolute; border-radius:50%; opacity:0; animation:hpFloat linear infinite; box-shadow:0 0 8px currentColor; }
-@keyframes hpFloat{ 0%{transform:translateY(30px) scale(.5); opacity:0} 12%{opacity:.85} 88%{opacity:.5} 100%{transform:translateY(-150px) scale(1.15); opacity:0} }
-
-/* Headline: word-by-word reveal + flowing gradient */
-.hero-left h1 .wr{ display:inline-block; opacity:0; transform:translateY(28px) rotate(3deg); animation:wordUp .7s cubic-bezier(.2,.75,.25,1) forwards; }
-@keyframes wordUp{ to{opacity:1; transform:none;} }
-.hero-left h1 .grad{ display:inline-block; opacity:0; transform:translateY(28px); background-size:220% auto;
-  animation:wordUp .8s cubic-bezier(.2,.75,.25,1) .55s forwards, gradFlow 5s ease-in-out 1.5s infinite; }
-@keyframes gradFlow{ 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-
-/* Glassmorphism — feature cards, mockup, badge, float chips */
-.feat-card{ background:linear-gradient(160deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
-  backdrop-filter:blur(16px) saturate(150%); -webkit-backdrop-filter:blur(16px) saturate(150%);
-  border:1px solid rgba(255,255,255,.12);
-  box-shadow:0 8px 32px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
-  transform-style:preserve-3d; transition:transform .18s ease, border-color .3s, box-shadow .3s; }
-.feat-card:hover{ box-shadow:0 20px 50px rgba(0,0,0,.42), 0 0 0 1px rgba(30,94,255,.25), inset 0 1px 0 rgba(255,255,255,.14); }
-.mock-card,.hero-badge{ backdrop-filter:blur(18px) saturate(160%); -webkit-backdrop-filter:blur(18px) saturate(160%);
-  box-shadow:0 22px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.10); transition:transform .2s ease; }
-.hero-badge{ background:linear-gradient(120deg, rgba(255,255,255,.10), rgba(255,255,255,.03)); border:1px solid rgba(255,255,255,.16); }
-.float-card{ backdrop-filter:blur(10px) saturate(140%); -webkit-backdrop-filter:blur(10px) saturate(140%); border:1px solid rgba(255,255,255,.16); }
-
-/* MCQ mockup: pulsing correct answer + live timer */
-.mock-opt.c-opt{ animation:cPulse 2.4s ease-in-out infinite; }
-@keyframes cPulse{ 0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,0)} 50%{box-shadow:0 0 0 4px rgba(16,185,129,.22)} }
-.mock-timer{ transition:color .3s; }
-
-/* Primary button shimmer */
-.btn-hp{ position:relative; overflow:hidden; }
-.btn-hp::after{ content:''; position:absolute; top:0; left:-120%; width:60%; height:100%; pointer-events:none;
-  background:linear-gradient(120deg, transparent, rgba(255,255,255,.35), transparent); transform:skewX(-20deg); animation:shine 3.4s ease-in-out infinite; }
-@keyframes shine{ 0%,60%{left:-120%} 100%{left:130%} }
-
-@media (prefers-reduced-motion: reduce){
-  .hero-aurora,.hero-particles{ display:none!important; }
-  .btn-hp::after,.mock-opt.c-opt{ animation:none!important; }
-}
-/* ===== END ENHANCED LAYER ===== */
-
-
-/* ===== SAARTHI 360 BRAND LOGO ===== */
-.nav-logo{ display:inline-flex; align-items:center; gap:9px; }
-.nav-logo .brand-mark{ height:40px; width:auto; filter:drop-shadow(0 3px 12px rgba(30,94,255,.55)); }
-.nav-logo span{ color:var(--blue); }
-.foot-logo{ display:inline-flex; align-items:center; gap:8px; }
-.foot-logo .brand-mark{ height:32px; width:auto; filter:drop-shadow(0 2px 9px rgba(30,94,255,.45)); }
-.foot-logo span{ color:var(--blue); }
-/* ===== END BRAND LOGO ===== */
-
+:root{--ink:#0f1222;--ink2:#454b66;--mut:#7a8099;--line:#e8eaf2;--bg:#f6f7fb;--indigo:#5b5bf7;--violet:#8b5cf6;--cyan:#22d3ee;--grad:linear-gradient(135deg,#5b5bf7,#8b5cf6);
+--hero:radial-gradient(900px 500px at 0% 0%,rgba(91,91,247,.55),transparent 60%),radial-gradient(800px 480px at 100% 100%,rgba(139,92,246,.5),transparent 60%),radial-gradient(500px 300px at 70% 0%,rgba(34,211,238,.22),transparent 60%),#0b0e2a;
+--shadow:0 1px 2px rgba(16,24,40,.04),0 10px 30px rgba(16,24,40,.07)}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+.disp{font-family:'Inter Tight',Inter,sans-serif;letter-spacing:-.03em}
+/* nav */
+nav{position:fixed;top:0;left:0;right:0;z-index:50;transition:background .25s,box-shadow .25s}
+nav.s{background:rgba(255,255,255,.88);backdrop-filter:saturate(1.8) blur(14px);box-shadow:0 1px 0 var(--line)}
+.nv{display:flex;align-items:center;gap:28px;height:68px}
+.logo{display:flex;align-items:center;gap:10px;font-family:'Inter Tight';font-weight:800;font-size:20px;color:#fff}
+nav.s .logo{color:var(--ink)}
+.logo .mk{width:34px;height:34px}.logo b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+nav.s .logo b{background:var(--grad);-webkit-background-clip:text}
+.nl{display:flex;gap:24px;margin-left:12px}.nl a{font-size:14px;font-weight:600;color:#cfd1ff;transition:color .15s}.nl a:hover{color:#fff}
+nav.s .nl a{color:var(--ink2)}nav.s .nl a:hover{color:var(--indigo)}
+.nr{margin-left:auto;display:flex;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:12px;padding:11px 20px;font-weight:700;font-size:14px;cursor:pointer;border:1px solid transparent;transition:transform .15s,box-shadow .15s,background .15s;font-family:inherit}
+.btn:hover{transform:translateY(-1px)}
+.btn.pri{background:var(--grad);color:#fff;box-shadow:0 10px 26px rgba(91,91,247,.35)}
+.btn.gh{background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.22)}
+nav.s .btn.gh{background:#fff;color:var(--ink2);border-color:var(--line)}
+.btn.wh{background:#fff;color:var(--indigo)}
+/* hero */
+.hero{background:var(--hero);color:#fff;padding:140px 0 110px;position:relative;overflow:hidden}
+.hero:after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(ellipse at 50% 30%,#000 30%,transparent 75%);pointer-events:none}
+.hg{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center;position:relative;z-index:1}
+.pill{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600;color:#e3e4ff}
+.pill i{width:8px;height:8px;border-radius:50%;background:#34d399;box-shadow:0 0 0 4px rgba(52,211,153,.2)}
+h1{font-size:62px;line-height:1.02;font-weight:900;margin:20px 0 18px}
+h1 span{background:linear-gradient(90deg,#a5b4fc,#c4b5fd,#67e8f9);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{font-size:18px;line-height:1.65;color:#cfd1ff;max-width:560px}
+.cta{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap}
+.trust{display:flex;gap:22px;margin-top:34px;flex-wrap:wrap;font-size:13px;color:#b9bbf0}.trust b{color:#fff}
+/* preview */
+.pv{position:relative;height:470px}
+.card{background:#fff;color:var(--ink);border-radius:20px;box-shadow:0 30px 70px rgba(5,8,40,.45)}
+.q{position:absolute;left:0;top:10px;width:88%;padding:22px 22px 18px;animation:fl 6s ease-in-out infinite}
+.qh{display:flex;gap:8px;align-items:center;margin-bottom:12px}.qn{width:30px;height:30px;border-radius:10px;background:var(--grad);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:13px}
+.tg{font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;background:#f0f2f8;color:var(--ink2)}.tg.y{background:#fff4dc;color:#a15c00}
+.qt{font-weight:700;font-size:15px;line-height:1.5;margin-bottom:12px}
+.op{display:flex;gap:10px;align-items:center;border:1.5px solid var(--line);border-radius:12px;padding:9px 12px;font-size:13.5px;margin-bottom:8px}
+.op b{width:24px;height:24px;border-radius:8px;background:#f0f2f8;display:flex;align-items:center;justify-content:center;font-size:11.5px}
+.op.on{border-color:var(--indigo);background:#f3f3ff;box-shadow:0 0 0 4px rgba(91,91,247,.1)}.op.on b{background:var(--grad);color:#fff}
+.tm{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:12px;color:var(--mut)}.tm .bar{flex:1;height:6px;background:#f0f2f8;border-radius:9px;margin:0 12px;overflow:hidden}.tm .bar i{display:block;height:100%;width:62%;background:var(--grad)}
+.ck{position:absolute;right:0;bottom:24px;width:62%;padding:16px 16px 14px;display:flex;gap:12px;animation:fl 6s ease-in-out -3s infinite}
+.ck .av{width:54px;height:58px;flex-shrink:0}
+.ck small{font-size:11px;font-weight:700;color:var(--indigo);letter-spacing:.4px}.ck p{font-size:13px;line-height:1.5;color:var(--ink2);margin-top:3px}
+.bd{position:absolute;right:6%;top:-8px;padding:10px 14px;display:flex;align-items:center;gap:10px;animation:fl 5s ease-in-out -1s infinite}
+.bd .hx{width:38px;height:42px}.bd b{display:block;font-size:13px}.bd span{font-size:11.5px;color:var(--mut)}
+@keyframes fl{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+/* stats */
+.stats{margin-top:-46px;position:relative;z-index:2}
+.sg{display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow)}
+.st{padding:24px 26px;border-right:1px solid var(--line)}.st:last-child{border:none}
+.st b{display:block;font-family:'Inter Tight';font-size:34px;font-weight:800;letter-spacing:-.03em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.st span{font-size:13.5px;color:var(--mut);font-weight:600}
+/* sections */
+section{padding:96px 0}
+.kick{font-size:12.5px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--indigo)}
+h2{font-size:42px;line-height:1.08;font-weight:800;margin:10px 0 14px}
+.sub{font-size:17px;line-height:1.65;color:var(--ink2);max-width:640px}
+.ctr{text-align:center}.ctr .sub{margin:0 auto}
+.pg{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:40px}
+.pc{background:#fff;border:1px solid var(--line);border-radius:22px;padding:26px;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.pc:hover{transform:translateY(-4px);box-shadow:0 20px 44px rgba(16,24,40,.12)}
+.pc:before{content:"";position:absolute;inset:0 0 auto 0;height:5px;background:var(--c)}
+.pc .ic{width:48px;height:48px;border-radius:14px;background:var(--c);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px}
+.pc h3{font-family:'Inter Tight';font-size:21px;font-weight:800}.pc .nm{font-size:13.5px;color:var(--mut);font-weight:600;margin:2px 0 12px}
+.pc ul{list-style:none;display:flex;flex-wrap:wrap;gap:6px}.pc li{font-size:12px;font-weight:600;color:var(--ink2);background:#f0f2f8;border-radius:999px;padding:4px 10px}
+.fg{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px}
+.fc{background:#fff;border:1px solid var(--line);border-radius:20px;padding:26px;box-shadow:var(--shadow)}
+.fc .ic{width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;background:#f0f0ff;margin-bottom:16px}
+.fc .ic svg{width:22px;height:22px;stroke:var(--indigo);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.fc h3{font-size:17px;font-weight:800;margin-bottom:6px}.fc p{font-size:14px;line-height:1.6;color:var(--ink2)}
+.fc .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:12px}.fc .chips span{font-family:'JetBrains Mono';font-size:11px;font-weight:700;color:var(--indigo);background:#f3f3ff;border-radius:7px;padding:3px 8px}
+/* chakra */
+.dk{background:var(--hero);color:#fff;border-radius:32px;padding:60px;display:grid;grid-template-columns:.8fr 1.2fr;gap:50px;align-items:center;position:relative;overflow:hidden}
+.dk h2{color:#fff}.dk .sub{color:#cfd1ff}.dk .kick{color:#a5b4fc}
+.rb{width:260px;height:280px;margin:0 auto;filter:drop-shadow(0 30px 50px rgba(91,91,247,.5));animation:fl 5s ease-in-out infinite}
+.chat{display:flex;flex-direction:column;gap:10px;margin-top:22px;max-width:520px}
+.m{border-radius:16px;padding:11px 14px;font-size:14px;line-height:1.5;max-width:86%}
+.m.u{align-self:flex-end;background:var(--grad);border-bottom-right-radius:4px}
+.m.b{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-bottom-left-radius:4px;color:#eef}
+.ck-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}.ck-list span{font-size:12.5px;font-weight:600;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:6px 12px}
+/* credential */
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+.cert{background:#fffdf8;border:6px solid #0d1b3e;outline:1.5px solid #c9a227;outline-offset:-14px;border-radius:6px;padding:34px 30px 26px;text-align:center;box-shadow:0 30px 60px rgba(13,27,62,.18);transform:rotate(-1.5deg)}
+.cert .k{font-size:10px;letter-spacing:3px;font-weight:700;color:#8a6d12}.cert .t{font-family:Georgia,serif;font-weight:700;font-size:25px;color:#0d1b3e;margin:6px 0 8px}
+.cert .tag{display:inline-block;background:#0d1b3e;color:#f0d27a;font-size:10px;font-weight:800;letter-spacing:2px;border-radius:999px;padding:4px 12px}
+.cert .n{font-family:'Brush Script MT','Segoe Script',cursive;font-size:38px;color:#12224e;margin:12px 0 2px}
+.cert .ft{display:flex;justify-content:space-between;align-items:flex-end;margin-top:18px;font-size:10.5px;color:#55617a;text-align:left}
+.qr{width:54px;height:54px;background:repeating-conic-gradient(#0d1b3e 0 25%,#fff 0 50%) 0 0/12px 12px;border:4px solid #fff;outline:1px solid #e3e6ee}
+.seal{width:60px;height:60px;border-radius:50%;background:#0d1b3e;border:3px solid #c9a227;color:#f0d27a;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1.2}
+.ticks{list-style:none;margin:22px 0 26px;display:grid;gap:12px}.ticks li{display:flex;gap:12px;align-items:flex-start;font-size:15px;color:var(--ink2);line-height:1.5}
+.ticks li b{color:var(--ink)}.ticks i{flex-shrink:0;width:24px;height:24px;border-radius:50%;background:#e7f8f1;color:#0a7a55;display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:900;font-size:12px}
+.vf{display:flex;gap:8px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px;box-shadow:var(--shadow);max-width:480px}
+.vf input{flex:1;border:none;outline:none;font:600 14px 'JetBrains Mono',monospace;padding:0 10px;color:var(--ink);min-width:0}
+.vf .btn{padding:10px 16px}
+.vh{font-size:12.5px;color:var(--mut);margin-top:8px}
+/* steps */
+.sp{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px;counter-reset:s}
+.sc{background:#fff;border:1px solid var(--line);border-radius:20px;padding:26px;box-shadow:var(--shadow);counter-increment:s}
+.sc:before{content:counter(s);display:flex;width:38px;height:38px;border-radius:12px;background:var(--grad);color:#fff;font-weight:800;align-items:center;justify-content:center;margin-bottom:14px;font-family:'Inter Tight'}
+.sc h3{font-size:17px;font-weight:800;margin-bottom:6px}.sc p{font-size:14px;color:var(--ink2);line-height:1.6}
+/* cta */
+.fin{background:var(--hero);border-radius:32px;padding:64px 40px;text-align:center;color:#fff}
+.fin h2{color:#fff}.fin .sub{color:#cfd1ff;margin:0 auto 28px}
+footer{padding:40px 0 50px;color:var(--mut);font-size:13.5px}
+.fr{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--line);padding-top:26px}
+.fr .logo{color:var(--ink);font-size:17px}.fr .lk{display:flex;gap:18px}.fr .lk a:hover{color:var(--indigo)}
+.rv{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}.rv.in{opacity:1;transform:none}
+@media(max-width:980px){h1{font-size:44px}.hg,.dk,.cg{grid-template-columns:1fr}.pv{height:440px;max-width:520px}.pg,.fg,.sp{grid-template-columns:1fr 1fr}.sg{grid-template-columns:1fr 1fr}.st:nth-child(2){border-right:none}.st{border-bottom:1px solid var(--line)}.nl{display:none}.dk{padding:40px 28px}}
+@media(max-width:620px){h1{font-size:36px}h2{font-size:30px}.hero{padding:112px 0 90px}.pg,.fg,.sp{grid-template-columns:1fr}.pv{height:420px}.q{width:100%}.ck{width:84%}.bd{display:none}.nr .gh{display:none}section{padding:70px 0}.st b{font-size:28px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}}
 </style>
 </head>
 <body>
+<nav id="nav"><div class="wrap nv">
+  <a class="logo" href="#"><svg class="mk" viewBox="0 0 120 120"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b5bf7"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><circle cx="60" cy="60" r="54" fill="none" stroke="url(#lg)" stroke-width="10"/><circle cx="60" cy="60" r="28" fill="url(#lg)"/><g stroke="url(#lg)" stroke-width="6" stroke-linecap="round"><path d="M60 6v20M60 94v20M6 60h20M94 60h20M22 22l14 14M84 84l14 14M98 22 84 36M36 84 22 98"/></g></svg>Saarthi <b>360</b></a>
+  <div class="nl"><a href="#programmes">Programmes</a><a href="#features">Features</a><a href="#chakra">Chakra AI</a><a href="#credentials">Credentials</a></div>
+  <div class="nr"><a class="btn gh" href="#verify">Verify credential</a><a class="btn pri" href="login.html">Log in →</a></div>
+</div></nav>
 
-<!-- ─── NAVBAR ─── -->
-<nav>
-  <a href="#" class="nav-logo"><img src="saarthi-mascot.png" alt="Saarthi 360 mascot" class="brand-mark">Saarthi<span>360</span></a>
-  <ul class="nav-links">
-    <li><a href="#features">Features</a></li>
-    <li><a href="#modules">Modules</a></li>
-    <li><a href="#badges">Badges</a></li>
-    <li><a href="#leaderboard">Leaderboard</a></li>
-  </ul>
-  <div class="nav-cta">
-    <a href="login.html" class="btn-outline">Log In</a>
-    <a href="login.html" class="btn-primary">Get Started →</a>
+<header class="hero"><div class="wrap hg">
+  <div>
+    <span class="pill"><i></i> C-DAC Mumbai · Kharghar — PGCP programmes</span>
+    <h1 class="disp">Practise smarter.<br>Code daily.<br><span>Get placement-ready.</span></h1>
+    <p class="lead">Saarthi 360 is where C-DAC PGCP students practise exam-pattern MCQs, solve real coding problems, learn with <b style="color:#fff">Chakra</b> — an AI study buddy that speaks English and Hinglish — and earn monthly credentials that recruiters can verify.</p>
+    <div class="cta"><a class="btn pri" href="login.html">Enter Saarthi 360 →</a><a class="btn gh" href="#features">See what's inside</a></div>
+    <div class="trust"><span>✓ <b>Free</b> for enrolled students</span><span>✓ Works on <b>phone & laptop</b></span><span>✓ <b>Fair-play</b> exams</span></div>
   </div>
-</nav>
-
-<!-- ─── HERO ─── -->
-<section class="hero">
-  <div class="glow-r"></div>
-  <div class="glow-l"></div>
-  <div class="hero-aurora"></div>
-  <div class="hero-particles" id="heroPtcls"></div>
-
-  <div class="hero-left reveal">
-    <div class="hero-badge">
-      <span class="pulse"></span>
-      CDAC Kharghar · PGCP Courses
+  <div class="pv" aria-hidden="true">
+    <div class="card q">
+      <div class="qh"><div class="qn">9</div><span class="tg y">intermediate</span><span class="tg">Hadoop & HDFS</span></div>
+      <div class="qt">In MapReduce, which phase sorts the intermediate key–value pairs and sends them to the reducers?</div>
+      <div class="op"><b>A</b>Map phase</div><div class="op"><b>B</b>Combine phase</div><div class="op on"><b>C</b>Shuffle &amp; sort phase</div><div class="op"><b>D</b>Partition phase</div>
+      <div class="tm"><span>Q 9 / 40</span><div class="bar"><i></i></div><span>⏱ 22:18</span></div>
     </div>
-    <h1>
-      Master Big Data<br>
-      Analytics. Build<br>
-      <span class="grad">Real Code. Win.</span>
-    </h1>
-    <p>Adaptive MCQ engine, live coding lab with syntax highlighting, assignment tracker, and gamified badges — designed exclusively for CDAC PGCP students.</p>
-    <div class="hero-btns">
-      <a href="login.html" class="btn-hero btn-hp">Start Practicing Free →</a>
-      <a href="#features" class="btn-hero btn-hg">↓ See Features</a>
+    <div class="card bd"><svg class="hx" viewBox="0 0 100 110"><defs><linearGradient id="hg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b5bf7"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><path d="M50 4 92 28v54L50 106 8 82V28Z" fill="url(#hg1)"/><text x="50" y="66" text-anchor="middle" font-family="Inter Tight,Arial" font-weight="800" font-size="30" fill="#fff">02</text></svg><div><b>Month 2 credential</b><span>Verified · Add to LinkedIn</span></div></div>
+    <div class="card ck"><div class="av"><svg class="bot" width="100%" height="100%" viewBox="0 0 120 132" aria-hidden="true">
+  <defs>
+    <linearGradient id="lpVisor2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b2550"/><stop offset="1" stop-color="#05091f"/></linearGradient>
+    <linearGradient id="lpShell2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dfe6f7"/></linearGradient>
+    <linearGradient id="lpCape2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#3730a3"/></linearGradient>
+    <filter id="lpGlow2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <g class="ck-cape"><path d="M30 78 C12 96 10 118 22 128 C40 120 52 124 60 118 C70 124 84 120 98 128 C110 116 106 96 90 78 Z" fill="url(#lpCape2)" stroke="#26305e" stroke-width="1.4" stroke-linejoin="round"/></g>
+  <g class="ck-body">
+    <path d="M38 76 Q60 66 82 76 L86 104 Q60 118 34 104 Z" fill="url(#lpShell2)" stroke="#26305e" stroke-width="1.4" stroke-linejoin="round"/>
+    <circle cx="60" cy="92" r="8" fill="#4f46e5" stroke="#26305e" stroke-width="1.2"/>
+    <path d="M56 95 l4-7 4 7" fill="none" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g class="ck-arm"><rect x="82" y="78" width="12" height="26" rx="6" fill="url(#lpShell2)" stroke="#26305e" stroke-width="1.4"/><circle cx="88" cy="104" r="5" fill="#4f46e5" stroke="#26305e" stroke-width="1.2"/></g>
+  <g class="ck-head">
+    <circle cx="17" cy="48" r="7" fill="#4f46e5" stroke="#26305e" stroke-width="1.4"/>
+    <circle cx="103" cy="48" r="7" fill="#4f46e5" stroke="#26305e" stroke-width="1.4"/>
+    <rect x="18" y="20" width="84" height="58" rx="27" fill="url(#lpShell2)" stroke="#26305e" stroke-width="1.4"/>
+    <rect x="27" y="29" width="66" height="40" rx="19" fill="url(#lpVisor2)" stroke="#26305e" stroke-width="1.2"/>
+    <path d="M33 37 Q44 31 55 33" stroke="rgba(255,255,255,.35)" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <g class="ck-eyes" filter="url(#lpGlow2)" stroke="#5ee7ff" stroke-width="4" fill="none" stroke-linecap="round">
+      <g class="ck-e-happy"><path d="M42 53 Q48 45 54 53"/><path d="M66 53 Q72 45 78 53"/></g>
+      <g class="ck-e-open"><circle cx="48" cy="50" r="4.5" fill="#5ee7ff" stroke="none"/><circle cx="72" cy="50" r="4.5" fill="#5ee7ff" stroke="none"/></g>
+      <g class="ck-e-think"><circle cx="51" cy="46" r="3.6" fill="#5ee7ff" stroke="none"/><circle cx="75" cy="46" r="3.6" fill="#5ee7ff" stroke="none"/></g>
+      <g class="ck-e-sleep"><path d="M42 51 h12"/><path d="M66 51 h12"/></g>
+      <g class="ck-e-sad"><path d="M42 49 Q48 55 54 49"/><path d="M66 49 Q72 55 78 49"/></g>
+    </g>
+    <rect class="ck-mouth" x="55" y="60" width="10" height="3" rx="1.5" fill="#5ee7ff" filter="url(#lpGlow2)"/>
+  </g>
+  <g class="ck-cap">
+    <path d="M60 4 L98 16 L60 28 L22 16 Z" fill="#0b1437" stroke="#26305e" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M40 21 v7 q20 8 40 0 v-7" fill="#16204d" stroke="#26305e" stroke-width="1.2"/>
+    <g class="ck-tassel"><path d="M60 16 L92 18 L92 34" fill="none" stroke="#ffc531" stroke-width="1.4" stroke-linecap="round"/><path d="M88 33 h8 l-1 9 h-6 z" fill="#ffc531" stroke="#26305e" stroke-width="1.5"/></g>
+    <circle cx="60" cy="16" r="2.6" fill="#ffc531"/>
+  </g>
+  <g class="ck-zz" fill="#4f46e5" font-family="Bricolage Grotesque,sans-serif" font-weight="800"><text x="96" y="14" font-size="12">z</text><text x="106" y="6" font-size="9">z</text></g>
+</svg></div><div><small>CHAKRA · AI STUDY BUDDY</small><p>Sahi jawab! 🎉 Shuffle &amp; sort mappers ka output key ke hisaab se group karke reducers tak bhejta hai. Next question?</p></div></div>
+  </div>
+</div></header>
+
+<div class="wrap stats"><div class="sg">
+  <div class="st"><b data-n="7200">7,200+</b><span>Q-Bank questions with explanations</span></div>
+  <div class="st"><b data-n="330">330+</b><span>auto-graded coding problems</span></div>
+  <div class="st"><b>7</b><span>coding engines: Python · Java · SQL · MongoDB · Cassandra · Linux · PySpark</span></div>
+  <div class="st"><b>3</b><span>PGCP programmes: BDA · AI · AC</span></div>
+</div></div>
+
+<section id="programmes"><div class="wrap">
+  <div class="ctr rv"><div class="kick">Programmes</div><h2 class="disp">Built for your PGCP curriculum</h2><p class="sub">Every set, problem and credential follows the C-DAC Mumbai syllabus for your programme — not a generic quiz site.</p></div>
+  <div class="pg">
+    <div class="pc rv" style="--c:linear-gradient(135deg,#5b5bf7,#8b5cf6)"><div class="ic">📊</div><h3>PGCP-BDA</h3><div class="nm">Big Data Analytics</div><ul><li>Python & R</li><li>SQL & RDBMS</li><li>MongoDB</li><li>Cassandra</li><li>Hadoop & Hive</li><li>PySpark</li><li>Statistics</li><li>ML & Gen AI</li></ul></div>
+    <div class="pc rv" style="--c:linear-gradient(135deg,#0ea5e9,#6366f1)"><div class="ic">🤖</div><h3>PGCP-AI</h3><div class="nm">Artificial Intelligence</div><ul><li>Python</li><li>Maths for ML</li><li>Machine Learning</li><li>Deep Learning</li><li>NLP</li><li>Gen AI & LLMs</li><li>MLOps</li></ul></div>
+    <div class="pc rv" style="--c:linear-gradient(135deg,#10b981,#0ea5e9)"><div class="ic">💻</div><h3>PGCP-AC</h3><div class="nm">Advanced Computing</div><ul><li>Java</li><li>Data Structures</li><li>Linux & Cloud</li><li>Git & DevOps</li><li>Databases</li><li>Web Programming</li></ul></div>
+  </div>
+</div></section>
+
+<section id="features" style="padding-top:20px"><div class="wrap">
+  <div class="ctr rv"><div class="kick">Features</div><h2 class="disp">Everything you need, in one place</h2><p class="sub">Practice, code, revise and track your progress — and see exactly what to do next.</p></div>
+  <div class="fg">
+    <div class="fc rv"><div class="ic"><svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg></div><h3>Exam-pattern MCQ practice</h3><p>40-question timed sets per module, a question navigator, mark-for-review, and a result page that shows your weak topics and lets you revise only what you missed.</p></div>
+    <div class="fc rv"><div class="ic"><svg viewBox="0 0 24 24"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg></div><h3>Live coding arena</h3><p>Write and run code in the browser, test with your own input, and submit against hidden test cases — with XP, levels and streaks.</p><div class="chips"><span>Python</span><span>Java</span><span>SQL</span><span>MongoDB</span><span>CQL</span><span>Linux</span><span>PySpark</span></div></div>
+    <div class="fc rv"><div class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 4v4M9 14h.01M15 14h.01"/></svg></div><h3>Chakra — AI study buddy</h3><p>Explains any concept, walks you through your test mistakes and coding errors, quizzes you on weak topics, and talks in English or Hinglish.</p></div>
+    <div class="fc rv"><div class="ic"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg></div><h3>Contests & leaderboard</h3><p>Monthly challenges and a batch leaderboard that combines MCQ and coding — climb the weekly league and keep your streak alive.</p></div>
+    <div class="fc rv"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="M8.5 14 7 22l5-3 5 3-1.5-8"/></svg></div><h3>Verifiable credentials</h3><p>Each month your coordinator certifies your progress. Download the PDF, share a live verification link, or add it to LinkedIn in one click.</p></div>
+    <div class="fc rv"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div><h3>Fair-play exams</h3><p>Full-screen tests with tab-switch and paste monitoring, server-side answer keys and shuffled options — so every score means something.</p></div>
+  </div>
+</div></section>
+
+<section id="chakra" style="padding-top:20px"><div class="wrap"><div class="dk rv">
+  <div class="rb"><svg class="bot" width="100%" height="100%" viewBox="0 0 120 132" aria-hidden="true">
+  <defs>
+    <linearGradient id="lpVisor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b2550"/><stop offset="1" stop-color="#05091f"/></linearGradient>
+    <linearGradient id="lpShell" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#dfe6f7"/></linearGradient>
+    <linearGradient id="lpCape" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#3730a3"/></linearGradient>
+    <filter id="lpGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <g class="ck-cape"><path d="M30 78 C12 96 10 118 22 128 C40 120 52 124 60 118 C70 124 84 120 98 128 C110 116 106 96 90 78 Z" fill="url(#lpCape)" stroke="#26305e" stroke-width="1.4" stroke-linejoin="round"/></g>
+  <g class="ck-body">
+    <path d="M38 76 Q60 66 82 76 L86 104 Q60 118 34 104 Z" fill="url(#lpShell)" stroke="#26305e" stroke-width="1.4" stroke-linejoin="round"/>
+    <circle cx="60" cy="92" r="8" fill="#4f46e5" stroke="#26305e" stroke-width="1.2"/>
+    <path d="M56 95 l4-7 4 7" fill="none" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g class="ck-arm"><rect x="82" y="78" width="12" height="26" rx="6" fill="url(#lpShell)" stroke="#26305e" stroke-width="1.4"/><circle cx="88" cy="104" r="5" fill="#4f46e5" stroke="#26305e" stroke-width="1.2"/></g>
+  <g class="ck-head">
+    <circle cx="17" cy="48" r="7" fill="#4f46e5" stroke="#26305e" stroke-width="1.4"/>
+    <circle cx="103" cy="48" r="7" fill="#4f46e5" stroke="#26305e" stroke-width="1.4"/>
+    <rect x="18" y="20" width="84" height="58" rx="27" fill="url(#lpShell)" stroke="#26305e" stroke-width="1.4"/>
+    <rect x="27" y="29" width="66" height="40" rx="19" fill="url(#lpVisor)" stroke="#26305e" stroke-width="1.2"/>
+    <path d="M33 37 Q44 31 55 33" stroke="rgba(255,255,255,.35)" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <g class="ck-eyes" filter="url(#lpGlow)" stroke="#5ee7ff" stroke-width="4" fill="none" stroke-linecap="round">
+      <g class="ck-e-happy"><path d="M42 53 Q48 45 54 53"/><path d="M66 53 Q72 45 78 53"/></g>
+      <g class="ck-e-open"><circle cx="48" cy="50" r="4.5" fill="#5ee7ff" stroke="none"/><circle cx="72" cy="50" r="4.5" fill="#5ee7ff" stroke="none"/></g>
+      <g class="ck-e-think"><circle cx="51" cy="46" r="3.6" fill="#5ee7ff" stroke="none"/><circle cx="75" cy="46" r="3.6" fill="#5ee7ff" stroke="none"/></g>
+      <g class="ck-e-sleep"><path d="M42 51 h12"/><path d="M66 51 h12"/></g>
+      <g class="ck-e-sad"><path d="M42 49 Q48 55 54 49"/><path d="M66 49 Q72 55 78 49"/></g>
+    </g>
+    <rect class="ck-mouth" x="55" y="60" width="10" height="3" rx="1.5" fill="#5ee7ff" filter="url(#lpGlow)"/>
+  </g>
+  <g class="ck-cap">
+    <path d="M60 4 L98 16 L60 28 L22 16 Z" fill="#0b1437" stroke="#26305e" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M40 21 v7 q20 8 40 0 v-7" fill="#16204d" stroke="#26305e" stroke-width="1.2"/>
+    <g class="ck-tassel"><path d="M60 16 L92 18 L92 34" fill="none" stroke="#ffc531" stroke-width="1.4" stroke-linecap="round"/><path d="M88 33 h8 l-1 9 h-6 z" fill="#ffc531" stroke="#26305e" stroke-width="1.5"/></g>
+    <circle cx="60" cy="16" r="2.6" fill="#ffc531"/>
+  </g>
+  <g class="ck-zz" fill="#4f46e5" font-family="Bricolage Grotesque,sans-serif" font-weight="800"><text x="96" y="14" font-size="12">z</text><text x="106" y="6" font-size="9">z</text></g>
+</svg></div>
+  <div>
+    <div class="kick">Meet Chakra</div>
+    <h2 class="disp">Your study buddy — in English or Hinglish</h2>
+    <p class="sub">Chakra knows every question in the Saarthi Q-Bank, looks things up when needed, and speaks answers aloud in a natural Indian voice.</p>
+    <div class="chat">
+      <div class="m u">quiz me on SQL joins</div>
+      <div class="m b">🎯 Chalo quiz karte hain — SQL joins! Q1: A LEFT JOIN keeps which rows? Option tap karo ya bolo "A", "B", "C" ya "D".</div>
+      <div class="m u">explain my mistakes</div>
+      <div class="m b">You missed 3 questions — let's start with Q12. Window functions keep every row while adding an aggregate…</div>
     </div>
-    <div class="social-proof">
-      <div class="av-stack">
-        <div class="av" style="background:linear-gradient(135deg,#1e5eff,#5b8cff)">R</div>
-        <div class="av" style="background:linear-gradient(135deg,#3b6cff,#5b8cff)">P</div>
-        <div class="av" style="background:linear-gradient(135deg,#0284c7,#38bdf8)">A</div>
-        <div class="av" style="background:linear-gradient(135deg,#059669,#10b981)">S</div>
-        <div class="av" style="background:linear-gradient(135deg,#d97706,#f59e0b)">M</div>
-      </div>
-      <p><strong>1,200+</strong> CDAC students already practicing</p>
-    </div>
+    <div class="ck-list"><span>🔊 Reads answers aloud</span><span>🎤 Voice questions</span><span>🎯 Quiz me</span><span>🐞 Explains code errors</span><span>🗺️ Daily plan</span></div>
   </div>
+</div></div></section>
 
-  <div class="hero-right">
-    <div class="hero-mockup">
-
-      <!-- MCQ Question Card -->
-      <div class="mock-card">
-        <div class="mock-topbar">
-          <div class="mock-module-tag">🐘 Hadoop & Big Data</div>
-          <div class="mock-prog">Q <span>09</span> / 25</div>
-        </div>
-        <div class="mock-q-num">Question 9 of 25 · Medium</div>
-        <div class="mock-question">
-          In Hadoop MapReduce, which phase is responsible for sorting intermediate key-value pairs and transferring them to the Reducer?
-        </div>
-        <div class="mock-opts">
-          <div class="mock-opt">
-            <span class="opt-k">A</span>
-            Map Phase
-          </div>
-          <div class="mock-opt w-opt">
-            <span class="opt-k">B</span>
-            Combine Phase ✗
-          </div>
-          <div class="mock-opt c-opt">
-            <span class="opt-k">C</span>
-            Shuffle &amp; Sort Phase ✓
-          </div>
-          <div class="mock-opt">
-            <span class="opt-k">D</span>
-            Partition Phase
-          </div>
-        </div>
-        <div class="mock-footer">
-          <div>
-            <div class="mock-timer">22:18</div>
-            <div class="mock-timer-lbl">Time Remaining</div>
-          </div>
-          <button class="mock-next">Next →</button>
-        </div>
-      </div>
-
-      <!-- Badge Unlocked float -->
-      <div class="float-card fc-badge">
-        <div class="fc-emoji">🐘</div>
-        <div>
-          <div class="fc-unlocked">Badge Unlocked!</div>
-          <div class="fc-name">Hadoop Hero</div>
-          <div class="fc-pts">+300 XP</div>
-        </div>
-      </div>
-
-      <!-- Score float -->
-      <div class="float-card fc-score">
-        <div class="score-ring">88%</div>
-        <div class="score-lbl">Last Score</div>
-      </div>
-
-      <!-- Streak float -->
-      <div class="float-card fc-streak">
-        <div class="fs-hdr">🔥 5-Day Streak!</div>
-        <div class="fs-days">
-          <div class="sd done">M</div>
-          <div class="sd done">T</div>
-          <div class="sd done">W</div>
-          <div class="sd done">T</div>
-          <div class="sd today">F</div>
-          <div class="sd miss">S</div>
-          <div class="sd miss">S</div>
-        </div>
-      </div>
-    </div>
+<section id="credentials" style="padding-top:20px"><div class="wrap cg">
+  <div class="rv" aria-hidden="true"><div class="cert">
+    <div class="k">PGCP-BDA · BIG DATA ANALYTICS</div><div class="t">Certificate of Professional Development</div><span class="tag">MONTH 02 OF 06</span>
+    <div style="font-family:Georgia,serif;font-style:italic;color:#55617a;margin-top:12px">This is to certify that</div><div class="n">Your Name</div>
+    <div class="ft"><div><div class="qr"></div>Scan to verify</div><div class="seal">C-DAC<br>MUMBAI</div><div style="text-align:center"><div style="font-family:'Brush Script MT',cursive;font-size:22px;color:#12224e">Coordinator</div>Course Coordinator</div></div>
+  </div></div>
+  <div class="rv">
+    <div class="kick">Digital credentials</div>
+    <h2 class="disp">Proof of progress that anyone can check</h2>
+    <ul class="ticks">
+      <li><i>✓</i><span><b>Signed by your Course Coordinator</b> every month you complete.</span></li>
+      <li><i>✓</i><span><b>QR code + live link</b> — recruiters see a "Verified" page straight from C-DAC records.</span></li>
+      <li><i>✓</i><span><b>One-click LinkedIn</b> and WhatsApp sharing, plus a PDF for your resume.</span></li>
+    </ul>
+    <div id="verify"><form class="vf" onsubmit="event.preventDefault();var v=this.c.value.trim();if(v)location.href='login.html?verify='+encodeURIComponent(v);"><input name="c" placeholder="Credential ID, e.g. BDA-M02-2026-123456" aria-label="Credential ID"><button class="btn pri" type="submit">Verify</button></form>
+    <div class="vh">The credential ID is printed at the bottom of every certificate.</div></div>
   </div>
-</section>
+</div></section>
 
-<!-- ─── STATS BAR ─── -->
-<div class="stats-bar">
-  <div class="stat-item reveal">
-    <span class="stat-num" data-target="12000" style="color:var(--crimson)">0</span>
-    <div class="stat-lbl">MCQ Questions</div>
+<section style="padding-top:20px"><div class="wrap">
+  <div class="ctr rv"><div class="kick">How it works</div><h2 class="disp">Three habits. Every day.</h2></div>
+  <div class="sp">
+    <div class="sc rv"><h3>Practise one set</h3><p>Pick your module, take a timed 40-question set, and review your weak topics with Chakra.</p></div>
+    <div class="sc rv"><h3>Solve two problems</h3><p>Keep your coding streak alive in the arena — easy, medium or hard, in the language your module uses.</p></div>
+    <div class="sc rv"><h3>Earn your credential</h3><p>Consistent practice, projects and viva add up to a monthly credential you can show recruiters.</p></div>
   </div>
-  <div class="stat-item reveal" style="transition-delay:.1s">
-    <span class="stat-num" data-target="500" style="color:var(--purple)">0<span class="stat-sfx">+</span></span>
-    <div class="stat-lbl">Coding Problems</div>
-  </div>
-  <div class="stat-item reveal" style="transition-delay:.2s">
-    <span class="stat-num" data-target="18" style="color:var(--gold)">0</span>
-    <div class="stat-lbl">Subject Modules</div>
-  </div>
-  <div class="stat-item reveal" style="transition-delay:.3s">
-    <span class="stat-num" data-target="94" style="color:var(--green)">0<span class="stat-sfx">%</span></span>
-    <div class="stat-lbl">Student Pass Rate</div>
-  </div>
-</div>
+</div></section>
 
-<!-- ─── MODULES MARQUEE ─── -->
-<div class="marquee-band" id="modules">
-  <div class="mq-track">
-    <div class="mq-item"><span class="mq-dot"></span> Python Programming</div>
-    <div class="mq-item"><span class="mq-dot"></span> Java Programming</div>
-    <div class="mq-item"><span class="mq-dot"></span> Big Data Fundamentals</div>
-    <div class="mq-item"><span class="mq-dot"></span> Hadoop &amp; HDFS</div>
-    <div class="mq-item"><span class="mq-dot"></span> Apache Spark</div>
-    <div class="mq-item"><span class="mq-dot"></span> Machine Learning</div>
-    <div class="mq-item"><span class="mq-dot"></span> Database Systems</div>
-    <div class="mq-item"><span class="mq-dot"></span> SQL &amp; NoSQL</div>
-    <div class="mq-item"><span class="mq-dot"></span> Operating Systems</div>
-    <div class="mq-item"><span class="mq-dot"></span> Computer Networks</div>
-    <div class="mq-item"><span class="mq-dot"></span> Web Technologies</div>
-    <div class="mq-item"><span class="mq-dot"></span> Data Structures</div>
-    <div class="mq-item"><span class="mq-dot"></span> Cloud Computing</div>
-    <div class="mq-item"><span class="mq-dot"></span> PySpark &amp; Hive</div>
-    <div class="mq-item"><span class="mq-dot"></span> Statistics</div>
-    <div class="mq-item"><span class="mq-dot"></span> Data Warehousing</div>
-    <!-- duplicate for loop -->
-    <div class="mq-item"><span class="mq-dot"></span> Python Programming</div>
-    <div class="mq-item"><span class="mq-dot"></span> Java Programming</div>
-    <div class="mq-item"><span class="mq-dot"></span> Big Data Fundamentals</div>
-    <div class="mq-item"><span class="mq-dot"></span> Hadoop &amp; HDFS</div>
-    <div class="mq-item"><span class="mq-dot"></span> Apache Spark</div>
-    <div class="mq-item"><span class="mq-dot"></span> Machine Learning</div>
-    <div class="mq-item"><span class="mq-dot"></span> Database Systems</div>
-    <div class="mq-item"><span class="mq-dot"></span> SQL &amp; NoSQL</div>
-    <div class="mq-item"><span class="mq-dot"></span> Operating Systems</div>
-    <div class="mq-item"><span class="mq-dot"></span> Computer Networks</div>
-    <div class="mq-item"><span class="mq-dot"></span> Web Technologies</div>
-    <div class="mq-item"><span class="mq-dot"></span> Data Structures</div>
-    <div class="mq-item"><span class="mq-dot"></span> Cloud Computing</div>
-    <div class="mq-item"><span class="mq-dot"></span> PySpark &amp; Hive</div>
-    <div class="mq-item"><span class="mq-dot"></span> Statistics</div>
-    <div class="mq-item"><span class="mq-dot"></span> Data Warehousing</div>
-  </div>
-</div>
+<section style="padding-top:10px"><div class="wrap"><div class="fin rv">
+  <h2 class="disp">Your placement journey starts today</h2>
+  <p class="sub">Log in with the student ID and password from your course coordinator.</p>
+  <a class="btn wh" href="login.html">Enter Saarthi 360 →</a>
+</div></div></section>
 
-<!-- ─── FEATURES ─── -->
-<section class="features" id="features">
-  <div class="feat-intro">
-    <div class="sec-badge reveal">⚡ Platform Features</div>
-    <div class="sec-h reveal" style="transition-delay:.1s">Everything a PGCP<br>Student Needs.</div>
-    <div class="sec-sub reveal" style="transition-delay:.2s; max-width:480px">Built ground-up for CDAC's PGCP curriculum — not a generic quiz tool. MCQ practice, live coding, assignments, analytics, and a test experience that mirrors real exams.</div>
-  </div>
-
-  <div class="feat-grid">
-
-    <!-- Large: Coding Lab -->
-    <div class="feat-card large reveal" style="transition-delay:.05s">
-      <div class="feat-content">
-        <div class="feat-icon" style="background:rgba(245,158,11,.15)">💻</div>
-        <h3>Live Coding Lab</h3>
-        <p>Write and practice Python &amp; Java code with full syntax highlighting, line numbers, and instant feedback. No setup needed — code right in the browser.</p>
-      </div>
-      <div class="feat-visual">
-        <div class="code-mockup">
-          <div class="code-bar">
-            <div class="code-dots">
-              <div class="code-dot" style="background:#ff5f57"></div>
-              <div class="code-dot" style="background:#febc2e"></div>
-              <div class="code-dot" style="background:#28c840"></div>
-            </div>
-            <div class="code-lang">Python</div>
-          </div>
-          <div class="code-body">
-            <div class="code-line"><span class="ln">1</span><span class="cm"># Kadane's Algorithm</span></div>
-            <div class="code-line"><span class="ln">2</span><span class="kw">def </span><span class="fn">max_subarray</span>(<span class="nm">arr</span>):</div>
-            <div class="code-line"><span class="ln">3</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">max_sum</span> <span class="op">=</span> <span class="nm">curr</span> <span class="op">=</span> <span class="nm">arr</span>[<span class="nm">0</span>]</div>
-            <div class="code-line"><span class="ln">4</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">for </span><span class="nm">n</span> <span class="kw">in </span><span class="nm">arr</span>[<span class="nm">1</span>:]:</div>
-            <div class="code-line"><span class="ln">5</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">curr</span> <span class="op">=</span> <span class="fn">max</span>(<span class="nm">n</span>, <span class="nm">curr</span> <span class="op">+</span> <span class="nm">n</span>)</div>
-            <div class="code-line"><span class="ln">6</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="nm">max_sum</span> <span class="op">=</span> <span class="fn">max</span>(<span class="nm">max_sum</span>, <span class="nm">curr</span>)</div>
-            <div class="code-line"><span class="ln">7</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return </span><span class="nm">max_sum</span></div>
-            <div class="code-line" style="margin-top:4px"><span class="ln">9</span><span class="cm"># Output: 6</span></div>
-            <div class="code-line"><span class="ln">10</span><span class="fn">print</span>(<span class="fn">max_subarray</span>([<span class="nm">-2</span>,<span class="nm">1</span>,<span class="nm">-3</span>,<span class="nm">4</span>,<span class="nm">-1</span>,<span class="nm">2</span>,<span class="nm">1</span>,<span class="nm">-5</span>,<span class="nm">4</span>]))</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="feat-card reveal" style="transition-delay:.1s">
-      <div class="feat-icon" style="background:rgba(30,94,255,.14)">🎯</div>
-      <h3>Adaptive MCQ Engine</h3>
-      <p>Smart difficulty adjustment across 18 BDA modules. Weak topics get more reps, mastered areas step back. Covers Hadoop, Spark, Python, ML, DBMS &amp; more.</p>
-    </div>
-
-    <div class="feat-card reveal" style="transition-delay:.15s">
-      <div class="feat-icon" style="background:rgba(91,140,255,.14)">📊</div>
-      <h3>Deep Analytics</h3>
-      <p>Topic-wise accuracy, difficulty trends, time-per-question. Visual charts show exactly where you're strong and where you need more work.</p>
-    </div>
-
-    <div class="feat-card reveal" style="transition-delay:.2s">
-      <div class="feat-icon" style="background:rgba(16,185,129,.14)">📋</div>
-      <h3>Assignment Tracker</h3>
-      <p>View, submit, and track all faculty-assigned work in one place. Deadlines, completion status, and grading — never miss a submission.</p>
-    </div>
-
-    <div class="feat-card reveal" style="transition-delay:.25s">
-      <div class="feat-icon" style="background:rgba(245,158,11,.14)">🏅</div>
-      <h3>Badges &amp; Streaks</h3>
-      <p>Earn module-specific badges (Python Pro, Hadoop Hero, Spark Ninja), maintain daily streaks, and compete on the class leaderboard.</p>
-    </div>
-
-    <div class="feat-card reveal" style="transition-delay:.3s">
-      <div class="feat-icon" style="background:rgba(59,130,246,.14)">🛡️</div>
-      <h3>Anti-Cheat Engine</h3>
-      <p>Fullscreen lock, tab-switch detection, and session integrity monitoring. Every score on Saarthi 360 is earned — no shortcuts.</p>
-    </div>
-
-  </div>
-</section>
-
-<!-- ─── GAMIFICATION ─── -->
-<section class="gamification" id="badges">
-  <div class="gami-layout">
-    <div>
-      <div class="sec-badge reveal">🏆 Gamification</div>
-      <div class="sec-h reveal" style="transition-delay:.1s; max-width:420px">Learn More.<br>Earn More.<br>Rank Higher.</div>
-      <div class="sec-sub reveal" style="transition-delay:.2s; max-width:420px; margin-bottom:28px">Unlock module-specific badges as you master each subject — from your first Python test to becoming a certified Big Data champion. Your hustle, gamified.</div>
-      <div class="gami-tags reveal" style="transition-delay:.3s">
-        <span class="gami-tag" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:var(--gold)">🔥 Daily Streak</span>
-        <span class="gami-tag" style="background:rgba(30,94,255,.1);border:1px solid rgba(30,94,255,.3);color:var(--crimson)">🏆 Top Ranker</span>
-        <span class="gami-tag" style="background:rgba(91,140,255,.1);border:1px solid rgba(91,140,255,.3);color:var(--purple)">💯 Perfect Score</span>
-        <span class="gami-tag" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:var(--green)">⚡ Speed Coder</span>
-        <span class="gami-tag" style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);color:var(--blue)">🐍 Python Pro</span>
-        <span class="gami-tag" style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:var(--gold)">🐘 Hadoop Hero</span>
-      </div>
-    </div>
-
-    <div class="badges-grid reveal" style="transition-delay:.15s">
-      <div class="bdg earned"><div class="bi">🐍</div><div class="bl">Python Pro</div></div>
-      <div class="bdg earned"><div class="bi">☕</div><div class="bl">Java Master</div></div>
-      <div class="bdg earned"><div class="bi">🐘</div><div class="bl">Hadoop Hero</div></div>
-      <div class="bdg earned"><div class="bi">⚡</div><div class="bl">Spark Ninja</div></div>
-      <div class="bdg earned"><div class="bi">🤖</div><div class="bl">ML Expert</div></div>
-      <div class="bdg earned"><div class="bi">💯</div><div class="bl">Perfect 100</div></div>
-      <div class="bdg earned"><div class="bi">🔥</div><div class="bl">Streak Fire</div></div>
-      <div class="bdg earned"><div class="bi">💻</div><div class="bl">Code Ninja</div></div>
-      <div class="bdg locked"><div class="bi">🗄️</div><div class="bl">DBMS Guru</div></div>
-      <div class="bdg locked"><div class="bi">🏆</div><div class="bl">BDA Champ</div></div>
-      <div class="bdg locked"><div class="bi">👑</div><div class="bl">Legend</div></div>
-      <div class="bdg locked"><div class="bi">🚀</div><div class="bl">Rockstar</div></div>
-    </div>
-  </div>
-</section>
-
-<!-- ─── LEADERBOARD ─── -->
-<section class="leaderboard" id="leaderboard">
-  <div class="lb-center">
-    <div class="sec-badge reveal">📊 Class Rankings</div>
-    <div class="sec-h reveal" style="transition-delay:.1s">Where Do You Stand?</div>
-    <div class="sec-sub reveal" style="transition-delay:.2s; margin-bottom:48px; max-width:480px">Live class leaderboard across all PGCP students. Compete, improve, and see your name rise to the top.</div>
-
-    <div class="lb-wrap reveal" style="transition-delay:.25s">
-      <div class="lb-hdr">
-        <span>Rank</span><span>Student</span><span>Avg Score</span><span>Badges</span>
-      </div>
-      <div class="lb-row">
-        <span class="lb-rank r-gold">🥇</span>
-        <div class="lb-student">
-          <div class="lb-av" style="background:linear-gradient(135deg,#1e5eff,#5b8cff)">R</div>
-          <span class="lb-name">Rohan Mehta</span>
-        </div>
-        <span class="lb-score">94.2%</span>
-        <span class="lb-badges">🏅 12</span>
-      </div>
-      <div class="lb-row">
-        <span class="lb-rank r-silver">🥈</span>
-        <div class="lb-student">
-          <div class="lb-av" style="background:linear-gradient(135deg,#6366f1,#5b8cff)">P</div>
-          <span class="lb-name">Priya Sharma</span>
-        </div>
-        <span class="lb-score">91.8%</span>
-        <span class="lb-badges">🏅 10</span>
-      </div>
-      <div class="lb-row">
-        <span class="lb-rank r-bronze">🥉</span>
-        <div class="lb-student">
-          <div class="lb-av" style="background:linear-gradient(135deg,#059669,#10b981)">A</div>
-          <span class="lb-name">Aditya Kumar</span>
-        </div>
-        <span class="lb-score">89.5%</span>
-        <span class="lb-badges">🏅 9</span>
-      </div>
-      <div class="lb-row">
-        <span class="lb-rank" style="color:var(--muted);font-size:14px">#4</span>
-        <div class="lb-student">
-          <div class="lb-av" style="background:linear-gradient(135deg,#d97706,#f59e0b)">S</div>
-          <span class="lb-name">Sneha Patel</span>
-        </div>
-        <span class="lb-score">87.1%</span>
-        <span class="lb-badges">🏅 8</span>
-      </div>
-      <div class="lb-row">
-        <span class="lb-rank" style="color:var(--muted);font-size:14px">#5</span>
-        <div class="lb-student">
-          <div class="lb-av" style="background:linear-gradient(135deg,#0284c7,#38bdf8)">K</div>
-          <span class="lb-name">Karan Joshi</span>
-        </div>
-        <span class="lb-score">85.9%</span>
-        <span class="lb-badges">🏅 7</span>
-      </div>
-      <div class="lb-row you">
-        <span class="lb-rank r-you">#7</span>
-        <div class="lb-student">
-          <div class="lb-av" style="background:linear-gradient(135deg,var(--crimson),#5b8cff)">Y</div>
-          <span class="lb-name">You <span class="lb-you-tag">You</span></span>
-        </div>
-        <span class="lb-score" style="color:var(--crimson)">82.4%</span>
-        <span class="lb-badges">🏅 5</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ─── CTA ─── -->
-<section class="cta-section">
-  <div class="cta-glow"></div>
-  <div class="sec-badge reveal" style="justify-content:center;display:flex">🚀 Ready?</div>
-  <div class="sec-h reveal" style="transition-delay:.1s">
-    Your PGCP Journey<br>Starts <span class="grad">Right Now</span>
-  </div>
-  <div class="sec-sub reveal" style="transition-delay:.2s">
-    Join your classmates who are practicing smart, not just reading theory. MCQs, code, badges, leaderboard — it's all here.
-  </div>
-  <div class="reveal" style="transition-delay:.3s">
-    <a href="login.html" class="btn-hero btn-hp" style="font-size:17px;padding:16px 40px;border-radius:14px;box-shadow:0 0 48px rgba(30,94,255,.45)">
-      Enter the Platform →
-    </a>
-  </div>
-</section>
-
-<!-- ─── FOOTER ─── -->
-<footer>
-  <div class="foot-logo"><img src="saarthi-mascot.png" alt="Saarthi 360 mascot" class="brand-mark">Saarthi<span>360</span></div>
-  <div class="foot-links">
-    <a href="#">Support</a>
-    <a href="#">Privacy</a>
-    <a href="login.html">Dashboard</a>
-  </div>
-  <div class="foot-copy">© 2025 Saarthi 360 · CDAC Kharghar PGCP Courses</div>
-</footer>
-
+<footer><div class="wrap fr">
+  <a class="logo" href="#"><svg class="mk" viewBox="0 0 120 120" width="28" height="28"><circle cx="60" cy="60" r="54" fill="none" stroke="#5b5bf7" stroke-width="10"/><circle cx="60" cy="60" r="28" fill="#8b5cf6"/></svg>Saarthi <b>360</b></a>
+  <div>© <span id="yr">2026</span> Saarthi 360 · C-DAC Mumbai, Kharghar</div>
+  <div class="lk"><a href="login.html">Log in</a><a href="#verify">Verify a credential</a></div>
+</div></footer>
 <script>
-// Reveal
-const ro = new IntersectionObserver(e => {
-  e.forEach(x => { if (x.isIntersecting) { x.target.classList.add('in'); ro.unobserve(x.target); } });
-}, { threshold: 0.12 });
-document.querySelectorAll('.reveal').forEach(el => ro.observe(el));
-
-// Counters
-function animCount(el, target, dur = 1600) {
-  const hasSfx = el.querySelector('.stat-sfx');
-  const sfx = hasSfx ? hasSfx.outerHTML : '';
-  let start = null;
-  const step = ts => {
-    if (!start) start = ts;
-    const prog = Math.min((ts - start) / dur, 1);
-    const ease = 1 - Math.pow(1 - prog, 3);
-    const val = Math.floor(ease * target);
-    const fmt = target >= 1000 ? (val / 1000).toFixed(1) + 'K' : String(val);
-    el.childNodes[0].textContent = fmt;
-    if (prog < 1) requestAnimationFrame(step);
-    else el.childNodes[0].textContent = target >= 1000 ? (target / 1000).toFixed(1) + 'K' : String(target);
-  };
-  requestAnimationFrame(step);
-}
-const co = new IntersectionObserver(e => {
-  e.forEach(x => {
-    if (x.isIntersecting && x.target.dataset.target) {
-      animCount(x.target, parseInt(x.target.dataset.target));
-      co.unobserve(x.target);
-    }
-  });
-}, { threshold: 0.5 });
-document.querySelectorAll('[data-target]').forEach(el => co.observe(el));
-
-// Nav scroll
-window.addEventListener('scroll', () => {
-  document.querySelector('nav').style.borderBottomColor =
-    window.scrollY > 60 ? 'rgba(255,255,255,.12)' : 'rgba(255,255,255,.08)';
-});
-</script>
-
-<script>
-/* ===== SAARTHI 360 — ENHANCED ANIMATIONS ===== */
 (function(){
-  var c=document.getElementById('heroPtcls');
-  if(c){
-    var cols=['#1e5eff','#5b8cff','#f59e0b','#10b981','#3b82f6'];
-    for(var i=0;i<28;i++){
-      var d=document.createElement('div'); d.className='hp';
-      var sz=Math.random()*4+2;
-      d.style.width=d.style.height=sz+'px';
-      d.style.left=(Math.random()*100)+'%';
-      d.style.bottom=(-8+Math.random()*24)+'%';
-      var col=cols[i%cols.length];
-      d.style.color=col;
-      d.style.background='radial-gradient(circle,'+col+',transparent 72%)';
-      d.style.animationDuration=(Math.random()*10+8)+'s';
-      d.style.animationDelay=(-Math.random()*16)+'s';
-      c.appendChild(d);
-    }
-  }
-
-  var h1=document.querySelector('.hero-left h1');
-  if(h1){
-    var out=[];
-    Array.prototype.forEach.call(h1.childNodes,function(node){
-      if(node.nodeType===3){
-        node.textContent.split(/(\s+)/).forEach(function(tok){
-          if(tok.length===0) return;
-          if(!tok.trim()){ out.push(document.createTextNode(tok)); }
-          else { var s=document.createElement('span'); s.className='wr'; s.textContent=tok; out.push(s); }
-        });
-      } else if(node.nodeName==='BR'){ out.push(node.cloneNode()); }
-      else { out.push(node); }
-    });
-    h1.innerHTML='';
-    out.forEach(function(n){ h1.appendChild(n); });
-    Array.prototype.forEach.call(h1.querySelectorAll('.wr'),function(s,i){ s.style.animationDelay=(0.12+i*0.08)+'s'; });
-  }
-
-  var sp=document.querySelector('.social-proof strong');
-  if(sp){
-    var target=1200,start=null,dur=1800;
-    var step=function(ts){
-      if(!start)start=ts;
-      var pr=Math.min((ts-start)/dur,1), e=1-Math.pow(1-pr,3);
-      sp.textContent=Math.floor(e*target).toLocaleString()+'+';
-      if(pr<1)requestAnimationFrame(step); else sp.textContent='1,200+';
-    };
-    setTimeout(function(){requestAnimationFrame(step);},700);
-  }
-
-  var tm=document.querySelector('.mock-timer');
-  if(tm){
-    var secs=22*60+18;
-    setInterval(function(){
-      secs = secs>0 ? secs-1 : (22*60+18);
-      var m=String(Math.floor(secs/60)).padStart(2,'0'), s=String(secs%60).padStart(2,'0');
-      tm.textContent=m+':'+s;
-      tm.style.color = secs<60 ? '#fb7185' : '';
-    },1000);
-  }
-
-  function tilt(el,max,lift){
-    el.addEventListener('mousemove',function(e){
-      var r=el.getBoundingClientRect();
-      var px=(e.clientX-r.left)/r.width-.5, py=(e.clientY-r.top)/r.height-.5;
-      el.style.transform='perspective(900px) rotateY('+(px*max)+'deg) rotateX('+(-py*max)+'deg) translateY('+lift+'px)';
-    });
-    el.addEventListener('mouseleave',function(){ el.style.transform=''; });
-  }
-  Array.prototype.forEach.call(document.querySelectorAll('.feat-card:not(.large)'),function(el){ tilt(el,7,-6); });
-  var mc=document.querySelector('.mock-card'); if(mc) tilt(mc,5,0);
+  var nav=document.getElementById('nav');function sc(){nav.classList.toggle('s',scrollY>30)}addEventListener('scroll',sc,{passive:true});sc();
+  document.getElementById('yr').textContent=new Date().getFullYear();
+  var io='IntersectionObserver' in window?new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12}):null;
+  document.querySelectorAll('.rv').forEach(function(el){io?io.observe(el):el.classList.add('in')});
 })();
 </script>
-
 </body>
 </html>
