@@ -4624,8 +4624,9 @@ function _mcPreviewCert(sid, mno){
   const rows = ((_reviewProf[mno] || {}).rows || []).map(r => ({ mid:r.mid, name:r.name, p:r.p, ovr:r.ovr || null, inMonth:!!r.inMonth, hide:!!r.hide, level:(r.ovr ? profLevelByV(r.ovr) : profLevel(r.p) || {}).label || null }));
   const saved = pentryFor(sid, mno) || {};
   const coord = (document.getElementById('reviewCoord')?.value || '').trim();
-  const draft = Object.assign({}, saved, { approved: true, approvedAt: saved.approvedAt || new Date().toISOString(), approvedBy: saved.approved ? saved.approvedBy : (coord || saved.approvedBy),
-    content: Object.assign({}, saved.content || {}, { competencies, proficiency: rows, total: tm ? Number(tm[1]) : (saved.content || {}).total, issuer: coord || (saved.content || {}).issuer }) });
+  const _pdv = document.getElementById('mcdate_' + mno)?.value || '';
+  const draft = Object.assign({}, saved, { approved: true, approvedAt: _pdv ? new Date(_pdv + 'T12:00:00+05:30').toISOString() : (saved.approvedAt || new Date().toISOString()), approvedBy: saved.approved ? saved.approvedBy : (coord || saved.approvedBy),
+    content: Object.assign({}, saved.content || {}, { rankManual: (function(v){ return v === '' || v == null ? null : Number(v); })(document.getElementById('mcrank_' + mno)?.value), competencies, proficiency: rows, total: tm ? Number(tm[1]) : (saved.content || {}).total, issuer: coord || (saved.content || {}).issuer }) });
   downloadMonthlyCredential(sid, mno, { draftEntry: draft, preview: !saved.approved });
 }
 function _mcAddSkill(mno){
@@ -4848,6 +4849,17 @@ function monthReviewCard(sid, cid, mno){
         <div style="margin-top:6px"><button type="button" class="btn btn-outline btn-sm" onclick="_mcRemarkIdeas('${sid}',${mno})">💡 Suggest remarks</button></div>
         <div id="mcremideas_${mno}" style="display:none;margin-top:6px"></div></div>
       </div>
+      ${(function(){ const c = (entry && entry.content) || {}; const rm = c.rankManual == null ? '' : String(c.rankManual); const ra = c.rankAuto && c.rankAuto.rank ? ('auto: ' + c.rankAuto.rank + ' of ' + c.rankAuto.of + ', saved at approval') : 'auto: live leaderboard, saved when approved';
+        const d = entry && entry.approvedAt ? new Date(new Date(entry.approvedAt).getTime() + 330*60000).toISOString().slice(0,10) : '';
+        return `<div class="frow" style="margin-top:8px">
+        <div class="fgroup"><label>🏆 Batch rank on certificate</label><select id="mcrank_${mno}" class="filter-select">
+          <option value="" ${rm===''?'selected':''}>Automatic (${ra})</option>
+          <option value="1" ${rm==='1'?'selected':''}>Ranked 1st</option><option value="2" ${rm==='2'?'selected':''}>Ranked 2nd</option><option value="3" ${rm==='3'?'selected':''}>Ranked 3rd</option>
+          <option value="0" ${rm==='0'?'selected':''}>Don't show a rank</option></select>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">Set this for students who topped the leaderboard that month. It overrides the automatic rank.</div></div>
+        <div class="fgroup"><label>📅 Issue date (optional)</label><input type="date" id="mcdate_${mno}" value="${d}">
+          <div style="font-size:11px;color:var(--text3);margin-top:4px">Leave blank to use today. Use this to date a missed certificate to the end of that month.</div></div>
+      </div>`; })()}
       <label style="display:flex;gap:8px;align-items:center;font-size:13px;margin:8px 0"><input type="checkbox" id="mcapp_${mno}" ${approved?'checked':''}> <strong>Approve &amp; certify this month</strong> — unlocks the student's monthly credential</label>
       <div style="display:flex;gap:8px">
         <button class="btn btn-accent btn-sm" onclick="saveMonthCert('${sid}',${mno})">💾 Save Month ${mno}</button>
@@ -4926,14 +4938,21 @@ async function saveMonthCert(sid, mno){
     else approved=true;
   }
   const now = new Date().toISOString();
+  const _prev = pentryFor(sid, mno) || {}; const _pc = _prev.content || {};
+  const _rmv = (document.getElementById('mcrank_'+mno)?.value || '');
+  const _dv = (document.getElementById('mcdate_'+mno)?.value || '');
+  let _issueAt = approved ? (_dv ? new Date(_dv + 'T12:00:00+05:30').toISOString() : (_prev.approved && _prev.approvedAt ? _prev.approvedAt : now)) : null;
+  let _rankAuto = _pc.rankAuto || null;
+  if (approved && !_rankAuto) { try { const r = await _credBatchRank(s); if (r && r.rank) _rankAuto = { rank: r.rank, of: r.of, at: now }; } catch(e){} }
   const rec = {
     studentId: sid, month_no: mno, course_id: cid, batch_id: s.batch_id ?? null,
     content: { competencies, overallLevel: lvl?Number(lvl):null, issuer: coord||null, scores: scores, total: _total, proficiency: _profRows, profAsOf: new Date().toISOString(),
-      growth: { focus: [...document.querySelectorAll('.mcgrow-'+mno+':checked')].map(c => c.value), strengths: (document.getElementById('mcstr_'+mno)?.value||'').trim(), goal: (document.getElementById('mcgoal_'+mno)?.value||'').trim() } },
+      growth: { focus: [...document.querySelectorAll('.mcgrow-'+mno+':checked')].map(c => c.value), strengths: (document.getElementById('mcstr_'+mno)?.value||'').trim(), goal: (document.getElementById('mcgoal_'+mno)?.value||'').trim() },
+      rankManual: _rmv === '' ? null : Number(_rmv), rankAuto: _rankAuto },
     coordinator_remarks: rem || null,
     status: approved ? 'approved' : 'submitted', approved,
     approvedBy: approved ? (coord || (currentUser?.role === 'coordinator' ? currentUser.name : await _courseCoordinator(cid)) || currentUser.name) : null,
-    approvedAt: approved ? now : null, updated: now
+    approvedAt: _issueAt, updated: now
   };
   const { error } = await ADB('portfolio_entries').upsert(rec, { onConflict:'studentId,month_no' });
   if (error) return toast('Error: ' + error.message, 'error');
@@ -5107,7 +5126,11 @@ async function downloadMonthlyCredential(sid, mno, opts){
   const dateStr = when.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
   const credId = _credId(cid, mno, when, sid);
   let rankInfo = {}, learning = [];
-  try { rankInfo = await _credBatchRank(s); } catch(e){}
+  const _ec = entry.content || {};
+  if (_ec.rankManual === 0) rankInfo = {};
+  else if (_ec.rankManual >= 1) rankInfo = { rank: _ec.rankManual, of: null, manual: true };
+  else if (_ec.rankAuto && _ec.rankAuto.rank) rankInfo = { rank: _ec.rankAuto.rank, of: _ec.rankAuto.of };
+  else { try { rankInfo = await _credBatchRank(s); } catch(e){} }
   const _pf = entry.content && Array.isArray(entry.content.proficiency) ? entry.content.proficiency : null;
   const _pfv = _pf ? _pf.filter(r => !r.hide) : _pf;
   const _pfm = _pfv && _pfv.some(r => r.inMonth) ? _pfv.filter(r => r.inMonth) : _pfv;
@@ -5118,7 +5141,7 @@ async function downloadMonthlyCredential(sid, mno, opts){
     monthNo: mno, theme: meta.theme || ('Month '+mno), groups, comp, issuer, dateStr, credId,
     scores: (entry.content && entry.content.scores) || {}, total: (entry.content ? entry.content.total : null),
     focus: meta.focus || '', monthsTotal: monthsForCourse(cid).length || 6, courseName: courseName(cid) || '',
-    verifyUrl: _credVerifyUrl(credId), serial: entry.cert_serial || '', rank: rankInfo.rank, rankOf: rankInfo.of, learning,
+    verifyUrl: _credVerifyUrl(credId), serial: entry.cert_serial || '', rank: rankInfo.rank, rankOf: rankInfo.of, rankManual: !!rankInfo.manual, learning,
     logoUrl: (window.CDAC_LOGO_DATA||new URL('cdac-logo.png', location.href).href), preview: !!opts.preview
   });
   const w = window.open('', '_blank', 'width=1040,height=1400');
@@ -5168,7 +5191,7 @@ function monthlyCredentialHtml(o){
   var total=(o.total!=null&&o.total!=="")?Number(o.total):null;
   var honour=total==null?"":(total>=8.5?"With Distinction":total>=7?"With Merit":"");
   var ordn=function(n){var s=["th","st","nd","rd"],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0]);};
-  var rankTxt=(o.rank&&o.rank<=3&&o.rankOf>=3)?('Ranked '+ordn(o.rank)+' on the batch leaderboard'):'';
+  var rankTxt=(o.rank&&o.rank<=3&&(o.rankManual||o.rankOf>=3))?('Ranked '+ordn(o.rank)+' on the batch leaderboard'):'';
   var learn=(o.learning||[]).slice(0,5).join('  ·  ');
   var verifyUrl=o.verifyUrl||"";
   var shown=verifyUrl.replace(/^https?:\/\//,"").replace(/\?.*$/,"").replace(/\/(login|index)\.html$/,"");
