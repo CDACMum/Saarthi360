@@ -85,6 +85,7 @@ h2{font-size:42px;line-height:1.08;font-weight:800;margin:10px 0 14px}
 .fc .ic{width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;background:#f0f0ff;margin-bottom:16px}
 .fc .ic svg{width:22px;height:22px;stroke:var(--indigo);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .fc h3{font-size:17px;font-weight:800;margin-bottom:6px}.fc p{font-size:14px;line-height:1.6;color:var(--ink2)}
+.fc .bdg{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.4px;color:var(--indigo);background:#f3f3ff;border-radius:999px;padding:3px 10px;margin-bottom:8px}
 .fc .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:12px}.fc .chips span{font-family:'JetBrains Mono';font-size:11px;font-weight:700;color:var(--indigo);background:#f3f3ff;border-radius:7px;padding:3px 8px}
 /* chakra */
 .dk{background:var(--hero);color:#fff;border-radius:32px;padding:60px;display:grid;grid-template-columns:.8fr 1.2fr;gap:50px;align-items:center;position:relative;overflow:hidden}
@@ -130,7 +131,7 @@ footer{padding:40px 0 50px;color:var(--mut);font-size:13.5px}
 <body>
 <nav id="nav"><div class="wrap nv">
   <a class="logo" href="#"><svg class="mk" viewBox="0 0 120 120"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b5bf7"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><circle cx="60" cy="60" r="54" fill="none" stroke="url(#lg)" stroke-width="10"/><circle cx="60" cy="60" r="28" fill="url(#lg)"/><g stroke="url(#lg)" stroke-width="6" stroke-linecap="round"><path d="M60 6v20M60 94v20M6 60h20M94 60h20M22 22l14 14M84 84l14 14M98 22 84 36M36 84 22 98"/></g></svg>Saarthi <b>360</b></a>
-  <div class="nl"><a href="#programmes">Programmes</a><a href="#features">Features</a><a href="#chakra">Chakra AI</a><a href="#credentials">Credentials</a></div>
+  <div class="nl"><a href="#features">Features</a><a href="#prepare">Prepare</a><a href="#chakra">Chakra AI</a><a href="#credentials">Credentials</a></div>
   <div class="nr"><a class="btn gh" href="#verify">Verify credential</a><a class="btn pri" href="login.html">Log in →</a></div>
 </div></nav>
 
@@ -197,16 +198,7 @@ footer{padding:40px 0 50px;color:var(--mut);font-size:13.5px}
   <div class="st"><b>3</b><span>PGCP programmes: BDA · AI · AC</span></div>
 </div></div>
 
-<section id="programmes"><div class="wrap">
-  <div class="ctr rv"><div class="kick">Programmes</div><h2 class="disp">Built for your PGCP curriculum</h2><p class="sub">Every set, problem and credential follows the C-DAC Mumbai syllabus for your programme — not a generic quiz site.</p></div>
-  <div class="pg">
-    <div class="pc rv" style="--c:linear-gradient(135deg,#5b5bf7,#8b5cf6)"><div class="ic">📊</div><h3>PGCP-BDA</h3><div class="nm">Big Data Analytics</div><ul><li>Python & R</li><li>SQL & RDBMS</li><li>MongoDB</li><li>Cassandra</li><li>Hadoop & Hive</li><li>PySpark</li><li>Statistics</li><li>ML & Gen AI</li></ul></div>
-    <div class="pc rv" style="--c:linear-gradient(135deg,#0ea5e9,#6366f1)"><div class="ic">🤖</div><h3>PGCP-AI</h3><div class="nm">Artificial Intelligence</div><ul><li>Python</li><li>Maths for ML</li><li>Machine Learning</li><li>Deep Learning</li><li>NLP</li><li>Gen AI & LLMs</li><li>MLOps</li></ul></div>
-    <div class="pc rv" style="--c:linear-gradient(135deg,#10b981,#0ea5e9)"><div class="ic">💻</div><h3>PGCP-AC</h3><div class="nm">Advanced Computing</div><ul><li>Java</li><li>Data Structures</li><li>Linux & Cloud</li><li>Git & DevOps</li><li>Databases</li><li>Web Programming</li></ul></div>
-  </div>
-</div></section>
-
-<section id="features" style="padding-top:20px"><div class="wrap">
+<section id="features"><div class="wrap">
   <div class="ctr rv"><div class="kick">Features</div><h2 class="disp">Everything you need, in one place</h2><p class="sub">Practice, code, revise and track your progress — and see exactly what to do next.</p></div>
   <div class="fg">
     <div class="fc rv"><div class="ic"><svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg></div><h3>Exam-pattern MCQ practice</h3><p>40-question timed sets per module, a question navigator, mark-for-review, and a result page that shows your weak topics and lets you revise only what you missed.</p></div>
@@ -215,6 +207,18 @@ footer{padding:40px 0 50px;color:var(--mut);font-size:13.5px}
     <div class="fc rv"><div class="ic"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg></div><h3>Contests & leaderboard</h3><p>Monthly challenges and a batch leaderboard that combines MCQ and coding — climb the weekly league and keep your streak alive.</p></div>
     <div class="fc rv"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="M8.5 14 7 22l5-3 5 3-1.5-8"/></svg></div><h3>Verifiable credentials</h3><p>Each month your coordinator certifies your progress. Download the PDF, share a live verification link, or add it to LinkedIn in one click.</p></div>
     <div class="fc rv"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div><h3>Fair-play exams</h3><p>Full-screen tests with tab-switch and paste monitoring, server-side answer keys and shuffled options — so every score means something.</p></div>
+  </div>
+</div></section>
+
+<section id="prepare" style="padding-top:20px"><div class="wrap">
+  <div class="ctr rv"><div class="kick">Learn · Prepare · Get hired</div><h2 class="disp">From first lesson to final interview</h2><p class="sub">Study material, interview preparation and company-style practice, all under one login.</p></div>
+  <div class="fg pr">
+    <div class="fc rv"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5M8 7h6M8 11h6"/></svg></div><span class="bdg">myPathshala</span><h3>Study material</h3><p>Module-wise reading material, slides and references in one library, so you always know what to study before you practise.</p></div>
+    <div class="fc rv"><div class="ic"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg></div><span class="bdg">Upvanta</span><h3>Interview questions</h3><p>Technical and HR interview questions with model answers, organised by topic, so you walk into every round prepared.</p></div>
+    <div class="fc rv"><div class="ic"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6M9 11h.01M15 11h.01"/></svg></div><span class="bdg">Placement</span><h3>Company practice sets</h3><p>Mock tests modelled on recruiter aptitude, reasoning and technical rounds — timed, scored and reviewed like the real thing.</p></div>
+    <div class="fc rv"><div class="ic"><svg viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg></div><span class="bdg">Study Notes</span><h3>Animated notes</h3><p>Step-by-step visual notes with labs, cheat sheets and quick quizzes that turn tough topics into something you can see.</p></div>
+    <div class="fc rv"><div class="ic"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg></div><span class="bdg">Contests</span><h3>Timed contests</h3><p>Coordinator-run coding contests with a live leaderboard, rank movement and achievement badges.</p></div>
+    <div class="fc rv"><div class="ic"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></div><span class="bdg">Progress</span><h3>Readiness tracking</h3><p>See your strongest and weakest modules, streaks and batch rank at a glance, and know exactly what to work on next.</p></div>
   </div>
 </div></section>
 
