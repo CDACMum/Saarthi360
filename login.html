@@ -13117,9 +13117,32 @@ async function renderStudentCodingTests() {
 // Writes go through security-definer RPCs (contest_save / contest_delete) that
 // check the staff session token — the browser can only READ the contests table.
 // ════════════════════════════════════════════════════════════════
+// ── Server clock: contest timers must not trust the student's PC clock / timezone ──
+// _srvOff = server time − device time (ms), read from the HTTP Date header of a no-cache HEAD request.
+window._srvOff = window._srvOff || 0;
+function _now(){ return Date.now() + (window._srvOff || 0); }
+// IST helpers — contest times are always entered and shown in IST, whatever the PC's time zone.
+const _IST = 330*60000;
+function _istParts(d){ const x = new Date(d.getTime() + _IST); return { y:x.getUTCFullYear(), m:x.getUTCMonth(), d:x.getUTCDate(), h:x.getUTCHours(), mi:x.getUTCMinutes() }; }
+function _istMk(y, m, d, h, mi){ return new Date(Date.UTC(y, m, d, h || 0, mi || 0) - _IST); }
+function _istStr(d){ const p = n => String(n).padStart(2, '0'), q = _istParts(d); return `${q.y}-${p(q.m+1)}-${p(q.d)}T${p(q.h)}:${p(q.mi)}`; }
+function _istParse(v){ const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(v || ''); return m ? _istMk(+m[1], +m[2]-1, +m[3], +m[4], +m[5]) : null; }
+async function _syncSrvClock(force){
+  if (!force && window._srvSyncAt && Date.now() - window._srvSyncAt < 10*60000) return window._srvOff;
+  const probe = async url => { const t0 = Date.now(); const r = await fetch(url, { method:'HEAD', cache:'no-store' }); const t1 = Date.now(); const d = r.headers.get('date'); if (!d) throw 0; return Date.parse(d) + 500 - (t0 + t1) / 2; };
+  try { window._srvOff = await probe(location.pathname + '?t=' + Date.now()); window._srvSyncAt = Date.now(); }
+  catch(e) { try { window._srvOff = await probe(SUPABASE_URL + '/auth/v1/health'); window._srvSyncAt = Date.now(); } catch(_) {} }
+  return window._srvOff;
+}
+function _clockWarn(){
+  const off = window._srvOff || 0, tzOk = new Date().getTimezoneOffset() === -330;
+  if (Math.abs(off) < 3*60000 && tzOk) return '';
+  const a = Math.abs(off), txt = a >= 864e5 ? Math.round(a/864e5) + ' day' + (Math.round(a/864e5) !== 1 ? 's' : '') : a >= 36e5 ? Math.round(a/36e5) + ' hour' + (Math.round(a/36e5) !== 1 ? 's' : '') : Math.round(a/6e4) + ' min';
+  return `<div style="margin:0 0 14px;padding:10px 14px;border-radius:12px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.45);color:#f59e0b;font-size:13px;line-height:1.5">⚠️ <b>Your computer's ${Math.abs(off) >= 3*60000 ? 'clock is ' + txt + (off > 0 ? ' behind' : ' ahead') : 'time zone is not IST'}.</b> Contest times below are shown in IST using server time, so they are correct. To fix your PC: Settings → Time &amp; language → Date &amp; time → turn on <b>Set time automatically</b> and choose <b>(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi</b>.</div>`;
+}
 function _ctArr(v){ if (Array.isArray(v)) return v; try { const x = JSON.parse(v); return Array.isArray(x) ? x : []; } catch(e) { return []; } }
-function _ctState(c){ const n = Date.now(); return n < new Date(c.start_at).getTime() ? 'upcoming' : n > new Date(c.end_at).getTime() ? 'ended' : 'live'; }
-function _ctFmt(iso){ return new Date(iso).toLocaleString('en-IN', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }); }
+function _ctState(c){ const n = _now(); return n < new Date(c.start_at).getTime() ? 'upcoming' : n > new Date(c.end_at).getTime() ? 'ended' : 'live'; }
+function _ctFmt(iso){ return new Date(iso).toLocaleString('en-IN', { timeZone:'Asia/Kolkata', day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) + ' IST'; }
 function _ctLeft(ms){ if (ms <= 0) return '0m'; const d = Math.floor(ms/86400000), h = Math.floor(ms%86400000/3600000), m = Math.floor(ms%3600000/60000), s = Math.floor(ms%60000/1000); return d ? `${d}d ${h}h ${m}m` : h ? `${h}h ${m}m` : `${m}m ${s}s`; }
 function _ctErr(e){
   const m = (e && e.message) || String(e || '');
@@ -13344,12 +13367,13 @@ async function openContestEditor(id){
   window._ctMcqSel = new Set(c ? await _ctMcqSetIds(c.id) : []);
   window._ctMcqOpen = {};
   const p = n => String(n).padStart(2, '0');
-  const toLocal = d => `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
-  const now = new Date();
-  const defStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1, 0);
-  let defEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59);   // last day of this month
+  await _syncSrvClock();
+  const toLocal = d => _istStr(d);   // inputs are always IST
+  const now = new Date(_now()), nq = _istParts(now);
+  const defStart = _istMk(nq.y, nq.m, nq.d, nq.h + 1, 0);
+  let defEnd = _istMk(nq.y, nq.m + 1, 0, 23, 59);   // last day of this month, 23:59 IST
   if (defEnd - defStart < 86400000) defEnd = new Date(defStart.getTime() + 7 * 86400000);
-  const monthName = defStart.toLocaleString('en-IN', { month:'long', year:'numeric' });
+  const monthName = defStart.toLocaleString('en-IN', { timeZone:'Asia/Kolkata', month:'long', year:'numeric' });
   const langs = [...new Set(window._ctQs.map(q => q._trk || q.language).filter(Boolean))];
   const selCourses = c ? _ctArr(c.course_ids) : [], selBatches = c ? _ctArr(c.batch_ids) : [];
 
@@ -13362,9 +13386,9 @@ async function openContestEditor(id){
         <div><label class="ct-lbl">DESCRIPTION / RULES</label>
           <textarea id="ctDesc" rows="2" class="filter-select" style="width:100%;resize:vertical" placeholder="Shown to students on the contest card">${escHtml(c?.description || '')}</textarea></div>
         <div style="display:grid;grid-template-columns:1fr 1fr 150px;gap:12px">
-          <div><label class="ct-lbl">STARTS *</label><input id="ctStart" type="datetime-local" class="filter-select ct-dt" style="width:100%" value="${toLocal(c ? new Date(c.start_at) : defStart)}" onclick="try{this.showPicker()}catch(e){}" oninput="_ctDur()">
+          <div><label class="ct-lbl">STARTS * (IST)</label><input id="ctStart" type="datetime-local" class="filter-select ct-dt" style="width:100%" value="${toLocal(c ? new Date(c.start_at) : defStart)}" onclick="try{this.showPicker()}catch(e){}" oninput="_ctDur()">
             <div class="ct-quick"><button type="button" onclick="_ctDt('start','now')">Now</button><button type="button" onclick="_ctDt('start','tom9')">Tomorrow 9 AM</button><button type="button" onclick="_ctDt('start','-1d')">− 1 day</button><button type="button" onclick="_ctDt('start','+1d')">+ 1 day</button></div></div>
-          <div><label class="ct-lbl">ENDS *</label><input id="ctEnd" type="datetime-local" class="filter-select ct-dt" style="width:100%" value="${toLocal(c ? new Date(c.end_at) : defEnd)}" onclick="try{this.showPicker()}catch(e){}" oninput="_ctDur()">
+          <div><label class="ct-lbl">ENDS * (IST)</label><input id="ctEnd" type="datetime-local" class="filter-select ct-dt" style="width:100%" value="${toLocal(c ? new Date(c.end_at) : defEnd)}" onclick="try{this.showPicker()}catch(e){}" oninput="_ctDur()">
             <div class="ct-quick"><button type="button" onclick="_ctDt('end','d1')" title="Start + 1 day">1 day</button><button type="button" onclick="_ctDt('end','d7')" title="Start + 1 week">1 week</button><button type="button" onclick="_ctDt('end','d14')" title="Start + 2 weeks">2 weeks</button><button type="button" onclick="_ctDt('end','eom')" title="Last day of the start month, 11:59 PM">Month end</button><button type="button" onclick="_ctDt('end','-1d')">− 1 day</button><button type="button" onclick="_ctDt('end','+1d')" title="Extend by one day">+ 1 day</button></div></div>
           <div><label class="ct-lbl">VISIBILITY</label><select id="ctStatus" class="filter-select" style="width:100%">
             <option value="published" ${c?.status !== 'draft' ? 'selected' : ''}>Published</option>
@@ -13493,15 +13517,15 @@ function _ctToggleModule(k, on){
 }
 function _ctToggleQ(id, on){ on ? window._ctSel.add(id) : window._ctSel.delete(id); _ctRenderPicker(); }
 // Date helpers for the contest editor: click opens the calendar, quick buttons shift/set times.
-function _ctDtGet(id){ const v = (document.getElementById(id) || {}).value; const d = v ? new Date(v) : null; return d && !isNaN(d) ? d : null; }
-function _ctDtSet(id, d){ const p = n => String(n).padStart(2, '0'); const el = document.getElementById(id); if (el) el.value = `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; }
+function _ctDtGet(id){ const d = _istParse((document.getElementById(id) || {}).value); return d && !isNaN(d) ? d : null; }
+function _ctDtSet(id, d){ const el = document.getElementById(id); if (el) el.value = _istStr(d); }
 function _ctDt(which, op){
-  const DAY = 86400000, now = new Date();
+  const DAY = 86400000, now = new Date(_now()), nq = _istParts(now);
   let s = _ctDtGet('ctStart') || now, e = _ctDtGet('ctEnd');
   if (which === 'start') {
     const len = e ? e - s : 7 * DAY;
     if (op === 'now') s = new Date(Math.ceil(now.getTime() / 300000) * 300000);
-    else if (op === 'tom9') s = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 9, 0);
+    else if (op === 'tom9') s = _istMk(nq.y, nq.m, nq.d + 1, 9, 0);
     else if (op === '+1d') s = new Date(s.getTime() + DAY);
     else if (op === '-1d') s = new Date(s.getTime() - DAY);
     _ctDtSet('ctStart', s);
@@ -13510,7 +13534,7 @@ function _ctDt(which, op){
     if (op === 'd1') e = new Date(s.getTime() + DAY);
     else if (op === 'd7') e = new Date(s.getTime() + 7 * DAY);
     else if (op === 'd14') e = new Date(s.getTime() + 14 * DAY);
-    else if (op === 'eom') e = new Date(s.getFullYear(), s.getMonth() + 1, 0, 23, 59);
+    else if (op === 'eom') { const sq = _istParts(s); e = _istMk(sq.y, sq.m + 1, 0, 23, 59); }
     else if (op === '+1d') e = new Date((e || s).getTime() + DAY);
     else if (op === '-1d') e = new Date((e || s).getTime() - DAY);
     _ctDtSet('ctEnd', e);
@@ -13523,7 +13547,7 @@ function _ctDur(){
   if (!s || !e) { el.innerHTML = ''; return; }
   if (e <= s) { el.innerHTML = '<span style="color:var(--red)">⚠ End time must be after the start time</span>'; return; }
   const m = Math.round((e - s) / 60000), d = Math.floor(m / 1440), h = Math.floor((m % 1440) / 60), mi = m % 60;
-  const fmt = x => x.toLocaleString('en-IN', { weekday:'short', day:'numeric', month:'short', hour:'numeric', minute:'2-digit' });
+  const fmt = x => x.toLocaleString('en-IN', { timeZone:'Asia/Kolkata', weekday:'short', day:'numeric', month:'short', hour:'numeric', minute:'2-digit' }) + ' IST';
   el.innerHTML = `🗓 Runs <b>${fmt(s)}</b> → <b>${fmt(e)}</b> · ${[d && d + ' day' + (d > 1 ? 's' : ''), h && h + ' h', mi && mi + ' min'].filter(Boolean).join(' ') || '0 min'}`;
 }
 async function saveContest(){
@@ -13531,7 +13555,8 @@ async function saveContest(){
   const title = v('ctTitle'), s = v('ctStart'), e = v('ctEnd');
   if (!title) { toast('Give the contest a title', 'error'); document.getElementById('ctTitle').focus(); return; }
   if (!s || !e) { toast('Set both the start and end time', 'error'); return; }
-  const sd = new Date(s), ed = new Date(e);
+  const sd = _istParse(s), ed = _istParse(e);
+  if (!sd || !ed) { toast('Enter valid start and end times', 'error'); return; }
   if (!(ed > sd)) { toast('End time must be after the start time', 'error'); return; }
   const mcqSel = [...(window._ctMcqSel || new Set())];
   if (!window._ctSel.size && !mcqSel.length) { toast('Pick at least one coding question or MCQ set', 'error'); return; }
@@ -13637,6 +13662,7 @@ async function renderStudentContests(){
   let list = [];
   try { list = await _ctLoadAll(); }
   catch(e) { el.innerHTML = `<div class="ct-wrap"><div class="ct-head"><div><h2>🏆 Contests</h2></div></div><div class="ct-empty"><div style="font-size:40px;margin-bottom:8px">🛠️</div>Contests are not available yet — please check back soon.</div></div>`; console.warn('contests:', e); return; }
+  await _syncSrvClock();
   if (!(cache.batches||[]).length) await loadBatchesCache();
   list = list.filter(_ctStudentCanSee);
   const mcqMap = await _ctLoadMcqMap();
@@ -13649,10 +13675,10 @@ async function renderStudentContests(){
     const b = Object.values(best);
     return { n: ids.length, solved: b.filter(x => x.total > 0 && x.passed === x.total).length, pts: b.reduce((a,x) => a + (x.score || 0), 0) };
   };
-  const now = Date.now();
+  const now = _now();
   const card = c => {
     const st = _ctState(c), p = prog(c), s = new Date(c.start_at).getTime(), e = new Date(c.end_at).getTime();
-    const when = st === 'live' ? `⏱ Ends in ${_ctLeft(e - now)}` : st === 'upcoming' ? `Starts in ${_ctLeft(s - now)}` : `Ended ${new Date(c.end_at).toLocaleDateString('en-IN', { day:'numeric', month:'short' })}`;
+    const when = st === 'live' ? `⏱ Ends in ${_ctLeft(e - now)}` : st === 'upcoming' ? `Starts in ${_ctLeft(s - now)}` : `Ended ${new Date(c.end_at).toLocaleDateString('en-IN', { timeZone:'Asia/Kolkata', day:'numeric', month:'short' })}`;
     return `<div class="ct-card ${st}">
       <div class="ct-card-top">${_ctPill(st)}<span class="ct-when">${when}</span></div>
       <div class="ct-card-title">🏆 ${escHtml(c.title)}</div>
@@ -13668,6 +13694,7 @@ async function renderStudentContests(){
   const sec = (t, arr) => arr.length ? `<div class="ct-sec">${t}</div><div class="ct-grid">${arr.map(card).join('')}</div>` : '';
   el.innerHTML = `<div class="ct-wrap">
     <div class="ct-head"><div><h2>🏆 Contests</h2><p>Monthly challenges — solve coding questions and MCQ sets inside the window to climb the contest leaderboard</p></div></div>
+    ${_clockWarn()}
     ${list.length ? sec('● Live now', live) + sec('Coming up', up) + sec('Past contests', past)
       : `<div class="ct-empty"><div style="font-size:44px;margin-bottom:8px">🏆</div><b>No contests yet</b><div style="margin-top:6px">Your coordinator will announce the next monthly challenge here.</div></div>`}
   </div>`;
@@ -13677,6 +13704,7 @@ async function renderStudentContests(){
 async function openStudentContest(id, silent){
   const el = document.getElementById('studentContent');
   _ctCss();
+  await _syncSrvClock();
   // silent = live refresh of the page already on screen (no spinner, keep scroll & filter)
   if (silent && !el.querySelector('[data-ct-live="' + id + '"]')) return;
   const _scrollY = window.scrollY;
@@ -13748,8 +13776,8 @@ async function openStudentContest(id, silent){
   let _prev = {}; try { _prev = JSON.parse(localStorage.getItem(_lsk) || '{}'); } catch(e){}
   const moved = (myRank >= 0 && _prev.rank) ? _prev.rank - (myRank + 1) : 0;
   const moveChip = moved > 0 ? `<span class="cg-mv up">▲ up ${moved} place${moved !== 1 ? 's' : ''}</span>` : moved < 0 ? `<span class="cg-mv dn">▼ down ${-moved} place${moved !== -1 ? 's' : ''}</span>` : (_prev.rank ? '<span class="cg-mv">● holding steady</span>' : '');
-  const days = [...new Set((sr.data || []).map(x => String(x.submittedAt).slice(0, 10)))].sort();
-  let streak = 0; { const d = new Date(); for (let k = 0; k < 60; k++) { const key = new Date(d.getTime() - k * 864e5).toISOString().slice(0, 10); if (days.includes(key)) streak++; else if (k > 0) break; } }
+  const days = [...new Set((sr.data || []).map(x => _istStr(new Date(x.submittedAt)).slice(0, 10)))].sort();   // IST calendar days
+  let streak = 0; { const d = new Date(_now()); for (let k = 0; k < 60; k++) { const key = _istStr(new Date(d.getTime() - k * 864e5)).slice(0, 10); if (days.includes(key)) streak++; else if (k > 0) break; } }
   const earnedNow = ach.filter(a => a[2]).map(a => a[1]);
   const newly = _prev.ach ? earnedNow.filter(a => !_prev.ach.includes(a)) : [];
   try { localStorage.setItem(_lsk, JSON.stringify({ rank: myRank >= 0 ? myRank + 1 : null, ach: earnedNow, at: Date.now() })); } catch(e){}
@@ -13759,12 +13787,13 @@ async function openStudentContest(id, silent){
   if (silent && !el.querySelector('[data-ct-live="' + id + '"]')) return;
   el.innerHTML = `<div class="ct-wrap cg" data-ct-live="${c.id}">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><button class="cg-back" onclick="studentNav('contests')">← All contests</button>${live ? `<span style="font-size:11.5px;font-weight:700;color:#16a34a;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);padding:4px 10px;border-radius:999px">● Live scores · updated ${_liveStamp()}</span>` : ''}</div>
+    ${_clockWarn()}
     <div class="cg-hero">
       <div class="cg-hl">
         <div class="cg-top">${_ctPill(st)}<span class="cg-mode">🎮 Contest arena</span></div>
         <h2>🏆 ${escHtml(c.title)}</h2>
         ${c.description ? `<p>${escHtml(c.description)}</p>` : '<p>Solve coding questions and MCQ sets inside the window — every point moves you up the board.</p>'}
-        <div class="cg-cd" id="ctTimer">${live ? seg(new Date(c.end_at) - Date.now()) : `<div class="cg-ended">Ended ${_ctFmt(c.end_at)}</div>`}</div>
+        <div class="cg-cd" id="ctTimer">${live ? seg(new Date(c.end_at) - _now()) : `<div class="cg-ended">Ended ${_ctFmt(c.end_at)}</div>`}</div>
         ${live ? '<div class="cg-cdl">time left to climb</div>' : ''}
         <div class="cg-hype">${hype}${streak > 1 ? ` <span class="cg-fire">🔥 ${streak}-day contest streak</span>` : ''}</div>
       </div>
@@ -13806,7 +13835,7 @@ async function openStudentContest(id, silent){
     window._ctTimer = setInterval(() => {
       const t = document.getElementById('ctTimer');
       if (!t) { clearInterval(window._ctTimer); window._ctTimer = null; return; }
-      const left = end - Date.now();
+      const left = end - _now();
       if (left <= 0) { clearInterval(window._ctTimer); window._ctTimer = null; openStudentContest(id); return; }
       t.innerHTML = seg(left);
       // fallback poll every 45 s in case the live channel is down
@@ -16986,7 +17015,7 @@ function _hxAgo(d){
   const dd = Math.round(h / 24); return dd === 1 ? 'yesterday' : dd + 'd ago';
 }
 function _hxLs(k, v){ try { if (v === undefined) return JSON.parse(localStorage.getItem(k) || 'null'); localStorage.setItem(k, JSON.stringify(v)); } catch(e) { return null; } }
-function _hxMonday(off){ const d = new Date(); d.setHours(0,0,0,0); const wd = (d.getDay() + 6) % 7; d.setDate(d.getDate() - wd - 7 * (off || 0)); return d; }
+function _hxMonday(off){ const IST = 330*60000, d = new Date(_now() + IST); d.setUTCHours(0,0,0,0); const wd = (d.getUTCDay() + 6) % 7; return new Date(d.getTime() - (wd + 7 * (off || 0)) * 864e5 - IST); }   // Monday 00:00 IST, server clock
 
 function _hxCss(){
   if (document.getElementById('hxCss')) return;
@@ -17474,6 +17503,7 @@ async function _hxLoadSocial(){
   }, 10000);
   const lgBox = document.getElementById('hxLeague'), feed = document.getElementById('hxFeed');
   try {
+    await _syncSrvClock();
     const mon = _hxMonday(0), lastMon = _hxMonday(1), since48 = new Date(Date.now() - 48*3600e3);
     const [sc, cod, members, wk] = await Promise.all([
       fetchAllRows(() => SB.from('scores').select('id,studentId,studentName,setId,setName,moduleId,pct,correct,total,date,tabSwitches,pasteAttempts,fullscreenExits,violations').order('date', { ascending:false }).order('id', { ascending:true })),
@@ -17504,7 +17534,7 @@ async function _hxLoadSocial(){
       scores.forEach(s => { const t = new Date(s.date); if (t >= from && t < to) p[s.studentId] = (p[s.studentId]||0) + (s.correct||0)*2 + ((s.pct||0) >= 60 ? 20 : 0); });
       const firstSolve = {}; (wk || []).filter(x => inB(x.studentId)).forEach(x => { const t = new Date(x.submittedAt); if (t >= from && t < to && x.total > 0 && x.passed === x.total) { const k = x.studentId + '|' + x.questionId; if (!firstSolve[k]) { firstSolve[k] = 1; p[x.studentId] = (p[x.studentId]||0) + (x.score||10); } } });
       return p; };
-    const now = new Date(Date.now() + 1000), thisW = wkPts(mon, now), lastW = wkPts(lastMon, mon);
+    const now = new Date(_now() + 1000), thisW = wkPts(mon, now), lastW = wkPts(lastMon, mon);
     const roster = [...ids].filter(sid => currentUser.batch_id == null ? lb.some(r => r.id === sid) : true);
     const byLast = [...roster].sort((a, b) => (lastW[b]||0) - (lastW[a]||0) || (thisW[b]||0) - (thisW[a]||0));
     const N = byLast.length, cuts = [Math.ceil(N*.15), Math.ceil(N*.40), Math.ceil(N*.70)];
@@ -17514,7 +17544,7 @@ async function _hxLoadSocial(){
     const myPos = group.indexOf(currentUser.id), G = group.length;
     const upN = myTier > 0 ? Math.min(3, Math.max(1, Math.floor(G/5))) : 0, downN = myTier < 3 ? Math.min(3, Math.max(1, Math.floor(G/5))) : 0;
     const show = new Set([...group.slice(0, 5), ...group.slice(Math.max(0, myPos-1), myPos+2)]);
-    const daysLeft = 7 - ((new Date().getDay() + 6) % 7);
+    const daysLeft = 7 - ((new Date(_now() + 330*60000).getUTCDay() + 6) % 7);
     document.getElementById('hxLgReset').textContent = `${daysLeft} day${daysLeft!==1?'s':''} left`;
     let rows = '', lastShown = -1;
     group.forEach((sid, k) => { if (!show.has(sid)) return; if (k > lastShown + 1) rows += '<div style="text-align:center;color:#c3c7d6;line-height:1;letter-spacing:2px">···</div>'; lastShown = k;
@@ -17554,6 +17584,7 @@ async function _hxLoadSocial(){
 async function _hxLoadContest(){
   const box = document.getElementById('hxContest'); if (!box) return;
   try {
+    await _syncSrvClock();
     const list = (await _ctLoadAll()).filter(_ctStudentCanSee);
     const live = list.filter(c => _ctState(c) === 'live').sort((a,b) => new Date(a.end_at) - new Date(b.end_at))[0];
     const up = list.filter(c => _ctState(c) === 'upcoming').sort((a,b) => new Date(a.start_at) - new Date(b.start_at))[0];
@@ -17563,9 +17594,9 @@ async function _hxLoadContest(){
       <div class="big">${_hxI('trophy')}</div>
       <div style="flex:1;min-width:0">${live ? '<span class="hx-live">LIVE CONTEST</span>' : '<span class="hx-live" style="color:#ddd6fe;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2)">COMING UP</span>'}
         <div class="hx-d" style="font-size:19px;font-weight:700;margin-top:6px">${escHtml(c.title)}</div>
-        <div style="font-size:12.5px;color:#d9d6ff;margin-top:2px">${live ? 'Ends in' : 'Starts in'} <b id="hxCtLeft" style="font-family:'JetBrains Mono',monospace;color:#fff">${_ctLeft(target - Date.now())}</b> · every solve and MCQ set counts</div></div>
+        <div style="font-size:12.5px;color:#d9d6ff;margin-top:2px">${live ? 'Ends in' : 'Starts in'} <b id="hxCtLeft" style="font-family:'JetBrains Mono',monospace;color:#fff">${_ctLeft(target - _now())}</b> · every solve and MCQ set counts</div></div>
       <button class="hx-btn light">${live ? 'Enter' : 'View'}</button></div>`;
-    window._hxTimer = setInterval(() => { const t = document.getElementById('hxCtLeft'); if (!t) { clearInterval(window._hxTimer); window._hxTimer = null; return; } t.textContent = _ctLeft(target - Date.now()); }, 1000);
+    window._hxTimer = setInterval(() => { const t = document.getElementById('hxCtLeft'); if (!t) { clearInterval(window._hxTimer); window._hxTimer = null; return; } t.textContent = _ctLeft(target - _now()); }, 1000);
   } catch(e) {}
 }
 
