@@ -3215,14 +3215,20 @@ function animateStatVals(container = document) {
 }
 
 // 2 — Stagger animation for card grids
+// Card entrance animation. Never hides a card with inline opacity: when animations are blocked
+// (Windows "Animation effects" off → prefers-reduced-motion, or Focus mode) the cards must stay visible.
+// Fix 12 Nov 2026 — some students saw blank Practice MCQ / sets pages.
 function staggerCards(container, selector = '.mod-card, .card, .stat-card') {
   const cards = container.querySelectorAll(selector);
+  let still = false;
+  try { still = matchMedia('(prefers-reduced-motion: reduce)').matches || !!document.querySelector('#studentPage.focus-mode'); } catch (e) {}
   cards.forEach((c, i) => {
-    c.style.opacity = '0';
+    c.style.opacity = '';
+    if (still) { c.style.animation = ''; return; }
     c.style.animation = 'none';
-    requestAnimationFrame(() => {
-      c.style.animation = `cardIn 0.42s cubic-bezier(0.22,1,0.36,1) ${i * 55}ms both`;
-    });
+    void c.offsetWidth;   // restart the animation
+    c.style.animation = `cardIn 0.42s cubic-bezier(0.22,1,0.36,1) ${i * 55}ms both`;
+    c.addEventListener('animationend', () => { c.style.animation = ''; }, { once: true });
   });
 }
 
