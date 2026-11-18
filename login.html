@@ -17938,6 +17938,81 @@ async function renderStudentNotes() {
   const awsNotes = [
     { title: 'AWS, Animated', file: 'aws-animated.html', icon: '☁️', color: '#FF9900', desc: '26 modules: Cloud Practitioner → Solutions Architect (Associate & Pro) → CI/CD & data pipelines. Animations, console walkthroughs, CLI labs, quizzes' },
   ];
+  // Cheat sheets: one page (cheatsheets.html), one card per sheet, opened at #id
+  const cheatGroups = [
+    { name: "Python", icon: "🐍", color: "#3572A5" },
+    { name: "R", icon: "📐", color: "#2165B6" },
+    { name: "Databases & SQL", icon: "🗄️", color: "#0F766E" },
+    { name: "NoSQL", icon: "🍃", color: "#13AA52" },
+    { name: "Warehouse, Lake & Cloud", icon: "🏛️", color: "#29B5E8" }
+  ];
+  const cheatSheets = [
+    { g: "Python", id: "py-basics", icon: "🐍", title: "Python Basics", desc: "Syntax, types, operators, I/O, control flow" },
+    { g: "Python", id: "py-strings", icon: "🔤", title: "Strings & Formatting", desc: "Indexing, slicing, methods, f-strings" },
+    { g: "Python", id: "py-lists", icon: "📋", title: "Lists", desc: "Create, add, search, delete, sort, comprehension" },
+    { g: "Python", id: "py-dicts", icon: "📖", title: "Dictionaries & Sets", desc: "Define, modify, delete, comprehension, sets" },
+    { g: "Python", id: "py-tuples", icon: "📦", title: "Tuples", desc: "Immutable sequences, packing, zip" },
+    { g: "Python", id: "py-functions", icon: "⚙️", title: "Functions & Modules", desc: "Arguments, lambda, scope, built-ins, pickle" },
+    { g: "Python", id: "py-oop", icon: "🧱", title: "OOP in Python", desc: "Class, object, inheritance, overriding, data hiding" },
+    { g: "Python", id: "py-advanced", icon: "✨", title: "Regex, Generators, Decorators", desc: "re module, yield, @decorator" },
+    { g: "Python", id: "py-exceptions", icon: "🚨", title: "Exceptions & Logging", desc: "try/except/else/finally, custom errors, logging" },
+    { g: "Python", id: "py-files", icon: "📁", title: "Files, CSV & JSON", desc: "open modes, with, csv, json" },
+    { g: "Python", id: "numpy", icon: "🔢", title: "NumPy", desc: "ndarray, shapes, indexing, broadcasting, maths" },
+    { g: "Python", id: "pandas", icon: "🐼", title: "Pandas", desc: "Series, DataFrame, select, filter, group, merge" },
+    { g: "Python", id: "data-cleaning", icon: "🧹", title: "Data Cleaning & Wrangling", desc: "Missing values, duplicates, types, outliers" },
+    { g: "Python", id: "web-scraping", icon: "🕸️", title: "Web Scraping (BeautifulSoup)", desc: "requests, parse HTML, find, select, tables" },
+    { g: "Python", id: "py-viz", icon: "📊", title: "Matplotlib, Seaborn, Plotly", desc: "Common charts and when to use them" },
+    { g: "Python", id: "py-db", icon: "🔌", title: "Python + Databases", desc: "venv, MySQL, SQLite, SQLAlchemy, PyMongo" },
+    { g: "Python", id: "fastapi", icon: "⚡", title: "FastAPI", desc: "Routes, path/query params, models, Swagger" },
+    { g: "R", id: "r-basics", icon: "📐", title: "R Basics", desc: "Setup, help, operators, RStudio" },
+    { g: "R", id: "r-data", icon: "🧮", title: "R Data Structures", desc: "Vectors, lists, matrices, arrays, factors, data frames" },
+    { g: "R", id: "r-io", icon: "📥", title: "R Packages & Import/Export", desc: "install, library, CSV, Excel, databases" },
+    { g: "R", id: "tidyverse", icon: "🪄", title: "Tidyverse (dplyr, tidyr, ggplot2)", desc: "Pipe, verbs, joins, reshape, plots" },
+    { g: "R", id: "r-functions", icon: "🧪", title: "R Functions & R Markdown", desc: "Writing functions, built-ins, apply family, reports" },
+    { g: "Databases & SQL", id: "dbms-concepts", icon: "🗄️", title: "DBMS Concepts", desc: "Storage, data types, OLTP vs OLAP, data collection" },
+    { g: "Databases & SQL", id: "sql-basics", icon: "🧾", title: "SQL: DDL, DML, DCL, TCL", desc: "Create, alter, insert, update, grant, commit" },
+    { g: "Databases & SQL", id: "sql-queries", icon: "🔍", title: "Grouping, Joins & Subqueries", desc: "GROUP BY, HAVING, joins, correlated subqueries" },
+    { g: "Databases & SQL", id: "sql-cte-window", icon: "🪜", title: "CTEs, CASE & Window Functions", desc: "WITH, recursive CTE, RANK, LAG, running totals" },
+    { g: "Databases & SQL", id: "sql-design", icon: "🧩", title: "Schema Design, ER & Normal Forms", desc: "Entities, relationships, 1NF to BCNF" },
+    { g: "Databases & SQL", id: "sql-objects", icon: "🏗️", title: "Views, Triggers, PL/SQL & Indexes", desc: "Views, procedures, triggers, indexing, EXPLAIN" },
+    { g: "NoSQL", id: "nosql-intro", icon: "🧭", title: "NoSQL Fundamentals", desc: "Types, CAP, BASE, schema evolution" },
+    { g: "NoSQL", id: "mongodb", icon: "🍃", title: "MongoDB CRUD & Queries", desc: "insert, find, operators, update, delete" },
+    { g: "NoSQL", id: "mongodb-advanced", icon: "🧬", title: "MongoDB Aggregation, Indexes & Internals", desc: "Pipeline, $lookup, indexes, explain, replication, sharding" },
+    { g: "NoSQL", id: "cassandra", icon: "👁️", title: "Apache Cassandra & CQL", desc: "Ring, partition key, CQL, consistency, vs MongoDB" },
+    { g: "NoSQL", id: "hbase-redis", icon: "🔑", title: "HBase & Redis", desc: "Column-family on HDFS, key-value in memory" },
+    { g: "Warehouse, Lake & Cloud", id: "data-warehouse", icon: "🏛️", title: "Data Warehousing & SCD", desc: "Star schema, ETL, OLAP ops, slowly changing dimensions" },
+    { g: "Warehouse, Lake & Cloud", id: "data-lake", icon: "🌊", title: "Data Lake & Lakehouse", desc: "Zones, formats, lake vs warehouse vs lakehouse" },
+    { g: "Warehouse, Lake & Cloud", id: "snowflake", icon: "❄️", title: "Snowflake", desc: "Architecture, warehouses, stages, COPY, cost" },
+    { g: "Warehouse, Lake & Cloud", id: "data-engineering", icon: "🧭", title: "Data Engineering & Data Management", desc: "Pipelines, quality, governance, data-driven decisions" }
+  ];
+  const _cheatCard = (c, color) => `
+        <div class="note-card" onclick="window.open('cheatsheets.html#${c.id}','_blank')"
+             style="border-top:2px solid ${color}99;padding:14px 16px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:40px;height:40px;border-radius:11px;background:${color}18;border:2px solid ${color}44;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${c.icon}</div>
+            <div style="min-width:0">
+              <div style="font-weight:700;font-size:14px;color:var(--text)">${c.title}</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px;line-height:1.35">${c.desc}</div>
+            </div>
+            <span style="margin-left:auto;color:${color};font-size:15px;flex-shrink:0">↗</span>
+          </div>
+        </div>`;
+  const _cheatSection = () => `
+    <div style="display:flex;align-items:center;gap:10px;margin:30px 0 6px">
+      <span style="font-size:20px">📋</span>
+      <div><div style="font-weight:800;font-size:17px;color:var(--text)">Cheat Sheets</div>
+        <div style="font-size:12px;color:var(--text3)">Quick revision: Python &amp; R, SQL, NoSQL, data warehouse &amp; data lake. Syntax, examples, exam tips</div></div>
+      <div style="flex:1;height:1px;background:linear-gradient(90deg,#14B8A666,transparent);margin-left:8px"></div>
+      <button class="btn btn-outline btn-sm" onclick="window.open('cheatsheets.html','_blank')" style="flex-shrink:0">Open all ↗</button>
+    </div>
+    ${cheatGroups.map(g => `
+      <div style="display:flex;align-items:center;gap:8px;margin:18px 0 10px;font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:${g.color}">
+        <span style="font-size:15px">${g.icon}</span>${g.name}
+        <span style="font-weight:600;color:var(--text3);text-transform:none;letter-spacing:0">· ${cheatSheets.filter(c => c.g === g.name).length} sheets</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px">
+        ${cheatSheets.filter(c => c.g === g.name).map(c => _cheatCard(c, g.color)).join('')}
+      </div>`).join('')}`;
   const _noteCard = n => `
         <div class="note-card" onclick="window.open('${n.file}','_blank')"
              style="border-top:2px solid ${n.color}99">
@@ -17973,6 +18048,7 @@ async function renderStudentNotes() {
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px">
       ${awsNotes.map(_noteCard).join('')}
     </div>
+    ${_cheatSection()}
     <div style="margin-top:28px;padding:14px 20px;background:rgba(255,255,255,0.02);border-radius:var(--r);border:1px dashed rgba(255,255,255,0.08);color:var(--text3);font-size:13px;text-align:center">
       📚 More notes will be added as the course progresses. Check back regularly!
     </div>`;
