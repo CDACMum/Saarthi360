@@ -3942,6 +3942,14 @@ function _ntfBadge(n){
   b.style.display = n > 0 ? 'flex' : 'none';
 }
 async function _ntfInit(){
+  if (!window._ntfTimer) window._ntfTimer = setInterval(async () => {
+    try {
+      if (!currentUser || currentUser.role !== 'student') return;
+      const p = document.getElementById('ntfPanel'); if (p && p.style.display !== 'none') return;
+      await loadSetsCache();
+      _ntfItems = await _ntfCollect(); _ntfBadge(_ntfItems.length);
+    } catch (e) {}
+  }, 120000);
   try {
     _ntfItems = await _ntfCollect();
     _ntfBadge(_ntfItems.length);
@@ -3958,10 +3966,15 @@ function _ntfToggle(ev){
   if (ev) ev.stopPropagation();
   const p = document.getElementById('ntfPanel'); if (!p) return;
   if (p.style.display !== 'none') { _ntfClose(); return; }
-  _ntfRender();
   p.style.display = 'block';
-  _ntfSetSeen(new Date().toISOString());   // opening the panel marks everything as seen
-  _ntfBadge(0);
+  _ntfRender();
+  // Re-check on every open, then mark as seen only what was actually shown (fix 12 Nov 2026)
+  _ntfCollect().then(items => {
+    _ntfItems = items; _ntfRender();
+    const newest = items.map(i => i.at).filter(Boolean).sort().pop();
+    if (newest) _ntfSetSeen(new Date(new Date(newest).getTime() + 1000).toISOString());
+    _ntfBadge(0);
+  }).catch(e => console.warn('notifications:', e));
   setTimeout(() => document.addEventListener('click', _ntfOutside), 0);
 }
 function _ntfOutside(e){ const w = document.querySelector('.ntf-wrap'); if (w && !w.contains(e.target)) _ntfClose(); }
@@ -9719,6 +9732,7 @@ async function runPythonTests(code, testCases, onProgress, opts) {
   const baseMs = heavy ? (_pyHeavyReady ? 40000 : 180000) : spark ? (_pyWorkerReady ? 20000 : 45000) : lines > 200 ? 25000 : lines > 80 ? 18000 : 12000;
   const timeoutMs = baseMs + testCases.length * (heavy ? 15000 : spark ? 5000 : 1500); // +1.5s per extra test case
   const sparkLib = spark ? getSparkLib() : null;
+  if (spark) for (const t of testCases) if (t && t.files) t.files = await _spkResolveFiles(t.files);
 
   return new Promise((resolve, reject) => {
     const id = ++_pyWorkerReqId;
@@ -12111,13 +12125,14 @@ async function _cqCollectLnx() {
 // never part of the data files. Old PySpark questions have no such line and
 // stay in the PySpark DataFrame section.
 // ════════════════════════════════════════════════════════════════
-const _SPK_TRACKS = ['pyspark', 'spark_sql', 'spark_rdd', 'hive', 'pandas', 'ml'];
+const _SPK_TRACKS = ['pyspark', 'spark_sql', 'spark_rdd', 'hive', 'pandas', 'casestudy', 'ml'];
 const _TRACK_META = {
   pyspark:   { icon:'⚡', label:'PySpark DataFrame', long:'PySpark — DataFrame API', file:'job.py',      rt:'PySpark 3.5',                    mode:'python' },
   spark_sql: { icon:'🧮', label:'PySpark SQL',       long:'PySpark — Spark SQL',     file:'job.py',      rt:'Spark SQL 3.5',                  mode:'python' },
   spark_rdd: { icon:'🔗', label:'PySpark RDD',       long:'PySpark — RDD API',       file:'job.py',      rt:'Spark RDD API 3.5',              mode:'python' },
   hive:      { icon:'🐝', label:'Hive',              long:'Hive — HiveQL',           file:'script.hql',  rt:'Hive 3.1 · HiveQL',              mode:'text/x-hive' },
   pandas:    { icon:'🐼', label:'Pandas & NumPy',    long:'Pandas & NumPy — cleaning, statistics, EDA', file:'analysis.py', rt:'Python · pandas · NumPy · SciPy', mode:'python', heavy:true },
+  casestudy: { icon:'📂', label:'Case Studies',      long:'Case Studies — real datasets: cleaning, EDA & insights', file:'analysis.py', rt:'Python · pandas · NumPy · SciPy', mode:'python', heavy:true },
   ml:        { icon:'🤖', label:'Machine Learning',  long:'Machine Learning — scikit-learn',            file:'model.py',    rt:'Python · scikit-learn',           mode:'python', heavy:true },
 };
 function _spkTrackLine(schema) {
@@ -12134,7 +12149,18 @@ function _qTrack(q) {
   if (!q) return '';
   if (q.language !== 'pyspark') return q.language;
   const t = _spkTrackLine(q.schema);
+  if (t === 'pandas' && _spkCaseKey(q.schema)) return 'casestudy';
   return t && _TRACK_META[t] ? t : 'pyspark';
+}
+// Case-study questions carry '#@case: <key>' before the first data file.
+function _spkCaseKey(schema) {
+  const lines = String(schema || '').replace(/\r/g, '').split('\n');
+  for (const l of lines) {
+    if (l.startsWith('=== ')) break;
+    const m = /^#@case:\s*([a-z0-9_]+)\s*$/.exec(l.trim());
+    if (m) return m[1];
+  }
+  return '';
 }
 function _spkStripTrack(spec) {
   const out = []; let inData = false;
@@ -12164,13 +12190,13 @@ function _spkTrackDefaultCode(t) {
   if (t === 'hive') return '-- Write HiveQL statements, each ending with ;\n-- Data files are in the 📁 Files tab (current folder = /home/student)\n\n';
   if (t === 'spark_sql') return 'from pyspark.sql import SparkSession\n\nspark = SparkSession.builder.appName("sql").getOrCreate()\n\n# df = spark.read.csv("file.csv", header=True, inferSchema=True)\n# df.createOrReplaceTempView("t")\n# spark.sql("SELECT ... FROM t").show()\n';
   if (t === 'spark_rdd') return 'from pyspark.sql import SparkSession\n\nspark = SparkSession.builder.appName("rdd").getOrCreate()\nsc = spark.sparkContext\n\n# rdd = sc.textFile("file.txt")\n';
-  if (t === 'pandas') return 'import pandas as pd\nimport numpy as np\n\n# df = pd.read_csv("file.csv")\n';
+  if (t === 'pandas' || t === 'casestudy') return 'import pandas as pd\nimport numpy as np\n\n# df = pd.read_csv("file.csv")\n';
   if (t === 'ml') return 'import pandas as pd\nimport numpy as np\nfrom sklearn.model_selection import train_test_split\n\n# df = pd.read_csv("file.csv")\n';
   return _SPK_DEFAULT_CODE;
 }
 function _spkRunNote(t) {
   if (t === 'hive') return 'Your HiveQL script runs like <code>hive -S -f script.hql</code> on a <b>fresh copy</b> of the data files and an <b>empty warehouse</b> every time — create and load your tables inside the script.<br><br>Click “Run Input” to see what it prints: the rows of every SELECT (tab-separated), SHOW and DESCRIBE.';
-  if (t === 'pandas' || t === 'ml') return 'Your Python runs on a <b>fresh copy</b> of the data files every time (see the 📁 Files tab).<br><br>Click “Run Input” to see everything it prints. matplotlib charts (<code>plt.show()</code>) appear under the output. The <b>first run downloads pandas / NumPy' + (t === 'ml' ? ' / scikit-learn' : ' / SciPy') + '</b> — about 30–60 s once, quick after that.';
+  if (t === 'pandas' || t === 'casestudy' || t === 'ml') return 'Your Python runs on a <b>fresh copy</b> of the data files every time (see the 📁 Files tab).<br><br>Click “Run Input” to see everything it prints. matplotlib charts (<code>plt.show()</code>) appear under the output. The <b>first run downloads pandas / NumPy' + (t === 'ml' ? ' / scikit-learn' : ' / SciPy') + '</b> — about 30–60 s once, quick after that.';
   return 'Your PySpark job runs on a <b>fresh copy</b> of the data files every time (see the 📁 Files tab).<br><br>Click “Run Input” to see everything it prints — show(), printSchema() and print(). The first run loads the Python + Spark engine (a few seconds).';
 }
 function _spkImgsHTML(imgs) {
@@ -12221,6 +12247,7 @@ function _spkCheatSheetFor(t) {
     ['Actions', 'collect()   take(n)   first()   count()   reduce(f)   countByKey()   takeOrdered(n, key=f)'],
     ['Header', 'head = rdd.first()   rows = rdd.filter(lambda l: l != head).map(lambda l: l.split(","))']
   ], '• Transformations are <b>lazy</b> — nothing runs until an action (collect, take, count, reduce …).<br>• Print what the task asks for, e.g. <code>for k, v in rdd.collect(): print(k, v)</code>.');
+  if (t === 'casestudy') return _readGuideHTML() + _spkCheatSheetFor('pandas');
   if (t === 'pandas') return _trackCheatHTML('🐼 pandas & NumPy quick reference', [
     ['Read', 'pd.read_csv("f.csv")   np.loadtxt("f.txt")   np.array([…])'],
     ['Look', 'df.shape   df.head()   df.columns   df.dtypes   df.describe()   df.info()'],
@@ -12269,6 +12296,27 @@ function _spkParseSpec(spec) {
 }
 function _spkFiles(q, tc) {
   return Object.assign({}, _spkParseSpec(q.schema || ''), _spkParseSpec((tc && tc.seed) || ''));
+}
+// Large data files live on the site (e.g. datasets/quickkart/orders.csv); the question only holds '@url <path>'.
+const _SPK_REMOTE = {};
+function _spkRemoteUrl(text) { const m = /^@url\s+(\S+)\s*$/.exec(String(text || '').trim()); return m ? m[1] : null; }
+function _spkFetchRemote(url) {
+  if (!_SPK_REMOTE[url]) {
+    _SPK_REMOTE[url] = fetch(url, { cache: 'force-cache' }).then(r => {
+      if (!r.ok) throw new Error('Could not load the data file ' + url + ' (HTTP ' + r.status + ')');
+      return r.text();
+    }).then(t => t.replace(/\r/g, '')).catch(e => { delete _SPK_REMOTE[url]; throw e; });
+  }
+  return _SPK_REMOTE[url];
+}
+async function _spkResolveFiles(files) {
+  if (!files) return files;
+  const out = Object.assign({}, files); const names = Object.keys(out).filter(n => _spkRemoteUrl(out[n]));
+  if (!names.length) return out;
+  const pending = names.filter(n => !_SPK_REMOTE[_spkRemoteUrl(out[n])]);
+  if (pending.length && typeof toast === 'function') toast('📥 Loading dataset ' + pending.join(', ') + ' (first time only)…', 'info');
+  await Promise.all(names.map(async n => { out[n] = await _spkFetchRemote(_spkRemoteUrl(out[n])); }));
+  return out;
 }
 const _SPK_DEFAULT_CODE = 'from pyspark.sql import SparkSession\nfrom pyspark.sql import functions as F\n\nspark = SparkSession.builder.appName("job").getOrCreate()\n\n';
 // Runs a PySpark job once on the question's data files (or extra files).
@@ -12334,6 +12382,7 @@ function _spkCaseResultHTML(r, caseLabel) {
   else inner += lbl('EXPECTED OUTPUT', '#50fa7b') + _spkTerm(String(r.expected));
   return box(inner);
 }
+function _spkNthNl(t, n) { let i = -1; while (n-- > 0) { i = t.indexOf('\n', i + 1); if (i < 0) return t.length; } return i + 1; }
 function _spkCsvTable(text, maxRows) {
   const parseLine = l => { const out = []; let cur = '', q = false; for (let i = 0; i < l.length; i++) { const c = l[i]; if (q) { if (c === '"') { if (l[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; } else if (c === '"') q = true; else if (c === ',') { out.push(cur); cur = ''; } else cur += c; } out.push(cur); return out; };
   const lines = String(text).replace(/\n$/, '').split('\n');
@@ -12347,10 +12396,23 @@ function _spkCsvTable(text, maxRows) {
 function _spkFilesExample(q, names) {
   const t = _qTrack(q); const f = names.find(n => /\.csv$/i.test(n)) || names[0] || 'data.csv';
   if (t === 'hive') return `LOAD DATA LOCAL INPATH '${f}' INTO TABLE my_table;`;
-  if (t === 'pandas' || t === 'ml') return /\.csv$/i.test(f) ? `df = pd.read_csv("${f}")` : `open("${f}").read()`;
+  if (t === 'pandas' || t === 'casestudy' || t === 'ml') return /\.csv$/i.test(f) ? `df = pd.read_csv("${f}")` : `open("${f}").read()`;
   if (t === 'spark_rdd') return `sc.textFile("${f}")`;
   return `spark.read.csv("${f}", header=True, inferSchema=True)`;
 }
+// Coding questions on the PySpark engine: their data files ("=== file" blocks) can be viewed full-screen and downloaded.
+function _spkDsKey(q) {
+  if (!q || q.id == null) return null;
+  const files = _spkParseSpec(q.schema || ''); const names = Object.keys(files);
+  if (!names.length) return null;
+  const key = 'cq' + q.id;
+  SAARTHI_DATASETS[key] = { title: (q.title || 'Question') + ' — data files',
+    about: 'These files are in /home/student when your code runs. Read them with a relative path, e.g. ' + _spkFilesExample(q, names) + '. Download them to practise in Jupyter or VS Code.',
+    files: names.map(n => _spkRemoteUrl(files[n]) ? { name: n, url: _spkRemoteUrl(files[n]) } : { name: n, csv: files[n] }) };
+  _dsInjectCss();
+  return key;
+}
+function _spkDsChip(q) { const k = _spkDsKey(q); return k ? `<div style="margin:10px 0 4px">${datasetChip(k)}</div>` : ''; }
 function loadSpkFilesPanel(q, panelId) {
   const panel = document.getElementById(panelId); if (!panel || panel.dataset.loaded === '1') return;
   panel.dataset.loaded = '1'; _lnxInjectCss();
@@ -12358,10 +12420,17 @@ function loadSpkFilesPanel(q, panelId) {
   const head = `<div style="font-size:10px;font-weight:700;color:#6272a4;letter-spacing:.1em;margin-bottom:10px;text-transform:uppercase">Data files in <span style="color:#50fa7b">/home/student</span> — read them with a relative path</div>
     <div style="font-size:12px;color:#d7d2f0;margin-bottom:12px;line-height:1.6">e.g. <code>${escHtml(_spkFilesExample(q, names))}</code></div>`;
   if (!names.length) { panel.innerHTML = head + '<div style="color:#6272a4;text-align:center;padding:30px">This question has no data files — build the data in your code.</div>'; return; }
-  panel.innerHTML = head + names.map(n => {
-    const t = files[n]; const lines = t.replace(/\n$/, '').split('\n').length;
-    const body = /\.csv$/i.test(n) && lines > 1 ? _spkCsvTable(t, 40) : `<pre>${escHtml(t)}</pre>`;
-    return `<div class="lnx-file"><div class="h">📄 <span style="color:#bd93f9">${escHtml(n)}</span><span style="margin-left:auto;font-size:11px;color:#6272a4">${/\.csv$/i.test(n) ? (lines - 1) + ' row' + (lines - 1 !== 1 ? 's' : '') + ' + header' : lines + ' line' + (lines !== 1 ? 's' : '')}</span></div>${body}</div>`;
+  const dsKey = _spkDsKey(q);
+  panel.innerHTML = head + (dsKey ? `<div style="margin:-4px 0 12px">${datasetChip(dsKey)}</div>` : '') + names.map((n, fi) => {
+    const t = files[n]; const rurl = _spkRemoteUrl(t); const lines = rurl ? 0 : t.replace(/\n$/, '').split('\n').length;
+    if (rurl) setTimeout(() => _spkFetchRemote(rurl).then(txt => {
+      const el = document.getElementById(panelId + '_rf' + fi); if (!el) return;
+      const n2 = txt.replace(/\n$/, '').split('\n').length - 1;
+      const cols = (txt.slice(0, txt.indexOf('\n')).match(/,/g) || []).length + 1;
+      el.innerHTML = `<div style="font-size:11px;color:#f1fa8c;padding:2px 10px 6px">${n2.toLocaleString()} rows × ${cols} columns · showing the first 40 — use ⬇ Download for the full file</div>` + _spkCsvTable(txt.slice(0, _spkNthNl(txt, 41)), 40);
+    }).catch(e => { const el = document.getElementById(panelId + '_rf' + fi); if (el) el.innerHTML = `<div style="color:#ff5555;padding:10px">${escHtml(e.message)}</div>`; }), 0);
+    const body = rurl ? `<div id="${panelId}_rf${fi}" style="color:#6272a4;padding:14px 10px">⏳ Loading preview of ${escHtml(n)}…</div>` : /\.csv$/i.test(n) && lines > 1 ? _spkCsvTable(t, 40) : `<pre>${escHtml(t)}</pre>`;
+    return `<div class="lnx-file"><div class="h">📄 <span style="color:#bd93f9">${escHtml(n)}</span><span style="margin-left:auto;font-size:11px;color:#6272a4">${rurl ? 'large file' : /\.csv$/i.test(n) ? (lines - 1) + ' row' + (lines - 1 !== 1 ? 's' : '') + ' + header' : lines + ' line' + (lines !== 1 ? 's' : '')}</span>${dsKey ? `<button type="button" title="View all rows" onclick="event.stopPropagation();openDataset('${dsKey}',${fi})" style="margin-left:8px;padding:2px 8px;border-radius:6px;border:1px solid #44475a;background:transparent;color:#8be9fd;font-size:11px;cursor:pointer">⛶ View all</button><button type="button" title="Download ${escHtml(n)}" onclick="event.stopPropagation();downloadDataset('${dsKey}',${fi})" style="margin-left:6px;padding:2px 8px;border-radius:6px;border:1px solid #44475a;background:transparent;color:#50fa7b;font-size:11px;cursor:pointer">⬇ Download</button>` : ''}</div>${body}</div>`;
   }).join('');
 }
 function _spkCheatSheetHTML() {
@@ -12564,6 +12633,9 @@ async function openCodingQuestion(qId) {
             <span class="sa-qstat xp">⚡ ${q.maxScore||10} XP reward</span>
           </div>
           <div class="sa-prose">${escHtml(q.description||'')}</div>
+          ${isSpk ? _spkDsChip(q) : ''}
+          ${isSpk && ['pandas', 'casestudy', 'ml'].includes(_qTrack(q)) ? _readGuideBtn(q) : ''}
+          ${isSpk && _qTrack(q) === 'casestudy' ? _caseNavHTML(q) : ''}
           <div class="sa-eglabel">Examples</div>
           ${examplesHTML}
           ${hiddenCount>0?`<div class="sa-hidden-note">🔒 ${hiddenCount} more hidden test case${hiddenCount>1?'s':''} · revealed after Submit</div>`:''}
@@ -12962,6 +13034,187 @@ function _toggleLane(k){
   window._saLaneOpen[k] = !cur;
   _renderCodingList();
 }
+// ════════════════════════════════════════════════════════════════
+// 📂 CASE STUDIES — big real-world datasets, one case = several graded tasks in order
+// ════════════════════════════════════════════════════════════════
+const CASE_META = {
+  quickkart: { icon:'📦', name:'QuickKart', sector:'E-commerce · customers & retention', file:'orders.csv', size:'32,541 rows × 27 columns',
+    story:'An online store’s one-year order export. Clean it, then find what drives revenue, returns, delivery ratings and repeat customers.' },
+  citycare:  { icon:'🏥', name:'CityCare Hospital', sector:'Healthcare · diabetes centre', file:'hospital_admissions.csv', size:'38,417 rows × 25 columns',
+    story:'Hospital admissions typed in by many clerks. Fix dates, units and labels, then measure length of stay, cost and 30-day readmissions.' },
+  airwatch:  { icon:'🌫️', name:'AirWatch', sector:'Environment · air-quality sensors', file:'air_quality.csv', size:'34,793 rows × 22 columns',
+    story:'Readings from 12 monitoring stations every 3 hours. Remove faulty data, fill gaps, and find the seasons, places and hours with unsafe air.' },
+  talentco:  { icon:'👥', name:'TalentCo HR', sector:'HR analytics · pay & attrition', file:'employees.csv', size:'30,109 rows × 26 columns',
+    story:'An HR export with stale records and salaries in mixed formats. Find where and why people resign, audit the gender pay gap and build a flight-risk list.' },
+};
+const CASE_ORDER = ['quickkart', 'citycare', 'airwatch', 'talentco'];
+function _caseTaskNo(q) { const m = /·\s*(\d+)\.\s/.exec(q.title || ''); return m ? +m[1] : 999; }
+function _caseShortTitle(q) { return String(q.title || '').replace(/^.*?Case Study\s*·\s*/, ''); }
+function _caseOf(q) { return _spkCaseKey(q.schema) || 'other'; }
+function _caseQs(key) {
+  return (window._allCodingQuestions || []).filter(q => _qTrack(q) === 'casestudy' && _caseOf(q) === key)
+    .sort((a, b) => _caseTaskNo(a) - _caseTaskNo(b) || a.id - b.id);
+}
+function _caseDsKey(key, q) {
+  const k = q ? _spkDsKey(q) : null; const M = CASE_META[key];
+  if (k && M) { SAARTHI_DATASETS[k].title = M.name + ' case study — ' + M.file; }
+  return k;
+}
+function _caseInjectCss() {
+  if (document.getElementById('saCaseCss')) return;
+  const st = document.createElement('style'); st.id = 'saCaseCss';
+  st.textContent = `
+  .sa-case{border:1px solid rgba(127,127,127,.28);border-radius:16px;margin:0 0 16px;overflow:hidden;background:rgba(99,102,241,.05)}
+  .sa-case-h{display:flex;gap:14px;align-items:flex-start;padding:16px 18px 10px;cursor:pointer;user-select:none}
+  .sa-case-ic{font-size:34px;line-height:1}
+  .sa-case-tx{flex:1;min-width:0}
+  .sa-case-nm{font-weight:800;font-size:17px}
+  .sa-case-sec{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--saText2,#8a90b8);margin-left:8px}
+  .sa-case-st{font-size:13px;line-height:1.5;color:var(--saText2,#8a90b8);margin-top:4px}
+  .sa-case-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .sa-case-chips span{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:rgba(127,127,127,.14)}
+  .sa-case-pr{text-align:right;min-width:110px}
+  .sa-case-pr b{font-size:18px}
+  .sa-case-pr .bar{display:block;height:6px;border-radius:3px;background:rgba(127,127,127,.2);margin-top:6px;overflow:hidden}
+  .sa-case-pr .bar i{display:block;height:100%;background:linear-gradient(90deg,#22c55e,#14b8a6)}
+  .sa-case-act{display:flex;flex-wrap:wrap;gap:8px;padding:0 18px 12px 66px}
+  .sa-case-act button{padding:7px 13px;border-radius:9px;border:1px solid rgba(99,102,241,.55);background:rgba(99,102,241,.12);color:inherit;font:600 12.5px Inter,system-ui,sans-serif;cursor:pointer}
+  .sa-case-act button:hover{background:rgba(99,102,241,.22)}
+  .sa-case.collapsed .sa-list,.sa-case.collapsed .sa-case-act{display:none}
+  .sa-case .sa-list{padding:0 12px 12px}
+  .sa-case-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 4px;padding:9px 12px;border-radius:10px;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);font-size:12.5px}
+  .sa-case-nav button{padding:4px 10px;border-radius:7px;border:1px solid rgba(127,127,127,.4);background:transparent;color:inherit;font-size:12px;cursor:pointer}
+  .sa-case-nav button:disabled{opacity:.35;cursor:default}
+  .rg-wrap{padding:16px 20px 20px;font:14px/1.6 Inter,system-ui,sans-serif}
+  .rg-wrap h4{margin:16px 0 6px;font-size:14.5px}
+  .rg-wrap pre{margin:6px 0 8px;padding:10px 12px;border-radius:9px;background:rgba(127,127,127,.13);font:12.5px/1.5 'JetBrains Mono',Consolas,monospace;white-space:pre-wrap;overflow-x:auto}
+  .rg-wrap code{font-family:'JetBrains Mono',Consolas,monospace;font-size:12.5px;background:rgba(127,127,127,.13);padding:1px 5px;border-radius:5px}
+  .rg-wrap table{border-collapse:collapse;width:100%;font-size:13px;margin:6px 0}
+  .rg-wrap td{border-top:1px solid rgba(127,127,127,.25);padding:6px 8px;vertical-align:top}
+  .rg-wrap td:first-child{white-space:nowrap;font-weight:700}`;
+  document.head.appendChild(st);
+}
+function _caseListHTML(list, smap, term) {
+  _caseInjectCss();
+  const keys = [...CASE_ORDER, ...[...new Set(list.map(_caseOf))].filter(k => !CASE_ORDER.includes(k))];
+  let html = `<div style="margin:0 0 14px;padding:12px 16px;border-radius:12px;background:rgba(20,184,166,.1);border:1px solid rgba(20,184,166,.35);font-size:13px;line-height:1.55">
+    📂 <b>Each case study is one real, messy dataset</b> and a chain of tasks — profile → clean → analyse → insight. Solve the tasks in order; every task repeats the cleaning rules it needs.
+    New to data files? <a href="#" onclick="event.preventDefault();openReadGuide()" style="font-weight:700">📖 How to read the files</a></div>`;
+  keys.forEach(key => {
+    const items = list.filter(q => _caseOf(q) === key).sort((a, b) => _caseTaskNo(a) - _caseTaskNo(b) || a.id - b.id);
+    if (!items.length) return;
+    const M = CASE_META[key] || { icon:'📂', name:key, sector:'Case study', file:'', size:'', story:'' };
+    const sv = items.filter(q => smap[q.id]).length, xp = items.reduce((a, q) => a + (q.maxScore || 10), 0);
+    const open = window._saLaneOpen['case_' + key] !== false;
+    const dk = _caseDsKey(key, items[0]);
+    html += `<div class="sa-case ${open ? '' : 'collapsed'}">
+      <div class="sa-case-h" onclick="_toggleLane('case_${key}')">
+        <div class="sa-case-ic">${M.icon}</div>
+        <div class="sa-case-tx"><div class="sa-case-nm">${open ? '▾' : '▸'} ${escHtml(M.name)}<span class="sa-case-sec">${escHtml(M.sector)}</span></div>
+          <div class="sa-case-st">${escHtml(M.story)}</div>
+          <div class="sa-case-chips">${M.file ? `<span>📄 ${escHtml(M.file)}${M.size ? ' · ' + escHtml(M.size) : ''}</span>` : ''}<span>🧩 ${items.length} task${items.length !== 1 ? 's' : ''}</span><span>⚡ ${xp} XP</span></div></div>
+        <div class="sa-case-pr"><b>${sv} / ${items.length}</b><div style="font-size:11px;color:var(--saText2,#8a90b8)">solved</div><span class="bar"><i style="width:${Math.round(sv / items.length * 100)}%"></i></span></div>
+      </div>
+      <div class="sa-case-act">
+        <button type="button" onclick="event.stopPropagation();openReadGuide('${escHtml(M.file || 'data.csv')}')">📖 How to read the files</button>
+        ${dk ? `<button type="button" onclick="event.stopPropagation();openDataset('${dk}')">📊 Preview / ⬇ Download the dataset</button>` : ''}
+        <button type="button" onclick="event.stopPropagation();openCodingQuestion(${(items.find(q => !smap[q.id]) || items[0]).id})">▶ ${sv ? 'Continue' : 'Start'} with task ${_caseTaskNo(items.find(q => !smap[q.id]) || items[0])}</button>
+      </div>
+      <div class="sa-list">`;
+    items.forEach(q => {
+      const t = (window.SA_TIER_MAP || {})[q.difficulty || 'medium'] || { cls:'med', ico:'⚔️', sub:'Medium' };
+      const sub = smap[q.id], solved = !!sub;
+      html += `<div class="sa-row ${t.cls} ${solved ? 'solved' : ''}" onclick="openCodingQuestion(${q.id})"><span class="sa-ledge"></span>
+        <div class="sa-status ${solved ? 'done' : 'play'}">${solved ? '✓' : '▶'}</div>
+        <div class="sa-title">${escHtml(_caseShortTitle(q))}</div>
+        <span class="sa-lang">${t.ico} ${t.sub}</span>
+        <span class="sa-mxp">⚡${q.maxScore || 10}</span>
+        ${solved ? `<span class="sa-score">${sub.score || 0}<span>/${q.maxScore || 10}</span></span>` : `<span class="sa-cta">Solve →</span>`}
+      </div>`;
+    });
+    html += `</div></div>`;
+  });
+  if (!list.length) html += `<div class="sa-empty">No case-study tasks${term ? ' match your search' : ' yet'}.</div>`;
+  return html;
+}
+function _caseNavHTML(q) {
+  _caseInjectCss();
+  const key = _caseOf(q), qs = _caseQs(key), i = qs.findIndex(x => x.id === q.id), M = CASE_META[key] || { icon:'📂', name:key };
+  if (i < 0) return '';
+  const prev = qs[i - 1], next = qs[i + 1];
+  return `<div class="sa-case-nav">${M.icon} <b>${escHtml(M.name)} case study</b> · task ${i + 1} of ${qs.length}
+    <span style="margin-left:auto"></span>
+    <button type="button" ${prev ? `onclick="openCodingQuestion(${prev.id})"` : 'disabled'}>◂ Previous</button>
+    <button type="button" ${next ? `onclick="openCodingQuestion(${next.id})"` : 'disabled'}>Next task ▸</button></div>`;
+}
+function _readGuideBtn(q) {
+  const names = Object.keys(_spkParseSpec(q.schema || '')); const f = names.find(n => /\.csv$/i.test(n)) || names[0] || 'data.csv';
+  return `<button type="button" onclick="openReadGuide('${escHtml(f)}')" style="margin:2px 0 6px;padding:6px 12px;border-radius:999px;border:1px solid rgba(20,184,166,.6);background:rgba(20,184,166,.1);color:inherit;font:600 12.5px Inter,system-ui,sans-serif;cursor:pointer">📖 How to read the files</button>`;
+}
+function _readGuideHTML(file) {
+  _caseInjectCss();
+  const f = escHtml(file || 'orders.csv');
+  return `<div class="rg-wrap">
+  <h4>1 · In Saarthi — read the file by its name</h4>
+  When you press Run or Submit, the data file is already in your working folder (<code>/home/student</code>). Give only the file name — no folder path, no upload:
+  <pre>import pandas as pd
+import numpy as np
+
+df = pd.read_csv("${f}")</pre>
+  <h4>2 · Take a first look — and remember print()</h4>
+  Only what you <b>print</b> appears in the output (and only printed text is graded):
+  <pre>print(df.shape)            # (rows, columns)
+print(df.head())           # first 5 rows
+df.info()                  # column types + non-null counts (prints by itself)
+print(df.isna().sum())     # blanks per column
+print(df["city"].value_counts())
+print(df.describe())       # count, mean, min, max of number columns</pre>
+  <h4>3 · Messy columns — read as text, clean, then convert</h4>
+  <pre>df = pd.read_csv("${f}", dtype={"unit_price": str})       # keep a messy column as text
+df["unit_price"] = pd.to_numeric(df["unit_price"].str.replace("₹", "").str.replace(",", ""))
+df["city"] = df["city"].str.strip().str.title()               # " mumbai " → "Mumbai"</pre>
+  Blank cells become <code>NaN</code> automatically. Use <code>keep_default_na=False</code> if you want them as empty text instead.
+  <h4>4 · Dates</h4>
+  <pre>df["order_datetime"] = pd.to_datetime(df["order_datetime"], format="%Y-%m-%d %H:%M:%S")
+df["month"] = df["order_datetime"].dt.strftime("%Y-%m")</pre>
+  If a column mixes formats (e.g. <code>2025-03-14</code> and <code>14/03/2025</code>), convert each format separately — the case study tells you which formats exist.
+  <h4>5 · Big files</h4>
+  <pre>pd.read_csv("${f}", nrows=1000)                       # try your code on the first 1,000 rows
+pd.read_csv("${f}", usecols=["customer_id", "city"])  # read only the columns you need</pre>
+  Your final answer must use the <b>whole</b> file — remove <code>nrows</code> before you submit.
+  <h4>6 · Practise on your own computer</h4>
+  Click <b>⬇ Download</b>, then:
+  <table>
+    <tr><td>Jupyter / VS Code</td><td>Put the CSV in the same folder as your notebook or .py file → <code>pd.read_csv("${f}")</code></td></tr>
+    <tr><td>Anywhere else</td><td>Give the full path: <code>pd.read_csv(r"C:\\Users\\you\\Downloads\\${f}")</code> (the <code>r</code> keeps the backslashes)</td></tr>
+    <tr><td>Google Colab</td><td><code>from google.colab import files; files.upload()</code> → choose the CSV → <code>pd.read_csv("${f}")</code></td></tr>
+  </table>
+  <h4>7 · Common errors and fixes</h4>
+  <table>
+    <tr><td>FileNotFoundError</td><td>Wrong name or folder. <code>import os; print(os.listdir())</code> shows the files where Python is looking.</td></tr>
+    <tr><td>KeyError: 'city'</td><td>Check the exact column names: <code>print(df.columns.tolist())</code>. Hidden spaces? <code>df.columns = df.columns.str.strip()</code></td></tr>
+    <tr><td>UnicodeDecodeError</td><td>Add <code>encoding="utf-8"</code> (needed for ₹ and other symbols on some PCs).</td></tr>
+    <tr><td>DtypeWarning: mixed types</td><td>Add <code>low_memory=False</code>, or read that column with <code>dtype=str</code> and clean it.</td></tr>
+    <tr><td>Nothing appears</td><td>You did not <code>print()</code> the result.</td></tr>
+    <tr><td>.txt file with numbers</td><td><code>np.loadtxt("marks.txt", delimiter=",", skiprows=1)</code> or simply <code>pd.read_csv("marks.txt")</code> — then <code>print()</code> it.</td></tr>
+  </table>
+  </div>`;
+}
+function openReadGuide(file) {
+  _dsInjectCss(); closeDataset();
+  const ov = document.createElement('div'); ov.id = 'dsModal';
+  const host = document.querySelector('.page.active') || document.body;
+  ov.innerHTML = `<div class="ds-box" role="dialog" aria-modal="true" aria-label="How to read the data files" style="width:min(860px,96vw)">
+    <div class="ds-head"><div><h3>📖 How to read the data files</h3><p>pandas / NumPy · works the same in Saarthi, Jupyter, VS Code and Colab</p></div>
+      <button type="button" class="ds-x" title="Close (Esc)" onclick="closeDataset()">×</button></div>
+    <div class="ds-scroll">${_readGuideHTML(file)}</div></div>`;
+  ov.addEventListener('click', e => { if (e.target === ov) closeDataset(); });
+  host.appendChild(ov);
+  if (!window._dsKeyGuard) {
+    window._dsKeyGuard = true;
+    window.addEventListener('keydown', e => { if (!document.getElementById('dsModal')) return; if (e.key === 'Escape') closeDataset(); e.stopPropagation(); }, true);
+  }
+}
 function _saInjectTierCss(){
   if (document.getElementById('saTierCss')) return;
   const st=document.createElement('style'); st.id='saTierCss';
@@ -12984,6 +13237,7 @@ function _renderCodingList() {
   const term = ((sEl && sEl.value) || '').trim().toLowerCase();
   let list = qs.filter(q => _qTrack(q) === subj);
   if (term) list = list.filter(q => (q.title||'').toLowerCase().includes(term));
+  if (subj === 'casestudy') { el.innerHTML = _caseListHTML(list, smap, term); return; }
   let html = '';
   window.SA_TIERS.forEach(function(t){
     const items = list.filter(q => (q.difficulty||'medium') === t.key);
@@ -13477,7 +13731,7 @@ function _ctGroups(){
   const mods = visibleModules();
   const byKey = {}; const order = [];
   mods.forEach(m => { byKey[String(m.id)] = { key:String(m.id), name:m.name, icon:m.icon || '📚', qs:[] }; order.push(String(m.id)); });
-  ['spark_sql', 'spark_rdd', 'hive', 'pandas', 'ml'].forEach(t => { const M = _TRACK_META[t]; byKey['trk_' + t] = { key:'trk_' + t, name:M.label, icon:M.icon, qs:[] }; order.push('trk_' + t); });
+  ['spark_sql', 'spark_rdd', 'hive', 'pandas', 'casestudy', 'ml'].forEach(t => { const M = _TRACK_META[t]; byKey['trk_' + t] = { key:'trk_' + t, name:M.label, icon:M.icon, qs:[] }; order.push('trk_' + t); });
   byKey._other = { key:'_other', name:'Other / no module', icon:'📋', qs:[] }; order.push('_other');
   (window._ctQs || []).forEach(q => {
     if (term && !(q.title || '').toLowerCase().includes(term)) return;
@@ -15294,17 +15548,17 @@ function _cqSpkTrackUI() {
   const M = _TRACK_META[t] || _TRACK_META.pyspark;
   const h = document.getElementById('cqSpkHead'); if (h) h.textContent = M.icon + ' ' + M.long.toUpperCase() + ' — QUESTION SETUP';
   const what = t === 'hive' ? 'the correct HiveQL script (CREATE TABLE … ; LOAD DATA … ; SELECT … ;)'
-    : t === 'pandas' ? 'the correct pandas / NumPy program' : t === 'ml' ? 'the correct scikit-learn program'
+    : (t === 'pandas' || t === 'casestudy') ? 'the correct pandas / NumPy program' : t === 'ml' ? 'the correct scikit-learn program'
     : t === 'spark_sql' ? 'the correct PySpark job using spark.sql(…)' : t === 'spark_rdd' ? 'the correct PySpark job using the RDD API' : 'the correct PySpark job';
   const r = document.getElementById('cqSpkRefHint'); if (r) r.textContent = '— ' + what + '. Whatever it prints is the expected output of every test case.';
   const ref = document.getElementById('cqSpkRef');
   if (ref) ref.placeholder = t === 'hive' ? "CREATE TABLE employees (emp_id INT, name STRING, dept STRING, salary INT)\nROW FORMAT DELIMITED FIELDS TERMINATED BY ','\nTBLPROPERTIES ('skip.header.line.count'='1');\nLOAD DATA LOCAL INPATH 'employees.csv' INTO TABLE employees;\nSELECT dept, COUNT(*) FROM employees GROUP BY dept ORDER BY dept;"
-    : (t === 'pandas' || t === 'ml') ? 'import pandas as pd\ndf = pd.read_csv("employees.csv")\nprint(df.groupby("dept")["salary"].mean().round(2).to_string())'
+    : (t === 'pandas' || t === 'casestudy' || t === 'ml') ? 'import pandas as pd\ndf = pd.read_csv("employees.csv")\nprint(df.groupby("dept")["salary"].mean().round(2).to_string())'
     : _spkTrackDefaultCode(t) + '…';
   const hp = document.getElementById('cqSpkHelp');
   if (hp) hp.innerHTML = t === 'hive'
     ? "The student's HiveQL runs in the browser (a built-in Hive engine, like <code>hive -S -f script.hql</code>) on a fresh copy of the files and an empty warehouse; the printed output (rows of every SELECT / SHOW / DESCRIBE) must match the reference's. Test cases after the first two are hidden. Give a hidden case <b>different data files</b> so answers cannot be hard-coded. Saving runs the reference on every case and stores its output."
-    : (t === 'pandas' || t === 'ml')
+    : (t === 'pandas' || t === 'casestudy' || t === 'ml')
     ? "The student's Python runs in the browser (pandas, NumPy, SciPy, scikit-learn, statsmodels, matplotlib) on a fresh copy of the files; the printed output must match the reference's, so ask for exact formats (e.g. 2 decimals) and fixed <code>random_state</code> values. Test cases after the first two are hidden. Give a hidden case <b>different data files</b> so answers cannot be hard-coded. Saving runs the reference on every case (the first run downloads the packages, ~30–60 s)."
     : "The student's job runs in the browser (a built-in Spark 3.5 engine) on a fresh copy of the files; the printed output must match the reference's output. Test cases after the first two are hidden. Give a hidden case <b>different data files</b> so answers cannot be hard-coded. Saving runs the reference on every case and stores its output.";
 }
@@ -17865,7 +18119,7 @@ async function openModuleSets(moduleId) {
         </div>
         ${kick ? `<div class="ms-kick">${escHtml(kick)}</div>` : ''}
         <div class="ms-title">${escHtml(title)}</div>
-        <div class="ms-meta"><span>⏱️ ${s.timer || 45} min</span><span>❓ ${s.qCount || 50} Qs</span>${r.n ? `<span>⌛ ${_msFmtTime(r.avgT)}</span>` : ''}</div>
+        <div class="ms-meta"><span>⏱️ ${s.timer || 45} min</span><span>❓ ${s.qCount || 50} Qs</span>${r.n ? `<span>⌛ ${_msFmtTime(r.avgT)}</span>` : ''}${_dsKeyOfSet(s) ? `<button type="button" class="ms-ds" title="View or download the dataset before you start" onclick="event.stopPropagation();openDataset('${_dsKeyOfSet(s)}')">📊 Dataset</button>` : ''}</div>
         <div class="ms-mid">
           <div class="ms-ring ${tone(r.best)}" style="--p:${ring}">
             <div class="ms-ring-in"><b>${r.best === null ? '—' : r.best + '%'}</b><small>best</small></div>
@@ -17938,13 +18192,15 @@ async function renderStudentNotes() {
   const awsNotes = [
     { title: 'AWS, Animated', file: 'aws-animated.html', icon: '☁️', color: '#FF9900', desc: '26 modules: Cloud Practitioner → Solutions Architect (Associate & Pro) → CI/CD & data pipelines. Animations, console walkthroughs, CLI labs, quizzes' },
   ];
-  // Cheat sheets: one page (cheatsheets.html), one card per sheet, opened at #id
+  // Cheat sheets (18 Nov 2026): one page, cheatsheets.html, one card per topic, opened at #id
   const cheatGroups = [
-    { name: "Python", icon: "🐍", color: "#3572A5" },
-    { name: "R", icon: "📐", color: "#2165B6" },
-    { name: "Databases & SQL", icon: "🗄️", color: "#0F766E" },
-    { name: "NoSQL", icon: "🍃", color: "#13AA52" },
-    { name: "Warehouse, Lake & Cloud", icon: "🏛️", color: "#29B5E8" }
+    { name: "Python", icon: "🐍" },
+    { name: "R", icon: "📐" },
+    { name: "Java", icon: "☕" },
+    { name: "Databases & SQL", icon: "🗄️" },
+    { name: "NoSQL", icon: "🍃" },
+    { name: "Warehouse, Lake & Cloud", icon: "🏛️" },
+    { name: "Big Data Technologies", icon: "🐘" }
   ];
   const cheatSheets = [
     { g: "Python", id: "py-basics", icon: "🐍", title: "Python Basics", desc: "Syntax, types, operators, I/O, control flow" },
@@ -17969,6 +18225,19 @@ async function renderStudentNotes() {
     { g: "R", id: "r-io", icon: "📥", title: "R Packages & Import/Export", desc: "install, library, CSV, Excel, databases" },
     { g: "R", id: "tidyverse", icon: "🪄", title: "Tidyverse (dplyr, tidyr, ggplot2)", desc: "Pipe, verbs, joins, reshape, plots" },
     { g: "R", id: "r-functions", icon: "🧪", title: "R Functions & R Markdown", desc: "Writing functions, built-ins, apply family, reports" },
+    { g: "Java", id: "java-basics", icon: "☕", title: "Java Fundamentals & JVM", desc: "JDK/JRE/JVM, compile & run, data types, operators, casting" },
+    { g: "Java", id: "java-control", icon: "🔀", title: "Control Flow & Arrays", desc: "if/else, switch, loops, break/continue, 1-D/2-D arrays" },
+    { g: "Java", id: "java-oop", icon: "🧱", title: "OOP in Java", desc: "Class, constructor, this/super, static, inheritance, polymorphism, abstract, interface" },
+    { g: "Java", id: "java-inner", icon: "📦", title: "Inner Classes & Packages", desc: "member, static nested, local, anonymous classes; packages & imports" },
+    { g: "Java", id: "java-lang", icon: "🔤", title: "java.lang, Strings & Wrappers", desc: "Object methods, String pool, StringBuilder, wrappers, autoboxing" },
+    { g: "Java", id: "java-memory", icon: "🧠", title: "JVM Memory, GC & Reflection", desc: "Heap vs stack, method area, garbage collection, reflection" },
+    { g: "Java", id: "java-exceptions", icon: "🚨", title: "Exception Handling", desc: "Hierarchy, checked vs unchecked, try/catch/finally, try-with-resources, custom" },
+    { g: "Java", id: "java-threads", icon: "🧵", title: "Multithreading", desc: "Thread lifecycle, Runnable, synchronized, wait/notify, ExecutorService" },
+    { g: "Java", id: "java-collections", icon: "🗃️", title: "Collections Framework", desc: "List, Set, Queue, Map, iteration, Comparable vs Comparator" },
+    { g: "Java", id: "java-8", icon: "λ", title: "Java 8: Lambdas & Streams", desc: "Lambda syntax, functional interfaces, method refs, Stream API, Optional" },
+    { g: "Java", id: "java-io-jdbc", icon: "💾", title: "File I/O & JDBC", desc: "java.io streams, readers/writers, java.nio Files, serialization, JDBC steps" },
+    { g: "Java", id: "java-output", icon: "🎯", title: "Predict the Output (Exam Traps)", desc: "35 tricky snippets with real outputs: strings, operators, overloading, finally, init order" },
+    { g: "Java", id: "java-util", icon: "🧰", title: "java.util Essentials", desc: "Generics, wildcards, enums, Scanner, Random, java.time, Optional, Objects" },
     { g: "Databases & SQL", id: "dbms-concepts", icon: "🗄️", title: "DBMS Concepts", desc: "Storage, data types, OLTP vs OLAP, data collection" },
     { g: "Databases & SQL", id: "sql-basics", icon: "🧾", title: "SQL: DDL, DML, DCL, TCL", desc: "Create, alter, insert, update, grant, commit" },
     { g: "Databases & SQL", id: "sql-queries", icon: "🔍", title: "Grouping, Joins & Subqueries", desc: "GROUP BY, HAVING, joins, correlated subqueries" },
@@ -17983,35 +18252,46 @@ async function renderStudentNotes() {
     { g: "Warehouse, Lake & Cloud", id: "data-warehouse", icon: "🏛️", title: "Data Warehousing & SCD", desc: "Star schema, ETL, OLAP ops, slowly changing dimensions" },
     { g: "Warehouse, Lake & Cloud", id: "data-lake", icon: "🌊", title: "Data Lake & Lakehouse", desc: "Zones, formats, lake vs warehouse vs lakehouse" },
     { g: "Warehouse, Lake & Cloud", id: "snowflake", icon: "❄️", title: "Snowflake", desc: "Architecture, warehouses, stages, COPY, cost" },
-    { g: "Warehouse, Lake & Cloud", id: "data-engineering", icon: "🧭", title: "Data Engineering & Data Management", desc: "Pipelines, quality, governance, data-driven decisions" }
+    { g: "Warehouse, Lake & Cloud", id: "data-engineering", icon: "🧭", title: "Data Engineering & Data Management", desc: "Pipelines, quality, governance, data-driven decisions" },
+    { g: "Big Data Technologies", id: "bd-hadoop-intro", icon: "🐘", title: "Big Data & Hadoop Intro", desc: "5 Vs, sources, data life cycle, Hadoop history, ecosystem, distributions" },
+    { g: "Big Data Technologies", id: "hdfs", icon: "🗂️", title: "HDFS", desc: "NameNode/DataNode, blocks, replication, rack awareness, read/write, HA, commands" },
+    { g: "Big Data Technologies", id: "hadoop-cluster", icon: "🖥️", title: "Hadoop Cluster & YARN", desc: "Run modes, config files, daemons, YARN, admin and monitoring" },
+    { g: "Big Data Technologies", id: "mapreduce", icon: "🗺️", title: "MapReduce", desc: "Map, shuffle & sort, reduce, word count, combiner, partitioner" },
+    { g: "Big Data Technologies", id: "hive", icon: "🐝", title: "Hive & HiveQL", desc: "Architecture, managed vs external, partitions, bucketing, formats, joins, UDFs" },
+    { g: "Big Data Technologies", id: "airflow", icon: "🌬️", title: "Airflow & ETL Pipelines", desc: "DAGs, operators, sensors, hooks, scheduler, ETL vs ELT, managed Airflow" },
+    { g: "Big Data Technologies", id: "spark-core", icon: "⚡", title: "Spark Core & RDDs", desc: "Architecture, lazy evaluation, transformations vs actions, narrow vs wide, caching, broadcast" },
+    { g: "Big Data Technologies", id: "spark-sql", icon: "📊", title: "Spark DataFrames, SQL & EDA", desc: "RDD vs DataFrame vs Dataset, operations, Spark SQL, window functions, JDBC, EDA" },
+    { g: "Big Data Technologies", id: "kafka-streaming", icon: "📨", title: "Kafka & Spark Streaming", desc: "Topics, partitions, offsets, consumer groups, CLI, Connect, Structured Streaming" },
+    { g: "Big Data Technologies", id: "spark-mllib-cloud", icon: "🤖", title: "Spark MLlib & Spark on Cloud", desc: "ML pipeline, train/evaluate, Databricks/EMR, autoscaling, cost" },
+    { g: "Big Data Technologies", id: "bd-mr-spark", icon: "🔁", title: "MapReduce with Spark", desc: "Word count both ways, disk vs memory, Spark with and without Hadoop (Session 23)" },
+    { g: "Big Data Technologies", id: "bd-capstone", icon: "🏁", title: "Capstone: End-to-End Pipeline", desc: "Airflow → HDFS → Spark → Hive, optional Kafka stream (Session 33)" }
   ];
-  const _cheatCard = (c, color) => `
-        <div class="note-card" onclick="window.open('cheatsheets.html#${c.id}','_blank')"
-             style="border-top:2px solid ${color}99;padding:14px 16px">
+  const _cheatCard = c => `
+        <div class="note-card" onclick="window.open('cheatsheets.html#${c.id}','_blank')" style="padding:14px 16px">
           <div style="display:flex;align-items:center;gap:12px">
-            <div style="width:40px;height:40px;border-radius:11px;background:${color}18;border:2px solid ${color}44;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${c.icon}</div>
+            <div style="width:40px;height:40px;border-radius:12px;background:rgba(91,91,247,.10);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0">${c.icon}</div>
             <div style="min-width:0">
               <div style="font-weight:700;font-size:14px;color:var(--text)">${c.title}</div>
-              <div style="font-size:11px;color:var(--text3);margin-top:2px;line-height:1.35">${c.desc}</div>
+              <div style="font-size:11.5px;color:var(--text3);margin-top:2px;line-height:1.4">${c.desc}</div>
             </div>
-            <span style="margin-left:auto;color:${color};font-size:15px;flex-shrink:0">↗</span>
+            <span style="margin-left:auto;color:var(--accent);font-size:15px;flex-shrink:0">↗</span>
           </div>
         </div>`;
   const _cheatSection = () => `
-    <div style="display:flex;align-items:center;gap:10px;margin:30px 0 6px">
+    <div style="display:flex;align-items:center;gap:10px;margin:32px 0 6px;flex-wrap:wrap">
       <span style="font-size:20px">📋</span>
       <div><div style="font-weight:800;font-size:17px;color:var(--text)">Cheat Sheets</div>
-        <div style="font-size:12px;color:var(--text3)">Quick revision: Python &amp; R, SQL, NoSQL, data warehouse &amp; data lake. Syntax, examples, exam tips</div></div>
-      <div style="flex:1;height:1px;background:linear-gradient(90deg,#14B8A666,transparent);margin-left:8px"></div>
+        <div style="font-size:12px;color:var(--text3)">One page per topic: a diagram of the idea, then syntax and examples. Python, R, Java, SQL, NoSQL, warehouse &amp; lake, Hadoop/Spark/Kafka</div></div>
+      <div style="flex:1;height:1px;background:var(--border,rgba(0,0,0,.08));margin-left:8px;min-width:30px"></div>
       <button class="btn btn-outline btn-sm" onclick="window.open('cheatsheets.html','_blank')" style="flex-shrink:0">Open all ↗</button>
     </div>
     ${cheatGroups.map(g => `
-      <div style="display:flex;align-items:center;gap:8px;margin:18px 0 10px;font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:${g.color}">
+      <div style="display:flex;align-items:center;gap:8px;margin:18px 0 10px;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--text3)">
         <span style="font-size:15px">${g.icon}</span>${g.name}
-        <span style="font-weight:600;color:var(--text3);text-transform:none;letter-spacing:0">· ${cheatSheets.filter(c => c.g === g.name).length} sheets</span>
+        <span style="font-weight:500;text-transform:none;letter-spacing:0">· ${cheatSheets.filter(c => c.g === g.name).length} topics</span>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px">
-        ${cheatSheets.filter(c => c.g === g.name).map(c => _cheatCard(c, g.color)).join('')}
+        ${cheatSheets.filter(c => c.g === g.name).map(_cheatCard).join('')}
       </div>`).join('')}`;
   const _noteCard = n => `
         <div class="note-card" onclick="window.open('${n.file}','_blank')"
@@ -19244,7 +19524,7 @@ async function _doStartTest(moduleId, setId, set, mod) {
   let started;
   try { started = await CG('quiz_start', { token: currentUser.token || '', studentId: currentUser.id, setId, moduleId }); }
   catch (e) { return toast(e.message || 'Could not start the test', 'error'); }
-  const processedQs = started.questions || [];
+  const processedQs = _fixedOrderQuestions(set, started.questions || []);
   if (!processedQs.length) return toast('No questions available for this set.', 'error');
   clearTestState();
   testState = {
@@ -19307,7 +19587,124 @@ function _autoCodeSplit(t){
   }
   return { before: prose.join(' '), code: c, lang };
 }
+// ════════════════════════════════════════════════════════════════
+// DATASETS for case-study question sets (25 Nov 2026)
+// A question whose text starts with [DATASET:key] shows a "View dataset" chip.
+// A set whose notes contain DATASET:key shows a Dataset button on its card,
+// and a set whose notes contain FIXED_ORDER keeps its questions in sequence.
+// ════════════════════════════════════════════════════════════════
+const SAARTHI_DATASETS = {"retail": {"title": "Retail Orders case study", "about": "30 online orders (Sep–Nov 2026) plus a city lookup table. Contains one duplicate order, 4 missing ratings and inconsistent city spellings on purpose.", "files": [{"name": "sales_orders.csv", "csv": "order_id,order_date,customer,city,category,product,qty,unit_price,discount_pct,payment,rating\n1001,02-09-2026,Asha Patil,Pune,Electronics,Earbuds,2,1499,10,UPI,4.5\n1002,03-09-2026,Ravi Kumar,Mumbai,Books,Python Crash Course,1,899,0,Card,4.0\n1003,05-09-2026,Meena Iyer,Chennai,Grocery,Basmati Rice 5kg,3,620,5,COD,\n1004,07-09-2026,John Dsouza,Mumbai,Electronics,Power Bank,1,1299,0,UPI,3.5\n1005,08-09-2026,Asha Patil,pune ,Fashion,Cotton Kurta,2,750,20,Card,5.0\n1006,11-09-2026,Imran Shaikh,Delhi,Electronics,Smart Watch,1,3999,15,Card,4.0\n1007,12-09-2026,Kavya Rao,Bengaluru,Books,Data Science Handbook,2,1150,10,UPI,4.5\n1008,14-09-2026,Ravi Kumar,Mumbai,Grocery,Cold Pressed Oil 1L,4,240,0,COD,3.0\n1009,15-09-2026,Neha Joshi,Pune,Fashion,Running Shoes,1,2499,25,UPI,\n1010,18-09-2026,Imran Shaikh,Delhi,Grocery,Green Tea 100 bags,2,350,0,UPI,4.0\n1010,18-09-2026,Imran Shaikh,Delhi,Grocery,Green Tea 100 bags,2,350,0,UPI,4.0\n1011,21-09-2026,Kavya Rao,Bengaluru,Electronics,Bluetooth Speaker,1,2199,10,Card,4.5\n1012,23-09-2026,Meena Iyer,Chennai,Books,SQL for Analysts,1,699,0,UPI,5.0\n1013,26-09-2026,Arjun Mehta,MUMBAI,Fashion,Denim Jacket,1,1899,30,Card,3.5\n1014,29-09-2026,Neha Joshi,Pune,Grocery,Almonds 500g,2,560,5,UPI,4.0\n1015,01-10-2026,Asha Patil,Pune,Books,Atomic Habits,1,499,0,COD,4.5\n1016,03-10-2026,John Dsouza,Mumbai,Fashion,Formal Shirt,3,899,15,UPI,4.0\n1017,06-10-2026,Kavya Rao,Bengaluru,Grocery,Basmati Rice 5kg,2,620,5,UPI,\n1018,09-10-2026,Imran Shaikh,Delhi,Books,Deep Learning Basics,1,1350,10,Card,3.0\n1019,12-10-2026,Arjun Mehta,Mumbai,Electronics,Earbuds,1,1499,10,UPI,4.0\n1020,15-10-2026,Meena Iyer,Chennai,Electronics,Smart Watch,1,3999,20,Card,4.5\n1021,18-10-2026,Ravi Kumar,Mumbai,Books,Python Crash Course,2,899,5,UPI,4.0\n1022,21-10-2026,Neha Joshi,Pune,Electronics,Power Bank,2,1299,0,COD,3.5\n1023,24-10-2026,Asha Patil,Pune,Grocery,Green Tea 100 bags,3,350,0,UPI,5.0\n1024,27-10-2026,Kavya Rao,Bengaluru,Fashion,Cotton Kurta,2,750,10,Card,4.0\n1025,30-10-2026,John Dsouza,Mumbai,Grocery,Almonds 500g,1,560,0,UPI,\n1026,02-11-2026,Imran Shaikh,Delhi,Fashion,Running Shoes,1,2499,20,Card,4.5\n1027,05-11-2026,Meena Iyer,Chennai,Fashion,Formal Shirt,2,899,10,UPI,4.0\n1028,08-11-2026,Arjun Mehta,Mumbai,Books,Data Science Handbook,1,1150,0,COD,5.0\n1029,11-11-2026,Neha Joshi,Pune,Electronics,Bluetooth Speaker,1,2199,15,UPI,4.0\n1030,14-11-2026,Ravi Kumar,Mumbai,Electronics,Smart Watch,1,3999,10,Card,4.5\n"}, {"name": "cities.csv", "csv": "city,state,region,store_manager\nPune,Maharashtra,West,Rohit\nMumbai,Maharashtra,West,Sneha\nDelhi,Delhi,North,Aman\nBengaluru,Karnataka,South,Divya\nHyderabad,Telangana,South,Farhan\n"}]}, "marks": {"title": "Student Marks case study", "about": "Marks of 15 students in 5 subjects. One Big Data mark (roll 2601006) is blank on purpose.", "files": [{"name": "student_marks.csv", "csv": "roll,python,sql,statistics,bigdata,ml\n2601001,68,72,64,55,61\n2601002,53,69,88,61,59\n2601003,75,73,70,54,68\n2601004,78,48,61,39,49\n2601005,40,64,49,72,70\n2601006,65,30,60,,70\n2601007,45,61,53,56,84\n2601008,56,68,81,59,66\n2601009,70,69,50,69,88\n2601010,45,81,70,58,98\n2601011,79,50,69,77,65\n2601012,78,67,78,90,58\n2601013,71,61,70,50,59\n2601014,65,81,85,48,56\n2601015,78,38,61,67,87\n"}]}};
+function _dsCsvRows(text) {
+  const rows = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) { if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += ch; }
+    else if (ch === '"') q = true;
+    else if (ch === ',') { row.push(cell); cell = ''; }
+    else if (ch === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
+    else if (ch !== '\r') cell += ch;
+  }
+  if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
+function _dsInjectCss() {
+  if (document.getElementById('dsCss')) return;
+  const st = document.createElement('style'); st.id = 'dsCss';
+  st.textContent = `
+  .ds-chip{display:inline-flex;align-items:center;gap:6px;margin:0 0 10px;padding:6px 12px;border-radius:999px;border:1px solid var(--accent);background:rgba(30,94,255,.08);color:var(--accent);font:600 12.5px/1.2 Inter,system-ui,sans-serif;cursor:pointer}
+  .ds-chip:hover{background:rgba(30,94,255,.16)}
+  .ms-ds{margin-left:auto;padding:3px 10px;border-radius:999px;border:1px solid var(--accent);background:transparent;color:var(--accent);font:600 11.5px Inter,system-ui,sans-serif;cursor:pointer}
+  #dsModal{position:fixed;inset:0;z-index:2147483000;background:rgba(8,10,20,.55);display:flex;align-items:center;justify-content:center;padding:20px}
+  #dsModal .ds-box{background:var(--bg2,#fff);color:var(--text);border:1px solid var(--border);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.35);width:min(1100px,96vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+  #dsModal .ds-head{display:flex;align-items:flex-start;gap:12px;padding:16px 18px 10px;border-bottom:1px solid var(--border)}
+  #dsModal .ds-head h3{font:700 16px Inter,system-ui,sans-serif;margin:0 0 4px}
+  #dsModal .ds-head p{font:400 12.5px/1.45 Inter,system-ui,sans-serif;color:var(--text2);margin:0}
+  #dsModal .ds-x{margin-left:auto;border:0;background:transparent;color:var(--text2);font-size:22px;line-height:1;cursor:pointer;padding:2px 6px}
+  #dsModal .ds-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:10px 18px 0}
+  #dsModal .ds-tab{padding:6px 12px;border-radius:8px 8px 0 0;border:1px solid var(--border);border-bottom:0;background:transparent;color:var(--text2);font:600 12.5px Inter,system-ui,sans-serif;cursor:pointer}
+  #dsModal .ds-tab.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  #dsModal .ds-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 18px;border-top:1px solid var(--border);font:500 12.5px Inter,system-ui,sans-serif;color:var(--text2)}
+  #dsModal .ds-dl{margin-left:auto;padding:8px 14px;border-radius:8px;border:0;background:var(--accent);color:#fff;font:600 13px Inter,system-ui,sans-serif;cursor:pointer}
+  #dsModal .ds-scroll{overflow:auto;flex:1;min-height:120px}
+  #dsModal table{border-collapse:collapse;width:100%;font:12.5px/1.35 'JetBrains Mono',Consolas,monospace}
+  #dsModal th{position:sticky;top:0;background:var(--bg3,#eef);color:var(--text);text-align:left;font-weight:700;padding:7px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+  #dsModal td{padding:6px 10px;border-bottom:1px solid var(--border);white-space:nowrap;color:var(--text)}
+  #dsModal td.ds-i{color:var(--text3);text-align:right}
+  #dsModal td.ds-na{color:var(--red,#ef4444);font-style:italic}
+  #dsModal tr:nth-child(even) td{background:rgba(127,127,127,.06)}`;
+  document.head.appendChild(st);
+}
+function datasetChip(key) {
+  const d = SAARTHI_DATASETS[key];
+  if (!d) return '';
+  _dsInjectCss();
+  const names = d.files.map(f => f.name).join(' + ');
+  return `<button type="button" class="ds-chip" onclick="event.stopPropagation();openDataset('${key}')">📊 Dataset: ${escHtml(names)} — View / Download</button>`;
+}
+function openDataset(key, fileIdx) {
+  const d = SAARTHI_DATASETS[key];
+  if (!d) return toast('Dataset not found', 'error');
+  _dsInjectCss();
+  closeDataset();
+  const fi = Math.max(0, Math.min(d.files.length - 1, fileIdx || 0));
+  const f = d.files[fi];
+  if (f.csv == null && f.url) {
+    toast('📥 Loading ' + f.name + '…', 'info');
+    return _spkFetchRemote(f.url).then(t => { f.csv = t; openDataset(key, fi); }).catch(e => toast(e.message, 'error'));
+  }
+  const SHOW = 1000;   // a big file is previewed, not drawn whole
+  const total = (f.csv.replace(/\n+$/, '').match(/\n/g) || []).length;
+  const rows = _dsCsvRows(total > SHOW ? f.csv.slice(0, _spkNthNl(f.csv, SHOW + 1)) : f.csv).filter(r => r.length && !(r.length === 1 && r[0] === ''));
+  const head = rows[0] || [], body = rows.slice(1);
+  const ov = document.createElement('div'); ov.id = 'dsModal';
+  // Mount inside the active page so the modal picks up that page's light/dark theme tokens.
+  const host = document.querySelector('.page.active') || document.body;
+  ov.innerHTML = `
+    <div class="ds-box" role="dialog" aria-modal="true" aria-label="${escHtml(d.title)}">
+      <div class="ds-head"><div><h3>📊 ${escHtml(d.title)}</h3><p>${escHtml(d.about || '')}</p></div>
+        <button type="button" class="ds-x" title="Close (Esc)" onclick="closeDataset()">×</button></div>
+      <div class="ds-tabs">${d.files.map((x, i) => `<button type="button" class="ds-tab${i === fi ? ' on' : ''}" onclick="openDataset('${key}',${i})">${escHtml(x.name)}</button>`).join('')}</div>
+      <div class="ds-scroll"><table><thead><tr><th>#</th>${head.map(c => `<th>${escHtml(c)}</th>`).join('')}</tr></thead>
+        <tbody>${body.map((r, i) => `<tr><td class="ds-i">${i + 1}</td>${head.map((_, j) => (r[j] === undefined || r[j] === '') ? '<td class="ds-na">blank</td>' : `<td>${escHtml(r[j])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+      <div class="ds-bar"><span>${escHtml(f.name)} · ${total.toLocaleString()} rows × ${head.length} columns${total > body.length ? ` · showing the first ${body.length.toLocaleString()} — download for all rows` : ''} · cells marked <i>blank</i> are empty in the file</span>
+        <button type="button" class="ds-dl" onclick="downloadDataset('${key}',${fi})">⬇ Download ${escHtml(f.name)}</button></div>
+    </div>`;
+  ov.addEventListener('click', e => { if (e.target === ov) closeDataset(); });
+  host.appendChild(ov);
+  if (!window._dsKeyGuard) {
+    window._dsKeyGuard = true;
+    // Capture phase: while the dataset is open, keys must not answer or move the test.
+    window.addEventListener('keydown', e => {
+      if (!document.getElementById('dsModal')) return;
+      if (e.key === 'Escape') closeDataset();
+      e.stopPropagation();
+    }, true);
+  }
+}
+function closeDataset() { const m = document.getElementById('dsModal'); if (m) m.remove(); }
+function downloadDataset(key, fi) {
+  const d = SAARTHI_DATASETS[key]; if (!d) return;
+  const f = d.files[fi || 0];
+  if (f.csv == null && f.url) return _spkFetchRemote(f.url).then(t => { f.csv = t; downloadFile(t, f.name, 'text/csv;charset=utf-8'); }).catch(e => toast(e.message, 'error'));
+  downloadFile(f.csv, f.name, 'text/csv;charset=utf-8');
+}
+function _dsKeyOfSet(set) { const m = /DATASET:([\w-]+)/.exec((set && set.notes) || ''); if (!m || !SAARTHI_DATASETS[m[1]]) return null; _dsInjectCss(); return m[1]; }
+// Fixed-order sets: show the questions in linkedIds order, remember the server's order (_si) for grading.
+function _fixedOrderQuestions(set, qs) {
+  if (!/FIXED_ORDER/.test((set && set.notes) || '')) return qs;
+  let ids = set.linkedIds;
+  if (typeof ids === 'string') { try { ids = JSON.parse(ids); } catch (e) { ids = []; } }
+  ids = Array.isArray(ids) ? ids.map(String) : [];
+  const pos = id => { const k = ids.indexOf(String(id)); return k < 0 ? 1e9 : k; };
+  qs.forEach((q, i) => { q._si = i; });
+  return qs.slice().sort((a, b) => (pos(a.id) - pos(b.id)) || String(a.id).localeCompare(String(b.id)));
+}
 function renderQuestion(qText) {
+  const m = /^\s*\[DATASET:([\w-]+)\]\s*/.exec(qText || '');
+  if (!m) return _renderQuestionCore(qText);
+  return datasetChip(m[1]) + _renderQuestionCore(qText.slice(m[0].length));
+}
+function _renderQuestionCore(qText) {
   if (!qText) return '';
   const codeMatch = qText.match(/\[CODE(?::(\w+))?\]([\s\S]*?)\[\/CODE\]/i);
   let lang, code, before, after;
@@ -19487,8 +19884,12 @@ async function submitTest(autoSubmit = false) {
   testState.submitted = true;
   let res;
   try {
+    // Fixed-order sets are shown in a different order than the server stored them (_si = server index).
+    const _srvAnswers = questions.some(q => q._si !== undefined)
+      ? questions.reduce((acc, q, i) => { acc[q._si !== undefined ? q._si : i] = answers[i]; return acc; }, new Array(questions.length).fill(null))
+      : answers;
     res = await CG('quiz_submit', { token: currentUser.token || '', studentId: currentUser.id, attemptKey: testState.attemptKey,
-      answers, timeTaken, tabSwitches: testState.tabSwitches || 0, pasteAttempts: testState.pasteAttempts || 0,
+      answers: _srvAnswers, timeTaken, tabSwitches: testState.tabSwitches || 0, pasteAttempts: testState.pasteAttempts || 0,
       fullscreenExits: testState.fullscreenExits || 0, violations: testState.violations || [], autoSubmitted: !!autoSubmit });
   } catch (e) {
     if (e.status === 409) { clearTestState(); stopTest(); teardownTestKeyboard(); toast('This test was already submitted.', 'info'); goStudentDash(); return; }
@@ -19500,7 +19901,7 @@ async function submitTest(autoSubmit = false) {
   teardownTestKeyboard();
   stopTest();
   const scoreRec = res.scoreRec;
-  const reviewData = questions.map((q, i) => Object.assign({}, q, res.review[i] || {}));
+  const reviewData = questions.map((q, i) => Object.assign({}, q, res.review[q._si !== undefined ? q._si : i] || {}));
   const correct = scoreRec.correct, wrong = scoreRec.wrong, total = scoreRec.total, pct = scoreRec.pct;
   const skipped = total - correct - wrong, diffReached = scoreRec.diff;
   cache.scores.push(scoreRec);
