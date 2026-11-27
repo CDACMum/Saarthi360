@@ -2391,6 +2391,9 @@ html.sp-dark #studentPage img:not([src$=".svg"]){filter:none}
         <div class="sidebar-item" onclick="adminNav('gradebook')">
           <span class="si-icon">🧮</span> Gradebook
         </div>
+        <div class="sidebar-item" onclick="adminNav('integrity')">
+          <span class="si-icon">🛡️</span> Exam Integrity
+        </div>
         <div class="sidebar-item" onclick="adminNav('scores')">
           <span class="si-icon">🎯</span> Scores
         </div>
@@ -2594,8 +2597,8 @@ html.sp-dark #studentPage img:not([src$=".svg"]){filter:none}
       <div id="tabSingleStudent" class="tab-panel active">
         <div class="frow">
           <div class="fgroup">
-            <label>Enrollment ID *</label>
-            <input type="text" id="sId" placeholder="e.g. STU2024001">
+            <label>Enrollment ID</label>
+            <input type="text" id="sId" placeholder="Leave blank = next ID in batch">
           </div>
           <div class="fgroup">
             <label>Full Name *</label>
@@ -3498,7 +3501,8 @@ async function _cgLocalOutputs(q, code, onProgress, forScore) {
   const tcs = _parseTestCases(q.testCases).map(t => isSpk ? { stdin: null, expected: '', description: t.description || '', files: _spkFiles(q, t) } : ({ stdin: t.stdin == null ? null : t.stdin, expected: '', description: t.description || '' }));
   if (!tcs.length) return [];
   let res;
-  try { res = q.language === 'java' ? await runJavaTests(code, tcs, onProgress) : await runPythonTests(isSpk ? _spkWrapCode(q, code) : code, tcs, onProgress, isSpk ? { spark: true, heavy: _spkHeavy(q) } : null); }
+  const dl = _dsaLang(q);
+  try { res = (q.language === 'java' || dl === 'java') ? await runJavaTests(code, tcs, onProgress) : dl === 'cpp' ? await runCppTests(code, tcs, onProgress) : await runPythonTests(isSpk ? _spkWrapCode(q, code) : code, tcs, onProgress, isSpk ? { spark: true, heavy: _spkHeavy(q) } : null); }
   catch (e) {
     if (e && e.javaDisabled) return [];   // Java auto-run off → saved for instructor review
     const msg = String((e && e.message) || e);
@@ -3795,13 +3799,18 @@ function doLogout() {
 // LAUNCH
 // ════════════════════════════════════════════════════════════════
 // Sections a Course Coordinator may see (everything else is admin-only)
-const COORD_SECTIONS = ['dashboard','leaderboard','students','certs','modules','assignments','contests'];
+const COORD_SECTIONS = ['dashboard','analytics','leaderboard','students','batches','certs','modules','sets','questions','coding','tests',
+  'assignments','contests','gradebook','scores','badges','integrity'];
 function applyRoleUI(){
   const isCoord = currentUser?.role === 'coordinator';
   document.querySelectorAll('#adminPage .sidebar-item').forEach(el => {
     const m = /adminNav\('([^']+)'\)/.exec(el.getAttribute('onclick') || '');
     const sec = m ? m[1] : '';
     el.style.display = (isCoord && !COORD_SECTIONS.includes(sec)) ? 'none' : '';
+  });
+  document.querySelectorAll('#adminPage .sidebar-section').forEach(secEl => {
+    const items = [...secEl.querySelectorAll('.sidebar-item')];
+    secEl.style.display = (items.length && items.every(i => i.style.display === 'none')) ? 'none' : '';
   });
   const brand = document.querySelector('#adminPage .nav-brand');
   if (brand) {
@@ -3988,9 +3997,47 @@ async function loadModulesCache() {
   try {
     const { data, error } = await SB.from('modules').select('*').order('id');
     if (error) { console.warn('loadModulesCache error:', error.message); cache.modules = []; return; }
-    cache.modules = data || [];
+    cache.allModules = data || [];
+    cache.modules = cache.allModules;
+    // Course Coordinator: every page works only with their program's modules.
+    if (currentUser?.role === 'coordinator') {
+      if (!cache.moduleCourses) await loadModuleCoursesCache();
+      const cs = coordCourseSet();
+      cache.modules = cs ? cache.allModules.filter(m => [...moduleCourseSet(m.id)].some(c => cs.has(c))) : [];
+    }
   } catch(e) { console.warn('loadModulesCache exception:', e); cache.modules = []; }
 }
+function _myCourseId(){ if (!currentUser) return null; return currentUser.course_id != null ? currentUser.course_id : (typeof batchCourseId === 'function' ? batchCourseId(currentUser.batch_id) : null); }
+// Coding modules per program: config key coding_modules_<courseId> (list of module ids),
+// chosen by the coordinator. Not set yet → the program's mapped modules.
+async function loadCodingModules(courseId){
+  if (courseId == null) return null;
+  try { const { data } = await SB.from('config').select('value').eq('key', 'coding_modules_' + courseId).maybeSingle();
+    if (data && data.value) { const v = typeof data.value === 'string' ? JSON.parse(data.value) : data.value; if (Array.isArray(v)) return new Set(v.map(String)); } } catch(e) {}
+  return null;
+}
+async function codingVisibleFilter(courseId){
+  if (courseId == null) return () => true;
+  if (!cache.moduleCourses) await loadModuleCoursesCache();
+  const cfg = await loadCodingModules(courseId);
+  return q => {
+    if (q.course_id != null && String(q.course_id) !== String(courseId)) return false;
+    if (q.moduleId == null) return true;
+    return cfg ? cfg.has(String(q.moduleId)) : moduleVisibleForCourse(q.moduleId, courseId);
+  };
+}
+// Coordinator-only row filters for data read with the public key.
+function coordModuleIdSet(){ return new Set((cache.modules||[]).map(m => String(m.id))); }
+function coordRows(kind, rows){
+  if (currentUser?.role !== 'coordinator' || !Array.isArray(rows)) return rows || [];
+  if (kind === 'module') { const ms = coordModuleIdSet(); const cs = coordCourseSet() || new Set();
+    return rows.filter(r => ms.has(String(r.moduleId)) && (r.course_id == null || cs.has(String(r.course_id)))); }
+  if (kind === 'student') { const mine = new Set((cache.students||[]).map(x => String(x.id))); return rows.filter(r => mine.has(String(r.studentId))); }
+  if (kind === 'test') { const mine = new Set((cache.students||[]).map(x => String(x.id)));
+    return rows.filter(t => String(t.createdBy||'') === String(currentUser.id) || _pj(t.assignedTo, []).some(id => mine.has(String(id)))); }
+  return rows;
+}
+async function _coordEnsure(){ if (currentUser?.role !== 'coordinator') return; if (!cache.students) await loadStudentsCache(); if (!cache.modules || !cache.allModules) await loadModulesCache(); }
 // module → program(course) mappings. No rows for a module = visible to all programs.
 async function loadModuleCoursesCache() {
   try {
@@ -4137,7 +4184,10 @@ async function loadSetsCache() {
   try {
     const { data, error } = await SB.from('sets').select('*').order('created', { ascending: false });
     if (error) { console.warn('loadSetsCache error:', error.message); cache.sets = []; return; }
-    cache.sets = data || [];
+    cache.allSets = data || [];
+    cache.sets = cache.allSets;
+    if (currentUser?.role === 'coordinator') { await _coordEnsure(); cache.sets = coordRows('module', cache.allSets); }
+    else if (currentUser?.role === 'student') { const mc = _myCourseId(); if (mc != null) cache.sets = cache.allSets.filter(x => x.course_id == null || String(x.course_id) === String(mc)); }
   } catch(e) { console.warn('loadSetsCache exception:', e); cache.sets = []; }
 }
 async function loadScoresCache() {
@@ -4150,6 +4200,11 @@ async function loadScoresCache() {
     const { data, error } = await query;
     if (error) { console.warn('loadScoresCache error:', error.message); cache.scores = []; return; }
     cache.scores = data || [];
+    if (currentUser?.role === 'coordinator') {
+      if (!cache.students) await loadStudentsCache();
+      const mine = new Set((cache.students||[]).map(x => String(x.id)));
+      cache.scores = cache.scores.filter(x => mine.has(String(x.studentId)));
+    }
   } catch(e) { console.warn('loadScoresCache exception:', e); cache.scores = []; }
 }
 
@@ -4191,6 +4246,7 @@ async function adminNav(section) {
     badges:        renderAdminBadges,
     analytics:     renderAdminAnalytics,
     leaderboard:   renderAdminLeaderboard,
+    integrity:     renderAdminIntegrity,
     settings:      renderAdminSettings,
   };
   (map[section] || renderAdminDashboard)();
@@ -4201,8 +4257,14 @@ async function adminNav(section) {
 // ════════════════════════════════════════════════════════════════
 async function renderAdminDashboard() {
   await Promise.all([loadStudentsCache(), loadSetsCache(), loadScoresCache()]);
-  const { count: qCount } = await ADB('mcq_bank').select('*', { count: 'exact', head: true });
-  const activeSets = cache.sets.filter(s => s.status === 'published').length;
+  const _qcq = ADB('mcq_bank').select('*', { count: 'exact', head: true });
+  if (currentUser?.role === 'coordinator') _qcq.in('moduleId', visibleModules().map(m => m.id));
+  const { count: qCount } = await _qcq;
+  const _isCoord = currentUser?.role === 'coordinator';
+  const _dMods = _isCoord ? visibleModules() : cache.modules;
+  const _dModIds = new Set(_dMods.map(m => String(m.id)));
+  const _dSets = _isCoord ? cache.sets.filter(x => _dModIds.has(String(x.moduleId))) : cache.sets;
+  const activeSets = _dSets.filter(s => s.status === 'published').length;
   const avgPct = cache.scores.length ? Math.round(cache.scores.reduce((a,b) => a + (b.pct||0), 0) / cache.scores.length) : 0;
 
   const el = document.getElementById('adminContent');
@@ -4210,7 +4272,7 @@ async function renderAdminDashboard() {
     <div class="section-header">
       <div>
         <h2>Dashboard</h2>
-        <p>Platform overview and quick stats</p>
+        <p>${_isCoord ? 'Your program — students, modules and recent activity' : 'Platform overview and quick stats'}</p>
       </div>
       <div class="hd-right">
         <span style="font-size:12px;color:var(--text3)">${new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</span>
@@ -4226,7 +4288,7 @@ async function renderAdminDashboard() {
       <div class="stat-card purple">
         <div class="stat-icon">📚</div>
         <div class="stat-label">Modules</div>
-        <div class="stat-val">${cache.modules.length}</div>
+        <div class="stat-val">${_dMods.length}</div>
         <div class="stat-sub">${activeSets} published sets</div>
       </div>
       <div class="stat-card green">
@@ -4244,8 +4306,8 @@ async function renderAdminDashboard() {
       <div class="stat-card cyan">
         <div class="stat-icon">📝</div>
         <div class="stat-label">Total Sets</div>
-        <div class="stat-val">${cache.sets.length}</div>
-        <div class="stat-sub">${cache.sets.filter(s=>s.status==='draft').length} drafts</div>
+        <div class="stat-val">${_dSets.length}</div>
+        <div class="stat-sub">${_dSets.filter(s=>s.status==='draft').length} drafts</div>
       </div>
       <div class="stat-card orange">
         <div class="stat-icon">🏆</div>
@@ -4314,7 +4376,7 @@ async function renderAdminDashboard() {
         if (!data) return;
         const counts = {};
         data.forEach(q => { const n = parseInt(q.moduleId); counts[n] = (counts[n]||0)+1; });
-        const mods = cache.modules.filter(m => counts[m.id]);
+        const mods = _dMods.filter(m => counts[m.id]);
         new Chart(modCtx, {
           type:'bar',
           data:{
@@ -4915,7 +4977,8 @@ async function loadPortfolioMonthsCache(){
 async function loadPortfolioEntriesCache(){
   try {
     const { data } = await SB.from('portfolio_entries').select('*');
-    let list = data || [];
+    await _coordEnsure();
+    let list = coordRows('student', data || []);
     const cs = coordBatchSet();
     if (cs) list = list.filter(e => cs.has(String(e.batch_id)));
     cache.portfolioEntries = list;
@@ -5599,7 +5662,7 @@ function finalPortfolioHtml(o){
 async function downloadFinalPortfolio(sid){
   if(!cache.portfolioMonths) await loadPortfolioMonthsCache();
   var s=(cache.students||[]).find(function(x){return x.id===sid;});
-  if(!s){ try{ var r=await SB.from("students").select("*").eq("id",sid).single(); s=r.data; }catch(e){} }
+  if(!s){ try{ var r=await SB.from("students").select("id,name,status,course_id,batch_id").eq("id",sid).single(); s=r.data; }catch(e){} }
   if(!s && currentUser && currentUser.id===sid){ s={id:currentUser.id,name:currentUser.name,batch_id:currentUser.batch_id,course_id:currentUser.course_id}; }
   if(!s){ toast("Student not found","error"); return; }
   var cid = (typeof studentCourseId==="function" && studentCourseId(s)!=null) ? studentCourseId(s) : (s.course_id!=null?s.course_id:batchCourseId(s.batch_id));
@@ -5623,6 +5686,17 @@ async function downloadFinalPortfolio(sid){
 // ════════════════════════════════════════════════════════════════
 async function renderAdminBatches() {
   await Promise.all([loadCoursesCache(), loadBatchesCache(), loadStudentsCache()]);
+  if (currentUser?.role === 'coordinator') {
+    const n = id => (cache.students||[]).filter(s => String(s.batch_id) === String(id)).length;
+    document.getElementById('adminContent').innerHTML = `
+      <div class="section-header"><div><h2>🎓 Your Batches</h2><p>Batches of your program. Ask the admin to add a new batch.</p></div></div>
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Batch</th><th>Program</th><th>Students</th><th></th></tr></thead><tbody>
+      ${visibleBatches().map(b => `<tr><td style="font-weight:600">${escHtml(b.name)}</td><td>${escHtml(courseName(b.course_id))} ${courseCode(b.course_id) ? '(' + escHtml(courseCode(b.course_id)) + ')' : ''}</td>
+        <td>${n(b.id)}</td><td><button class="btn btn-outline btn-sm" onclick="adminNav('students')">View students</button></td></tr>`).join('')
+        || '<tr><td colspan="4"><div class="empty-state"><h3>No batches yet</h3><p>Ask the admin to create a batch for your program.</p></div></td></tr>'}
+      </tbody></table></div></div>`;
+    return;
+  }
   const el = document.getElementById('adminContent');
 
   const studentsInBatch = id => cache.students.filter(s => String(s.batch_id) === String(id)).length;
@@ -5933,6 +6007,13 @@ async function _ensureBatchCaches(){
 async function openAddStudent() {
   await _ensureBatchCaches();
   document.getElementById('addStudentTitle').textContent = 'Add Student';
+  // Clear any state left over from a previous Edit (otherwise the ID box stays
+  // locked and Save tries to UPDATE a student instead of adding a new one).
+  studentEditId = null;
+  document.getElementById('sId').disabled = false;
+  document.getElementById('sId').style.borderColor = '';
+  document.getElementById('sPass').placeholder = 'Leave blank = first name';
+  switchStudentTab('single');
   document.getElementById('sId').value = '';
   document.getElementById('sName').value = '';
   document.getElementById('sPass').value = '';
@@ -5965,7 +6046,7 @@ async function editStudent(id) {
 }
 
 async function saveStudent() {
-  const id = document.getElementById('sId').value.trim();
+  let id = document.getElementById('sId').value.trim();
   const name = document.getElementById('sName').value.trim();
   const pass = document.getElementById('sPass').value.trim();
   const status = document.getElementById('sStatus').value;
@@ -5975,7 +6056,25 @@ async function saveStudent() {
     return saveBulkStudents();
   }
 
-  if (!id || !name) return toast('ID and Name are required', 'error');
+  // Blank Enrollment ID (new student only) → next number in the chosen batch.
+  if (!id && !studentEditId) {
+    const bSel = document.getElementById('sBatch').value;
+    if (!bSel) return toast('Pick a Batch, or type an Enrollment ID', 'error');
+    if (!cache.students) await loadStudentsCache();
+    const nums = (cache.students||[])
+      .filter(x => String(x.batch_id) === String(bSel) && /^\d+$/.test(String(x.id)))
+      .map(x => BigInt(x.id));
+    if (!nums.length) return toast('No numbered students in this batch yet — please type the Enrollment ID', 'error');
+    id = String(nums.reduce((m, v) => v > m ? v : m) + 1n);
+    document.getElementById('sId').value = id;
+  }
+  if (!id || !name) {
+    const miss = !id ? 'sId' : 'sName';
+    const el = document.getElementById(miss);
+    el.style.borderColor = '#ef4444'; el.focus();
+    el.addEventListener('input', () => { el.style.borderColor = ''; }, { once: true });
+    return toast(!id ? 'Enter the Enrollment ID (this is the student\'s login ID)' : 'Enter the student\'s full name', 'error');
+  }
   // Batch implies course; store both for easy filtering
   const batchSel = document.getElementById('sBatch').value;
   const courseSel = document.getElementById('sCourse').value;
@@ -5993,8 +6092,11 @@ async function saveStudent() {
   const { error } = studentEditId
     ? await ADB('students').update(upd).eq('id', id)
     : await ADB('students').insert(rec);
-  if (error) return toast('Error: ' + error.message, 'error');
-  toast(studentEditId ? 'Student updated!' : 'Student added!', 'success');
+  if (error) {
+    if (/duplicate|unique|already exists/i.test(error.message||'')) return toast('A student with Enrollment ID "' + id + '" already exists', 'error');
+    return toast('Error: ' + error.message, 'error');
+  }
+  toast(studentEditId ? 'Student updated!' : ('Student added — Enrollment ID ' + id + ', password ' + rec.pass), 'success');
   studentEditId = null;
   document.getElementById('sId').disabled = false;
   closeModal('modalAddStudent');
@@ -6045,10 +6147,23 @@ async function saveBulkStudents() {
   const rows = (batch_id != null || course_id != null)
     ? bulkStudentRows.map(r => ({ ...r, course_id, batch_id }))
     : bulkStudentRows;
-  const { error } = await ADB('students').upsert(rows, { onConflict: 'id' });
+  // An Enrollment ID, once given, is never overwritten or moved by an import:
+  // look the IDs up first and add only the new ones.
+  const ids = rows.map(r => String(r.id));
+  const existing = new Set();
+  for (let i = 0; i < ids.length; i += 200) {
+    const { data: ex, error: exErr } = await SB.from('students').select('id').in('id', ids.slice(i, i + 200));
+    if (exErr) return toast('Could not check existing IDs: ' + exErr.message, 'error');
+    (ex||[]).forEach(x => existing.add(String(x.id)));
+  }
+  const fresh = rows.filter(r => !existing.has(String(r.id)));
+  if (!fresh.length) return toast('All ' + rows.length + ' Enrollment IDs already exist — nothing imported.', 'error');
+  let error = null;
+  for (let i = 0; i < fresh.length && !error; i += 100) ({ error } = await ADB('students').insert(fresh.slice(i, i + 100)));
   if (error) return toast('Import error: ' + error.message, 'error');
   const where = batch_id ? ` into ${batchName(batch_id)}` : '';
-  toast(`${rows.length} students imported${where}!`, 'success');
+  toast(`${fresh.length} students imported${where}!` + (existing.size ? ` · ${existing.size} skipped (ID already exists)` : ''), existing.size ? 'info' : 'success');
+  if (existing.size) alert('These Enrollment IDs already exist, so they were NOT changed or re-assigned:\n\n' + [...existing].slice(0, 60).join(', ') + (existing.size > 60 ? ' …' : ''));
   bulkStudentRows = [];
   closeModal('modalAddStudent');
   await loadStudentsCache();
@@ -6110,7 +6225,79 @@ function switchStudentTab(tab) {
 // ════════════════════════════════════════════════════════════════
 // ADMIN: MODULES
 // ════════════════════════════════════════════════════════════════
+// A coordinator may edit/delete a module only when it belongs to their program(s) alone.
+function coordOwnsModule(mid){
+  if (currentUser?.role !== 'coordinator') return true;
+  const cs = coordCourseSet(); const ms = moduleCourseSet(mid);
+  return !!cs && ms.size > 0 && [...ms].every(c => cs.has(c));
+}
+function _coordModulePicker(){
+  const cs = coordCourseSet(); if (!cs) return '';
+  const setsBy = {}; (cache.allSets||cache.sets||[]).forEach(x => { const k = String(x.moduleId); setsBy[k] = (setsBy[k]||0) + 1; });
+  const codeBy = {}; (cache.codingModuleCounts||[]).forEach(x => { if (!x.hidden) { const k = String(x.moduleId); codeBy[k] = (codeBy[k]||0) + 1; } });
+  const rows = (cache.allModules||cache.modules||[]).slice().sort((a,b) => String(a.name).localeCompare(String(b.name))).map(m => {
+    const ms = moduleCourseSet(m.id);
+    const on = [...ms].some(c => cs.has(c));
+    const shared = [...ms].some(c => !cs.has(c));
+    return `<tr>
+      <td><label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="checkbox" ${on?'checked':''} onchange="coordToggleModule(${m.id}, this.checked, this)" style="width:18px;height:18px">
+        <span>${m.icon||'📚'} ${escHtml(m.name)}</span></label></td>
+      <td>${setsBy[String(m.id)]||0}</td>
+      <td>${codeBy[String(m.id)]||0}</td>
+      <td>${!on ? '' : (shared ? '<span class="badge badge-gray">Shared</span>' : '<span class="badge badge-blue">Only your program</span>')}</td>
+    </tr>`;
+  }).join('');
+  return `<div class="card" style="margin-bottom:20px"><div class="card-inner">
+    <div class="chart-title">🎯 Modules for your program (MCQ & content)</div>
+    <p style="font-size:12px;color:var(--text3);margin:4px 0 12px">Tick a module to give your students its MCQ sets and coding questions. Untick to hide it from your students only — other programs are not affected.</p>
+    <div style="max-height:420px;overflow-y:auto"><table><thead><tr><th>Module</th><th>MCQ sets</th><th>Coding questions</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+  </div></div>`;
+}
+async function _coordCodingPicker(){
+  const cid = (currentUser?.courses||[])[0]; if (cid == null) return '';
+  const cfg = await loadCodingModules(cid);
+  const codeBy = {}; (cache.codingModuleCounts||[]).forEach(x => { if (!x.hidden) { const k = String(x.moduleId); codeBy[k] = (codeBy[k]||0) + 1; } });
+  const mods = (cache.modules||[]).slice().sort((a,b) => (codeBy[b.id]||0) - (codeBy[a.id]||0) || String(a.name).localeCompare(String(b.name)));
+  const rows = mods.map(m => `<tr><td><label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+      <input type="checkbox" class="coordCodeMod" value="${m.id}" ${(cfg ? cfg.has(String(m.id)) : true) ? 'checked' : ''} style="width:18px;height:18px">
+      <span>${m.icon||'📚'} ${escHtml(m.name)}</span></label></td><td>${codeBy[String(m.id)]||0}</td></tr>`).join('');
+  return `<div class="card" style="margin-bottom:20px"><div class="card-inner">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <div class="chart-title">💻 Coding modules for your program</div>
+      <button class="btn btn-accent btn-sm" onclick="saveCoordCodingModules()">💾 Save coding modules</button></div>
+    <p style="font-size:12px;color:var(--text3);margin:4px 0 12px">Choose which modules' coding questions appear in your students' Coding Arena. ${cfg ? '' : '<b>Not saved yet</b> — your students currently see coding from all your modules.'}</p>
+    <div style="max-height:360px;overflow-y:auto"><table><thead><tr><th>Module</th><th>Coding questions</th></tr></thead><tbody>${rows}</tbody></table></div>
+  </div></div>`;
+}
+async function saveCoordCodingModules(){
+  const cid = (currentUser?.courses||[])[0]; if (cid == null) return;
+  const ids = [...document.querySelectorAll('.coordCodeMod:checked')].map(c => Number(c.value));
+  const { error } = await ADB('config').upsert({ key: 'coding_modules_' + cid, value: JSON.stringify(ids) }, { onConflict: 'key' });
+  if (error) return toast('Could not save: ' + error.message, 'error');
+  toast(`Saved — your students now see coding from ${ids.length} module${ids.length===1?'':'s'}.`, 'success');
+  renderAdminModules();
+}
+async function coordToggleModule(mid, on, box){
+  const courses = (currentUser?.courses||[]).map(Number);
+  if (!courses.length) return;
+  box.disabled = true;
+  const { error } = on
+    ? await ADB('module_courses').insert(courses.filter(c => !moduleCourseSet(mid).has(String(c))).map(c => ({ module_id: mid, course_id: c })))
+    : await ADB('module_courses').delete().eq('module_id', mid).in('course_id', courses);
+  box.disabled = false;
+  if (error) { box.checked = !on; return toast(error.message, 'error'); }
+  toast(on ? 'Module added to your program' : 'Module hidden from your students', 'success');
+  await loadModuleCoursesCache();
+  await loadModulesCache(); await loadSetsCache();
+  renderAdminModules();
+}
 async function renderAdminModules() {
+  if (currentUser?.role === 'coordinator') {
+    if (!cache.sets) await loadSetsCache();
+    if (!cache.moduleCourses) await loadModuleCoursesCache();
+    if (!cache.codingModuleCounts) { try { cache.codingModuleCounts = await fetchAllRows(() => SB.from('coding_questions').select('moduleId,hidden')); } catch(e) { cache.codingModuleCounts = []; } }
+  }
   const el = document.getElementById('adminContent');
   el.innerHTML = `
     <div class="section-header">
@@ -6119,6 +6306,7 @@ async function renderAdminModules() {
         <button class="btn btn-accent" onclick="openAddModule()">+ Add Module</button>
       </div>
     </div>
+    ${currentUser?.role === 'coordinator' ? _coordModulePicker() + await _coordCodingPicker() : ''}
     <div class="module-grid" id="adminModuleGrid">
       ${visibleModules().map((m,i) => {
         const [c1,c2] = MODULE_COLORS[i%MODULE_COLORS.length];
@@ -6127,9 +6315,9 @@ async function renderAdminModules() {
         <div class="mod-card" style="--c1:${c1};--c2:${c2}">
           <div style="display:flex;justify-content:space-between;align-items:flex-start">
             <div class="mod-icon">${m.icon||'📚'}</div>
-            <div style="display:flex;gap:6px">
+            <div style="display:flex;gap:6px">${coordOwnsModule(m.id) ? `
               <button class="btn btn-outline btn-sm" onclick="editModule(${m.id})">✏️</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteModule(${m.id},'${m.name}')">🗑</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteModule(${m.id},'${m.name}')">🗑</button>` : '<span class="badge badge-gray" title="Shared with another program — only the admin can edit it">Shared</span>'}
             </div>
           </div>
           <div class="mod-name">${m.name}</div>
@@ -6776,7 +6964,7 @@ async function openAssignQ(setId, setName, moduleId) {
 
   // Load all questions for this module
   const { data: qs } = await ADB('mcq_bank').select('*').eq('moduleId', assignState.moduleId).order('topic');
-  assignState.allQ = qs || [];
+  assignState.allQ = coordRows('module', qs || []);
 
   // Find which are already tagged to this set
   assignState.taggedIds = new Set((qs || []).filter(q => q.setTag === setId).map(q => q.id));
@@ -6975,7 +7163,7 @@ async function filterQuestions() {
   if (modF) query = query.eq('moduleId', parseInt(modF));
   if (diffF) query = query.eq('diff', diffF);
   const { data } = await query;
-  allQuestions = (data||[]).filter(q2 => !q || q2.q?.toLowerCase().includes(q) || q2.topic?.toLowerCase().includes(q));
+  allQuestions = coordRows('module', data||[]).filter(q2 => !q || q2.q?.toLowerCase().includes(q) || q2.topic?.toLowerCase().includes(q));
 
   document.getElementById('qCount').textContent = `${allQuestions.length} questions`;
 
@@ -7273,7 +7461,7 @@ let _gbState = { rows: [], codingSubs: [], codingQs: [], approvedOnly: false };
 
 async function loadCodingData() {
   let subs = [], qs = [];
-  try { subs = await fetchAllRows(() => SB.from('coding_submissions').select(CS_COLS)); } catch(e) {}
+  try { await _coordEnsure(); subs = coordRows('student', await fetchAllRows(() => SB.from('coding_submissions').select(CS_COLS))); } catch(e) {}
   try { const { data } = await SB.from('coding_questions').select('id,title,language,maxScore'); qs = data || []; } catch(e) {}
   return { subs, qs };
 }
@@ -7281,6 +7469,7 @@ async function loadCodingData() {
 // Combine MCQ scores + best coding score per question + placement tests
 // into one cumulative total per student.
 function computeGradebook(mcqScores, codingSubs, codingQs, approvedOnly, testAttempts) {
+  mcqScores = coordRows('student', mcqScores); codingSubs = coordRows('student', codingSubs); testAttempts = coordRows('student', testAttempts);
   const qMax = {}; (codingQs || []).forEach(q => qMax[q.id] = q.maxScore || 10);
   const byStudent = {};
   const ensure = (id, name) => {
@@ -7338,7 +7527,7 @@ async function renderAdminGradebook() {
   await Promise.all([loadStudentsCache(), loadAllScoresForAdmin()]);
   const { subs, qs } = await loadCodingData();
   let testAttempts = [];
-  try { const { data } = await ADB('test_attempts').select('*'); testAttempts = data || []; } catch(e) {}
+  try { const { data } = await ADB('test_attempts').select('*'); testAttempts = coordRows('student', data || []); } catch(e) {}
   _gbState.codingSubs = subs; _gbState.codingQs = qs; _gbState.testAttempts = testAttempts;
   _gbState.rows = computeGradebook(cache.scores, subs, qs, _gbState.approvedOnly, testAttempts);
 
@@ -7402,7 +7591,7 @@ function renderGradebookTable() {
 async function loadAllScoresForAdmin() {
   try {
     const { data, error } = await SB.from('scores').select('*').order('date', { ascending: false });
-    if (!error) cache.scores = data || [];
+    if (!error) { await _coordEnsure(); cache.scores = coordRows('student', data || []); }
   } catch(e) {}
 }
 
@@ -7448,12 +7637,12 @@ async function renderAdminAssignTests() {
   el.innerHTML = '<div class="spinner"></div>';
   await Promise.all([loadStudentsCache(), loadSetsCache()]);
   let codingQs = [], assignments = [];
-  try { const { data } = await SB.from('coding_questions').select('id,title,language'); codingQs = data || []; } catch(e) {}
-  try { const { data } = await SB.from('test_assignments').select('*').order('assignedAt', { ascending: false }); assignments = data || []; } catch(e) {}
+  try { await _coordEnsure(); const { data } = await SB.from('coding_questions').select('id,title,language,schema,moduleId'); codingQs = coordRows('module', data || []); } catch(e) {}
+  try { const { data } = await SB.from('test_assignments').select('*').order('assignedAt', { ascending: false }); assignments = coordRows('student', data || []); } catch(e) {}
   _assignCache = { codingQs, assignments };
 
   const setOpts = (cache.sets || []).map(s => `<option value="mcq:${s.id}">📝 MCQ · ${escHtml(s.name)}</option>`).join('');
-  const codeOpts = codingQs.map(q => `<option value="coding:${q.id}">${q.language==='python'?'🐍':'🗄️'} Coding · ${escHtml(q.title)}</option>`).join('');
+  const codeOpts = codingQs.map(q => `<option value="coding:${q.id}">${_secIcon(q)} Coding · ${escHtml(q.title)}</option>`).join('');
   const studentBoxes = (cache.students || []).map(s => `
     <label style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;cursor:pointer">
       <input type="checkbox" class="assignStu" value="${s.id}" data-name="${escHtml(s.name||s.id)}"> ${escHtml(s.name||s.id)} <span style="color:var(--text3);font-size:11px">${escHtml(s.id)}</span>
@@ -7616,8 +7805,8 @@ async function renderAdminTests() {
   el.innerHTML = '<div class="spinner"></div>';
   await loadStudentsCache();
   let tests = [], attempts = [];
-  try { const { data } = await SB.from('tests').select('*').order('createdAt', { ascending: false }); tests = data || []; } catch(e) {}
-  try { const { data } = await SB.from('test_attempts').select('testId,status'); attempts = data || []; } catch(e) {}
+  try { await _coordEnsure(); const { data } = await SB.from('tests').select('*').order('createdAt', { ascending: false }); tests = coordRows('test', data || []); } catch(e) {}
+  try { const { data } = await SB.from('test_attempts').select('testId,status,studentId'); attempts = coordRows('student', data || []); } catch(e) {}
   const subCount = id => attempts.filter(a => a.testId === id && a.status === 'submitted').length;
 
   el.innerHTML = `
@@ -7696,8 +7885,8 @@ async function openTestBuilder(editId) {
   await loadBatchesCache();
   await loadCoursesCache();
   // Load banks for the pickers
-  try { const { data } = await ADB('mcq_bank').select('id,q,opts,ans,topic,diff,moduleId').limit(2000); _tbBank.mcq = data || []; } catch(e) { _tbBank.mcq = []; }
-  try { const { data } = await SB.from('coding_questions').select('*'); _tbBank.coding = data || []; } catch(e) { _tbBank.coding = []; }
+  try { const { data } = await ADB('mcq_bank').select('id,q,opts,ans,topic,diff,moduleId').limit(2000); await _coordEnsure(); _tbBank.mcq = coordRows('module', data || []); } catch(e) { _tbBank.mcq = []; }
+  try { const { data } = await SB.from('coding_questions').select('*'); _tbBank.coding = coordRows('module', data || []); } catch(e) { _tbBank.coding = []; }
 
   let t = { id:null, name:'', description:'', status:'draft', hasMcq:true, hasCoding:false, mcqDuration:30, codingDuration:45, mcqQuestions:[], codingQuestions:[], assignedTo:[] };
   if (editId) {
@@ -7793,7 +7982,7 @@ async function openTestBuilder(editId) {
           <option value="mongodb">🍃 MongoDB  ·  LANG-MDB</option>
           <option value="cassandra">👁️ Cassandra  ·  LANG-CQL</option>
           <option value="linux">🐧 Linux  ·  LANG-SH</option>
-          <option value="pyspark">⚡ PySpark  ·  LANG-SPK</option>
+          ${_SPK_TRACKS.map(t => `<option value="${t}">${_secLabel(t)}</option>`).join('')}
         </select>
         <select id="tbCodeBankSel" class="filter-select" style="min-width:320px;max-width:460px" onchange="(function(v){var q=(_tbBank.coding||[]).find(function(x){return String(x.id)===String(v)});var m=document.getElementById('tbCodeBankMarks');if(q&&m&&q.maxScore)m.value=q.maxScore;})(this.value)">
           <option value="">— pick from coding bank —</option>
@@ -7809,8 +7998,8 @@ async function openTestBuilder(editId) {
           <label style="font-size:12px;color:var(--text2)">Language</label>
           <select id="tbCodeJsonLang" class="filter-select" style="width:170px" onchange="tbCodeJsonHelp()">
             <option value="sql">🗄️ SQL</option><option value="python">🐍 Python</option><option value="java">☕ Java</option>
-            <option value="mongodb">🍃 MongoDB</option><option value="cassandra">👁️ Cassandra</option><option value="linux">🐧 Linux</option><option value="pyspark">⚡ PySpark</option>
-            <option value="spark_sql">🧮 PySpark SQL</option><option value="spark_rdd">🔗 PySpark RDD</option><option value="hive">🐝 Hive</option><option value="pandas">🐼 Pandas &amp; NumPy</option><option value="ml">🤖 Machine Learning</option>
+            <option value="mongodb">🍃 MongoDB</option><option value="cassandra">👁️ Cassandra</option><option value="linux">🐧 Linux</option>
+            ${_SPK_TRACKS.map(t => `<option value="${t}">${_secLabel(t)}</option>`).join('')}
           </select>
           <button class="btn btn-outline btn-sm" onclick="tbCodeJsonTemplate()">📄 Insert template</button>
           <span style="font-size:11px;color:var(--text3)">One question <b>{…}</b> or several <b>[{…},{…}]</b>. Every answer is run and checked before it is added.</span>
@@ -7908,7 +8097,7 @@ function _tbRenderCodeList() {
   c.innerHTML = _testBuilder.codingQuestions.map((q,i) => `
     <div style="display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px">
       <span style="color:var(--text3);font-size:12px">${i+1}.</span>
-      <span style="flex:1;font-size:13px">${q.language==='python'?'🐍':'🗄️'} ${escHtml(String(q.title||'').slice(0,80))} <span style="color:var(--text3);font-size:11px">[${q.source}]</span></span>
+      <span style="flex:1;font-size:13px">${_secIcon(q)} ${escHtml(String(q.title||'').slice(0,80))} <span style="color:var(--text3);font-size:11px">[${q.source}]</span></span>
       <input type="number" value="${q.marks}" min="0" style="width:70px" class="filter-select" onchange="_testBuilder.codingQuestions[${i}].marks=+this.value;_tbUpdateTotal()">
       <button class="btn btn-danger btn-sm" onclick="tbRemoveCode(${i})">✕</button>
     </div>`).join('') || '<div style="color:var(--text3);font-size:13px">No coding questions added.</div>';
@@ -7985,13 +8174,13 @@ function _tbCodeModuleOptions() {
     + (count.none ? `<option value="none">📄 No module  (${count.none})</option>` : '');
 }
 function _tbCodeBankOptions(filterLang, filterModule) {
-  return ['python','sql','java','mongodb','cassandra','linux','pyspark'].map(lang => {
+  return _allSections().map(lang => {
     if (filterLang && lang !== filterLang) return '';
-    const items = (_tbBank.coding||[]).filter(q => (q.language||'sql')===lang)
+    const items = (_tbBank.coding||[]).filter(q => _secOf(q)===lang)
       .filter(q => !filterModule || (filterModule === 'none' ? q.moduleId == null : String(q.moduleId) === String(filterModule)))
-      .sort((a,b)=>String(a.title||'').localeCompare(String(b.title||'')));
+      .sort((a,b)=>String(a.title||'').localeCompare(String(b.title||''), undefined, { numeric:true }));
     if (!items.length) return '';
-    const label = lang==='python'?'🐍 Python':lang==='sql'?'🗄️ SQL':lang==='mongodb'?'🍃 MongoDB':lang==='cassandra'?'👁️ Cassandra':lang==='linux'?'🐧 Linux':lang==='pyspark'?'⚡ PySpark':'☕ Java';
+    const label = _secLabel(lang);
     return `<optgroup label="${label}  (${items.length})">${items.map(q=>`<option value="${q.id}">${escHtml(String(q.title||'').slice(0,70))}${q.maxScore?` (${q.maxScore} marks)`:''}</option>`).join('')}</optgroup>`;
   }).join('');
 }
@@ -8212,7 +8401,7 @@ async function tbNewCodeQuestion() {
   const lf = (document.getElementById('tbCodeLangFilter') || {}).value;
   const mf = (document.getElementById('tbCodeModuleFilter') || {}).value;
   const langSel = document.getElementById('cqLang');
-  if (lf && langSel) { langSel.value = lf; toggleCQFields(); }
+  if (lf && langSel) { langSel.value = (_SPK_TRACKS.includes(lf) && lf !== 'pyspark') ? 'pyspark:' + lf : lf; toggleCQFields(); }
   const modSel = document.getElementById('cqModule');
   if (mf && mf !== 'none' && modSel) modSel.value = mf;
   const h = document.querySelector('#modalGenericInner .modal-header h3'); if (h) h.textContent = '+ New coding question for this test';
@@ -8339,7 +8528,7 @@ async function saveTest(publish) {
     mcqQuestions: JSON.stringify(_testBuilder.mcqQuestions),
     codingQuestions: JSON.stringify(_testBuilder.codingQuestions.map(({ testCases, ...rest }) => rest)),   // answers never stored in the test
     assignedTo: JSON.stringify(assignedTo),
-    totalMarks, createdBy: 'admin'
+    totalMarks, createdBy: currentUser?.role === 'coordinator' ? currentUser.id : 'admin'
   };
   let error;
   if (_testBuilder.id) ({ error } = await ADB('tests').update(rec).eq('id', _testBuilder.id));
@@ -8354,10 +8543,17 @@ const VIOLATION_LABELS = {
   'paste':'Paste attempt', 'paste-key':'Paste attempt', 'copy':'Copy', 'cut':'Cut',
   'tab-switch':'Tab / window switch', 'fullscreen-exit':'Left fullscreen',
   'right-click':'Right-click', 'shortcut':'Blocked shortcut',
-  'burst-insert':'Large sudden text (possible AI / paste)'
+  'burst-insert':'Large sudden text (possible AI / paste)',
+  'second-screen':'Second monitor', 'window-blur':'Switched to another window', 'mouse-out':'Mouse left the screen',
+  'print-screen':'Print Screen', 'windows-key':'Windows key', 'devtools-suspected':'Developer tools (suspected)',
+  'screens-permission-denied':'Refused screen permission', 'second-device':'Opened on a second device',
+  'ip-change':'Network (IP) changed', 'auto-submitted':'Auto-submitted (strike limit)', 'device':'Device', 'device-reset':'New device allowed'
 };
+const _NON_FLAG = new Set(['device','device-reset']);
+function _realFlags(v){ return Array.isArray(v) ? v.filter(x => x && !_NON_FLAG.has(x.kind)) : []; }
 function _flagSummary(v) {
-  if (!Array.isArray(v) || !v.length) return 'No flags';
+  v = _realFlags(v);
+  if (!v.length) return 'No flags';
   const counts = {};
   v.forEach(x => { const lbl = VIOLATION_LABELS[x.kind] || x.kind; counts[lbl] = (counts[lbl]||0)+1; });
   return Object.entries(counts).map(([k,n]) => `${k} ×${n}`).join(', ');
@@ -8373,7 +8569,7 @@ function _attemptDetailHTML(a, cr, v) {
         <tbody>${cr.map(r=>`<tr><td style="padding:3px 12px">${r?.language==='python'?'🐍':'🗄️'} ${escHtml(r?.title||'—')}</td><td style="padding:3px 12px;text-align:center;font-family:'JetBrains Mono',monospace">${r?.score||0}/${r?.marks||0}</td></tr>`).join('')}</tbody>
       </table>`:''}
     <div style="margin-top:6px;font-weight:700">🧮 Cumulative total: <span style="color:var(--accent2)">${a.totalScore||0} / ${a.totalMax||0}</span> (${a.pct||0}%)</div>
-    ${Array.isArray(v)&&v.length?`<div style="margin-top:8px;color:var(--red)"><b>Integrity flags:</b> ${escHtml(_flagSummary(v))}</div>`:''}
+    ${_realFlags(v).length?`<div style="margin-top:8px;color:var(--red)"><b>Integrity flags:</b> ${escHtml(_flagSummary(v))}</div>`:''}
   </div>`;
 }
 
@@ -8382,7 +8578,7 @@ async function renderTestResults(testId) {
   el.innerHTML = '<div class="spinner"></div>';
   let test = null, attempts = [];
   try { const { data } = await ADB('tests').select('id,name,assignedTo,totalMarks,resultsReleased').eq('id', testId).single(); test = data; } catch(e) {}
-  try { const { data } = await ADB('test_attempts').select('*').eq('testId', testId).order('totalScore', { ascending:false }); attempts = data || []; } catch(e) {}
+  try { await _coordEnsure(); const { data } = await ADB('test_attempts').select('*').eq('testId', testId).order('totalScore', { ascending:false }); attempts = coordRows('student', data || []); } catch(e) {}
   if (!test) { el.innerHTML = '<div class="empty-state"><h3>Test not found</h3></div>'; return; }
   const asg = _pj(test.assignedTo, []);
   el.innerHTML = `
@@ -8398,7 +8594,7 @@ async function renderTestResults(testId) {
       <thead><tr><th>Rank</th><th>Student</th><th>MCQ</th><th>Coding</th><th>Total</th><th>%</th><th>Flags</th><th>Status</th><th>Submitted</th></tr></thead>
       <tbody>
       ${attempts.map((a,i) => {
-        const v = _pj(a.violations, []); const flags = Array.isArray(v)?v.length:0;
+        const v = _pj(a.violations, []); const flags = _realFlags(v).length;
         const cr = _pj(a.codingResults, []); const detId = 'det_'+a.id;
         return `<tr style="cursor:pointer" onclick="toggleAttemptDetail('${detId}')" title="Click for per-question breakdown">
           <td>${a.status==='submitted'?i+1:'—'}</td>
@@ -8431,7 +8627,7 @@ async function exportTestResultsXLSX(testId) {
   const XLSX = window.XLSX; if (!XLSX) return;
   let test=null, attempts=[];
   try { const { data } = await ADB('tests').select('name,totalMarks').eq('id', testId).single(); test=data; } catch(e) {}
-  try { const { data } = await ADB('test_attempts').select('*').eq('testId', testId).order('totalScore',{ascending:false}); attempts=data||[]; } catch(e) {}
+  try { await _coordEnsure(); const { data } = await ADB('test_attempts').select('*').eq('testId', testId).order('totalScore',{ascending:false}); attempts=coordRows('student', data||[]); } catch(e) {}
   const aoa = [['Rank','Student ID','Student','MCQ','MCQ Max','Coding','Coding Max','Total','Total Max','%','Flags','Status','Submitted']];
   attempts.forEach((a,i)=>{ const v=_pj(a.violations,[]); aoa.push([a.status==='submitted'?i+1:'', a.studentId, a.studentName||'', a.mcqScore||0, a.mcqMax||0, a.codingScore||0, a.codingMax||0, a.totalScore||0, a.totalMax||0, a.pct||0, Array.isArray(v)?v.length:0, a.status, a.submittedAt?new Date(a.submittedAt).toLocaleString('en-IN'):'']); });
   const wb = XLSX.utils.book_new();
@@ -8561,6 +8757,128 @@ async function startExam(testId) {
 function examLogViolation(kind, detail) {
   if (!examState) return;
   examState.violations.push({ kind, detail: detail||'', round: examState.round||'', at: new Date().toISOString() });
+  _exOnViolation(kind);
+}
+
+// ════ Exam integrity (screen / window / device checks, strikes, live sync) ════
+const EX_RULE_DEFAULTS = { maxStrikes: 3, blockExtended: true, askScreens: true, watermark: true, singleDevice: true };
+const EX_STRIKE_KINDS = new Set(['tab-switch','fullscreen-exit','second-screen','window-blur']);
+let _exRules = { ...EX_RULE_DEFAULTS };
+let _exSync = { sent: 0, timer: null, beat: null, busy: false, locked: false };
+let _exStrikes = { n: 0, last: 0 };
+function _exDeviceId(){
+  try { let d = localStorage.getItem('saarthi_device_id'); if (!d) { d = 'D' + Date.now().toString(36) + Math.random().toString(36).slice(2,10); localStorage.setItem('saarthi_device_id', d); } return d; }
+  catch(e){ return 'nostore-' + (navigator.userAgent||'').length; }
+}
+async function _exLoadRules(){
+  try { const r = await CG('exam_rules', {}); if (r && r.rules) _exRules = { ...EX_RULE_DEFAULTS, ...r.rules }; } catch(e) {}
+  return _exRules;
+}
+// Sends new violations to the server (append-only there) and checks the device lock.
+async function _exHeartbeat(){
+  if (!examState || _exSync.busy) return null;
+  _exSync.busy = true;
+  const list = examState.violations || [];
+  const from = _exSync.sent, upto = list.length;
+  const events = list.slice(from, upto).map((e, i) => ({ ...e, n: from + i }));
+  try {
+    const r = await CG('exam_heartbeat', { token: currentUser.token || '', studentId: currentUser.id, attemptId: examState.attemptId,
+      testId: examState.test.id, deviceId: _exDeviceId(), events });
+    if (r) {
+      if (r.rules) _exRules = { ...EX_RULE_DEFAULTS, ...r.rules };
+      if (r.attemptId && r.attemptId !== examState.attemptId) examState.attemptId = r.attemptId;
+      if (r.locked) { _exSync.locked = true; _exShowLocked(); }
+      else _exSync.sent = upto;
+    }
+    return r;
+  } catch(e) { return null; }
+  finally { _exSync.busy = false; }
+}
+function _exQueueSync(){ if (_exSync.timer) clearTimeout(_exSync.timer); _exSync.timer = setTimeout(_exHeartbeat, 1500); }
+function _exShowLocked(){
+  teardownExamAntiCheat(); _examStopAutosave();
+  if (examState?.mcq?.timer) clearInterval(examState.mcq.timer);
+  if (examState?.coding?.timer) clearInterval(examState.coding.timer);
+  showPage('examPage');
+  document.getElementById('examPage').innerHTML = `
+    <div style="max-width:560px;margin:80px auto;text-align:center;padding:20px">
+      <div style="font-size:60px;margin-bottom:10px">🔐</div>
+      <h2 style="margin-bottom:8px">This test is already open on another device</h2>
+      <p style="color:var(--text2);margin-bottom:20px">A test can be taken on one computer and one browser only. This attempt has been recorded.
+      If your first computer stopped working, ask your invigilator or coordinator to <b>allow a new device</b>, then press Try again.</p>
+      <button class="btn btn-accent" onclick="_examRetryAfterLock()">Try again</button>
+      <button class="btn btn-outline" style="margin-left:8px" onclick="examState=null;showPage('studentPage');studentNav('tests')">Back</button>
+    </div>`;
+}
+async function _examRetryAfterLock(){ _exSync.locked = false; const r = await _exHeartbeat(); if (r && !r.locked) _examInstructions(); }
+function _exOnViolation(kind){
+  _exQueueSync();
+  if (!EX_STRIKE_KINDS.has(kind) || !examState || _examFinishing) return;
+  const now = Date.now();
+  if (now - _exStrikes.last < 3000) return;          // one action (e.g. Alt+Tab) = one strike
+  _exStrikes.last = now; _exStrikes.n++;
+  const max = +_exRules.maxStrikes || 0;
+  if (!max) return;
+  if (_exStrikes.n >= max) { _exAutoSubmit(); return; }
+  toast(`⚠️ Warning ${_exStrikes.n} of ${max - 1}: leaving the test window is not allowed. At ${max} your test is submitted automatically.`, 'error');
+}
+async function _exAutoSubmit(){
+  if (!examState || _examFinishing) return;
+  examState.violations.push({ kind: 'auto-submitted', detail: 'Strike limit ' + _exRules.maxStrikes + ' reached', round: examState.round||'', at: new Date().toISOString() });
+  alert('Your test is being submitted automatically because you left the test window too many times.');
+  if (!examState.mcqSubmittedAt) examState.mcqSubmittedAt = new Date().toISOString();
+  await _exHeartbeat();
+  _examSubmitAll();
+}
+// Pre-start system check. Returns { ok, items:[{ok, text}] }.
+async function _exSystemCheck(){
+  const items = []; let ok = true;
+  const ua = navigator.userAgent || '';
+  const chromium = /Chrome\/|Edg\//.test(ua) && !/OPR\//.test(ua);
+  if (_exRules.blockExtended) {
+    if (!('isExtended' in screen)) { ok = false; items.push({ ok:false, text:'Please open the test in the latest Google Chrome or Microsoft Edge.' }); }
+    else if (screen.isExtended) { ok = false; items.push({ ok:false, text:'A second monitor is connected as an extended screen. Disconnect it (or choose “Show only on 1”) and check again.' }); }
+    else items.push({ ok:true, text:'Single screen' });
+  } else items.push({ ok:true, text: chromium ? 'Browser OK' : 'Browser: Chrome or Edge recommended' });
+  if (_exRules.askScreens && window.getScreenDetails) {
+    try {
+      const d = await window.getScreenDetails();
+      if (d.screens.length > 1) { ok = false; items.push({ ok:false, text: d.screens.length + ' screens found. Only one screen is allowed.' }); }
+      else items.push({ ok:true, text:'Screen count: 1' });
+    } catch(e) { items.push({ ok:true, warn:true, text:'Screen permission not given — this is recorded.' }); examState && examState.violations.push({ kind:'screens-permission-denied', detail:'', round:'', at:new Date().toISOString() }); }
+  }
+  if (window.innerWidth < 900) items.push({ ok:true, warn:true, text:'Small window — maximise the browser for the test.' });
+  if (_exRules.singleDevice) items.push({ ok:true, text:'This test will be locked to this computer and browser.' });
+  return { ok, items };
+}
+async function _examRunCheck(){
+  const box = document.getElementById('exCheckBox'), btn = document.getElementById('exStartBtn');
+  if (!box || !btn) return;
+  box.innerHTML = '<div style="color:var(--text3)">Checking your computer…</div>';
+  await _exLoadRules();
+  const r = await _exSystemCheck();
+  box.innerHTML = r.items.map(i => `<div style="color:${i.ok ? (i.warn ? 'var(--yellow)' : 'var(--green)') : 'var(--red)'}">${i.ok ? (i.warn ? '⚠️' : '✅') : '❌'} ${escHtml(i.text)}</div>`).join('');
+  btn.disabled = !r.ok;
+  btn.style.opacity = r.ok ? '' : '.5';
+}
+function _exWatermark(on){
+  const old = document.getElementById('exWatermark'); if (old) old.remove();
+  if (!on || !examState) return;
+  const txt = `${currentUser.id} · ${currentUser.name || ''}`;
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='360' height='180'><text x='10' y='100' transform='rotate(-20 180 90)' font-family='Arial' font-size='15' fill='rgba(120,120,140,0.13)'>${txt.replace(/[<>&'"]/g,'')}</text></svg>`;
+  const w = document.createElement('div');
+  w.id = 'exWatermark';
+  w.style.cssText = `position:fixed;inset:0;pointer-events:none;z-index:99990;background-image:url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`;
+  document.body.appendChild(w);
+}
+function _showScreenOverlay(){
+  if (!examState || document.getElementById('scrOverlay')) return;
+  const o = document.createElement('div');
+  o.id = 'scrOverlay';
+  o.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(5,8,16,0.97);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;color:#fff';
+  o.innerHTML = `<div style="font-size:56px;margin-bottom:12px">🖥️</div><h2 style="margin-bottom:8px">Second monitor detected</h2>
+    <p style="color:#a0a8c8;max-width:480px">This has been recorded. Disconnect the second monitor (or set the display to “Show only on 1”). The test continues automatically when only one screen is connected.</p>`;
+  document.body.appendChild(o);
 }
 
 // ── Auto-save & resume (survives network drop / refresh / restart) ──
@@ -8594,12 +8912,16 @@ function _examInstructions() {
         <div style="font-size:40px;margin-bottom:8px">↩️</div>
         <h2 style="margin-bottom:6px">Resume your test</h2>
         <p style="color:var(--text2);margin-bottom:16px">We found your in-progress attempt for <b>${escHtml(t.name)}</b>. Your answers are saved — continue where you left off. The timer keeps running in real time.</p>
-        <button class="btn btn-accent" style="width:100%;padding:12px" onclick="_examBegin()">Resume test</button>
+        <div id="exCheckBox" style="font-size:13px;line-height:1.9;margin-bottom:12px"></div>
+        <button class="btn btn-accent" id="exStartBtn" disabled style="width:100%;padding:12px;opacity:.5" onclick="_examBegin()">Resume test</button>
+        <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="_examRunCheck()">🔄 Check again</button>
         <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="_examAbort()">Back</button>
       </div>
     </div>`;
+    setTimeout(_examRunCheck, 50);
     return;
   }
+  setTimeout(_examRunCheck, 50);
   document.getElementById('examPage').innerHTML = `
     <div style="max-width:640px;margin:40px auto;padding:20px">
       <div class="card" style="padding:28px 30px">
@@ -8612,9 +8934,15 @@ function _examInstructions() {
           <div>• One attempt only. Timers auto-submit each round.</div>
           <div>• Your answers auto-save — a network drop or restart won't lose your work.</div>
           <div>• Copy / paste and AI generation are disabled and logged.</div>
-          <div>• Leaving fullscreen or switching tabs is recorded.</div>
+          <div>• Leaving fullscreen, switching tabs or windows, or moving the mouse off the screen is recorded.</div>
+          <div>• Only one screen is allowed. A second monitor pauses the test and is recorded.</div>
+          <div>• The test is locked to this computer and browser.</div>
+          <div>• Repeatedly leaving the test window submits your test automatically.</div>
         </div>
-        <button class="btn btn-accent" style="width:100%;padding:12px" onclick="_examBegin()">I understand — Start</button>
+        <div style="font-weight:700;font-size:13px;margin-bottom:6px">🖥️ System check</div>
+        <div id="exCheckBox" style="font-size:13px;line-height:1.9;margin-bottom:12px"></div>
+        <button class="btn btn-outline" style="width:100%;margin-bottom:8px" onclick="_examRunCheck()">🔄 Check again</button>
+        <button class="btn btn-accent" id="exStartBtn" disabled style="width:100%;padding:12px;opacity:.5" onclick="_examBegin()">I understand — Start</button>
         <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="_examAbort()">Cancel</button>
       </div>
     </div>`;
@@ -8623,6 +8951,11 @@ function _examInstructions() {
 async function _examBegin() {
   _examFinishing = false;
   requestTestFullscreen();
+  _exSync = { sent: 0, timer: null, beat: null, busy: false, locked: false };
+  _exStrikes = { n: 0, last: 0 };
+  const hb = await _exHeartbeat();               // registers this device / refuses a second one
+  if (hb && hb.locked) return;
+  if (hb && hb.submitted) { toast('You have already completed this test.', 'error'); _examAbort(); return; }
   setupExamAntiCheat();
   // Create the in_progress attempt row (best-effort) — only for a brand-new attempt
   if (examState.isNew) {
@@ -8658,7 +8991,42 @@ function setupExamAntiCheat() {
     else { const o=document.getElementById('fsOverlay'); if(o) o.remove(); }
   };
   document.addEventListener('fullscreenchange',_exFs);
+  // Second monitor (Chrome/Edge): screen 'change' event + 10 s re-check
+  let extOn = false;
+  _exScr = () => {
+    if (!examState || !_exRules.blockExtended || !('isExtended' in screen)) return;
+    if (screen.isExtended && !extOn) { extOn = true; examLogViolation('second-screen', 'Extended display detected'); _showScreenOverlay(); }
+    else if (!screen.isExtended && extOn) { extOn = false; const o = document.getElementById('scrOverlay'); if (o) o.remove(); }
+  };
+  try { screen.addEventListener('change', _exScr); } catch(e) {}
+  // Switching to another app/window without hiding the tab (e.g. app on another screen)
+  _exBlur = () => { if (!examState) return; setTimeout(() => { if (examState && !document.hidden && !document.hasFocus()) examLogViolation('window-blur'); }, 400); };
+  window.addEventListener('blur', _exBlur);
+  // Mouse leaving the exam window (in fullscreen this only happens with another screen)
+  let outAt = 0;
+  _exMouseOut = e => { if (examState && !e.relatedTarget) outAt = Date.now(); };
+  _exMouseIn  = () => { if (!examState || !outAt) return; const sec = Math.round((Date.now() - outAt) / 1000); outAt = 0;
+    if (sec >= 1) examLogViolation('mouse-out', sec + 's' + (document.fullscreenElement ? ' (fullscreen)' : '')); };
+  document.addEventListener('mouseout', _exMouseOut);
+  document.addEventListener('mouseover', _exMouseIn);
+  // Extra keys: Print Screen, Windows key
+  _exKeyUp = e => { if (!examState) return;
+    if (e.key === 'PrintScreen') { examLogViolation('print-screen'); try { navigator.clipboard.writeText(''); } catch(_) {} }
+    else if (e.key === 'Meta' || e.key === 'OS') examLogViolation('windows-key'); };
+  document.addEventListener('keyup', _exKeyUp, true);
+  // Periodic: screen re-check, developer tools heuristic, live sync
+  let lastDev = 0;
+  _exTick = setInterval(() => {
+    if (!examState) return;
+    _exScr();
+    const gapW = window.outerWidth - window.innerWidth, gapH = window.outerHeight - window.innerHeight;
+    if ((gapW > 200 || gapH > 260) && Date.now() - lastDev > 60000) { lastDev = Date.now(); examLogViolation('devtools-suspected', gapW + 'x' + gapH); }
+  }, 10000);
+  _exSync.beat = setInterval(_exHeartbeat, 20000);
+  _exScr();
+  _exWatermark(_exRules.watermark !== false);
 }
+let _exScr=null,_exBlur=null,_exMouseOut=null,_exMouseIn=null,_exKeyUp=null,_exTick=null;
 // Blocking overlay shown when the student leaves fullscreen during a test.
 function _showFsOverlay() {
   if (!examState || document.getElementById('fsOverlay')) return;
@@ -8678,6 +9046,17 @@ function teardownExamAntiCheat() {
   if(_exVis) document.removeEventListener('visibilitychange',_exVis);
   if(_exFs)  document.removeEventListener('fullscreenchange',_exFs);
   _exClip=_exKey=_exCtx=_exVis=_exFs=null;
+  try { if(_exScr) screen.removeEventListener('change',_exScr); } catch(e) {}
+  if(_exBlur) window.removeEventListener('blur',_exBlur);
+  if(_exMouseOut) document.removeEventListener('mouseout',_exMouseOut);
+  if(_exMouseIn) document.removeEventListener('mouseover',_exMouseIn);
+  if(_exKeyUp) document.removeEventListener('keyup',_exKeyUp,true);
+  if(_exTick) clearInterval(_exTick);
+  if(_exSync.beat) clearInterval(_exSync.beat);
+  if(_exSync.timer) clearTimeout(_exSync.timer);
+  _exScr=_exBlur=_exMouseOut=_exMouseIn=_exKeyUp=_exTick=null; _exSync.beat=_exSync.timer=null;
+  _exWatermark(false);
+  const so=document.getElementById('scrOverlay'); if(so) so.remove();
   const o=document.getElementById('fsOverlay'); if(o) o.remove();
   if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
 }
@@ -9112,11 +9491,11 @@ async function _examFinish() {
   if (examState.coding.timer) clearInterval(examState.coding.timer);
   _examStopAutosave();
   teardownExamAntiCheat();
+  await _exHeartbeat();   // last violations → server (append-only log)
   // All marks (MCQ + coding), totals and the "submitted" status are set by the
   // server (exam_finalize) from its own marking — not by the browser.
   const payload = {
     mcqAnswers: JSON.stringify(examState.mcq.answers),
-    violations: JSON.stringify(examState.violations),
     mcqSubmittedAt: examState.mcqSubmittedAt || null
   };
   let res = await SB.from('test_attempts').update(payload).eq('id', examState.attemptId).select('id');
@@ -9151,6 +9530,124 @@ async function _examFinish() {
 // ════════════════════════════════════════════════════════════════
 // ADMIN: BADGES
 // ════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+// EXAM INTEGRITY REPORT (admin + coordinators; coordinators see only their students)
+// ════════════════════════════════════════════════════════════════
+const _INT_W = { 'tab-switch':2, 'fullscreen-exit':2, 'window-blur':2, 'second-screen':6, 'second-device':6, 'mouse-out':1,
+  'devtools-suspected':3, 'print-screen':3, 'ip-change':2, 'screens-permission-denied':2, 'auto-submitted':6,
+  'paste':1, 'paste-key':1, 'copy':0.5, 'cut':0.5, 'right-click':0.3, 'shortcut':0.5, 'windows-key':0.5, 'burst-insert':2 };
+const _INT_RED = new Set(['second-screen','second-device','auto-submitted']);
+function _intSummary(a){
+  const v = _pj(a.violations, []); const all = Array.isArray(v) ? v : [];
+  const flags = _realFlags(all);
+  const c = {}; let score = 0, mouseSec = 0;
+  flags.forEach(x => { c[x.kind] = (c[x.kind]||0) + 1; score += (_INT_W[x.kind] ?? 1);
+    if (x.kind === 'mouse-out') mouseSec += parseInt(x.detail) || 0; });
+  const devices = all.filter(x => x.kind === 'device');
+  const ips = [...new Set(all.filter(x => x.ip).map(x => x.ip))];
+  const red = flags.some(x => _INT_RED.has(x.kind)) || score >= 10;
+  const risk = red ? 'red' : (score >= 3 ? 'amber' : 'green');
+  const needsDevice = (() => { let lastDev = -1, lastReset = -1, lastSecond = -1;
+    all.forEach((x,i) => { if (x.kind==='device') lastDev = i; if (x.kind==='device-reset') lastReset = i; if (x.kind==='second-device') lastSecond = i; });
+    return a.status !== 'submitted' && lastSecond > lastReset; })();
+  return { all, flags, c, score: Math.round(score*10)/10, mouseSec, devices, ips, risk, needsDevice };
+}
+let _intTest = '', _intTimer = null;
+async function renderAdminIntegrity(testId) {
+  if (_intTimer) { clearInterval(_intTimer); _intTimer = null; }
+  const el = document.getElementById('adminContent');
+  el.innerHTML = '<div class="spinner"></div>';
+  if (testId !== undefined) _intTest = testId;
+  let tests = [];
+  try { const { data } = await ADB('tests').select('id,name,assignedTo,createdAt,status').order('createdAt', { ascending:false }); tests = data || []; } catch(e) {}
+  if (currentUser?.role === 'coordinator') {
+    if (!cache.students) await loadStudentsCache();
+    const mine = new Set((cache.students||[]).map(x => String(x.id)));
+    tests = tests.filter(t => _pj(t.assignedTo, []).some(id => mine.has(String(id))));
+  }
+  if (!_intTest && tests.length) _intTest = tests[0].id;
+  let attempts = [];
+  if (_intTest) { try { const { data } = await ADB('test_attempts').select('id,studentId,studentName,status,violations,startedAt,submittedAt').eq('testId', _intTest); attempts = coordRows('student', data || []); } catch(e) {} }
+  const rows = attempts.map(a => ({ a, s: _intSummary(a) })).sort((x,y) => y.s.score - x.s.score);
+  const cnt = k => rows.filter(r => r.s.risk === k).length;
+  const badge = r => r === 'red' ? '<span class="badge badge-red">🔴 High</span>' : r === 'amber' ? '<span class="badge badge-yellow">🟠 Check</span>' : '<span class="badge badge-green">🟢 Clean</span>';
+  const n = (c,k) => c[k] ? `<b>${c[k]}</b>` : '<span style="color:var(--text3)">0</span>';
+  const isAdmin = currentUser?.role !== 'coordinator';
+  el.innerHTML = `
+    <div class="section-header">
+      <div><h2>🛡️ Exam Integrity</h2><p>What each student did during a test — the system flags, the coordinator decides.</p></div>
+      <div class="hd-right">
+        <select onchange="renderAdminIntegrity(this.value)" style="min-width:260px">${tests.map(t => `<option value="${escHtml(t.id)}" ${t.id===_intTest?'selected':''}>${escHtml(t.name)}</option>`).join('') || '<option>No tests</option>'}</select>
+        <button class="btn btn-outline btn-sm" onclick="renderAdminIntegrity()">🔄 Refresh</button>
+        ${isAdmin ? '<button class="btn btn-outline btn-sm" onclick="openExamRules()">⚙️ Exam rules</button>' : ''}
+      </div>
+    </div>
+    <div class="stat-grid" style="margin-bottom:18px">
+      <div class="stat-card blue"><div class="stat-label">Attempts</div><div class="stat-val">${rows.length}</div><div class="stat-sub">${rows.filter(r=>r.a.status!=='submitted').length} in progress</div></div>
+      <div class="stat-card red"><div class="stat-label">High risk</div><div class="stat-val">${cnt('red')}</div><div class="stat-sub">second screen / device, auto-submit or many flags</div></div>
+      <div class="stat-card yellow"><div class="stat-label">Check</div><div class="stat-val">${cnt('amber')}</div><div class="stat-sub">some flags</div></div>
+      <div class="stat-card green"><div class="stat-label">Clean</div><div class="stat-val">${cnt('green')}</div><div class="stat-sub">no real flags</div></div>
+    </div>
+    <div class="card"><div class="tbl-wrap"><table>
+      <thead><tr><th>Student</th><th>Risk</th><th title="Tab switch / other window">Tab / window</th><th>Fullscreen exits</th><th>2nd screen</th><th>2nd device</th><th>Mouse out</th><th>Other</th><th>Devices · IP</th><th>Status</th><th></th></tr></thead>
+      <tbody>${rows.map(({a,s}) => {
+        const other = s.flags.filter(x => !['tab-switch','window-blur','fullscreen-exit','second-screen','second-device','mouse-out'].includes(x.kind)).length;
+        const tid = 'int_' + a.id;
+        return `<tr style="cursor:pointer" onclick="toggleAttemptDetail('${tid}')">
+          <td><div style="font-weight:600">▸ ${escHtml(a.studentName||a.studentId)}</div><div style="font-size:11px;color:var(--text3)">${escHtml(a.studentId)} · score ${s.score}</div></td>
+          <td>${badge(s.risk)}</td>
+          <td>${(s.c['tab-switch']||0)+(s.c['window-blur']||0) ? '<b>'+((s.c['tab-switch']||0)+(s.c['window-blur']||0))+'</b>' : '<span style="color:var(--text3)">0</span>'}</td>
+          <td>${n(s.c,'fullscreen-exit')}</td><td>${n(s.c,'second-screen')}</td><td>${n(s.c,'second-device')}</td>
+          <td>${s.c['mouse-out'] ? `<b>${s.c['mouse-out']}</b> <span style="font-size:11px;color:var(--text3)">(${s.mouseSec}s)</span>` : '<span style="color:var(--text3)">0</span>'}</td>
+          <td>${other || '<span style="color:var(--text3)">0</span>'}</td>
+          <td style="font-size:11px">${s.devices.length} · ${escHtml(s.ips.join(', ') || '—')}</td>
+          <td><span class="badge ${a.status==='submitted'?'badge-green':'badge-yellow'}">${escHtml(a.status||'')}</span></td>
+          <td>${s.needsDevice ? `<button class="btn btn-accent btn-sm" onclick="event.stopPropagation();examAllowDevice('${escHtml(a.id)}')" title="The student's first computer failed? Let them continue on the new one.">Allow new device</button>` : ''}</td>
+        </tr>
+        <tr id="${tid}" style="display:none;background:rgba(255,255,255,0.02)"><td colspan="11" style="padding:10px 18px;font-size:12px;line-height:1.8">
+          ${s.all.length ? s.all.map(x => `<div><span style="font-family:'JetBrains Mono',monospace;color:var(--text3)">${x.at ? new Date(x.at).toLocaleTimeString('en-IN') : ''}</span>
+            ${_INT_RED.has(x.kind) ? '🔴' : (_NON_FLAG.has(x.kind) ? '💻' : '⚠️')} <b>${escHtml(VIOLATION_LABELS[x.kind] || x.kind)}</b>
+            ${x.detail ? '<span style="color:var(--text2)"> — ' + escHtml(String(x.detail)) + '</span>' : ''} ${x.round ? '<span style="color:var(--text3)">(' + escHtml(x.round) + ')</span>' : ''}</div>`).join('') : 'No events.'}
+        </td></tr>`;
+      }).join('') || `<tr><td colspan="11"><div class="empty-state"><div class="icon">🛡️</div><h3>No attempts yet</h3><p>Students appear here as soon as they start the test — the page refreshes every 30 seconds.</p></div></td></tr>`}
+      </tbody></table></div></div>
+    <p style="font-size:11px;color:var(--text3);margin-top:10px">A browser cannot see mirrored/duplicate screens, cables, remote-control apps (AnyDesk etc.) or virtual machines — use Safe Exam Browser and a lab check for those. Flags are evidence for review, not proof.</p>`;
+  _intTimer = setInterval(() => { if (document.querySelector('#adminContent h2')?.textContent.includes('Exam Integrity') && !document.querySelector('#adminContent tr[id^="int_"][style*="table-row"]')) renderAdminIntegrity(); else if (!document.querySelector('#adminContent h2')?.textContent.includes('Exam Integrity')) { clearInterval(_intTimer); _intTimer = null; } }, 30000);
+}
+async function examAllowDevice(attemptId){
+  if (!confirm('Allow this student to continue the test on a new computer? Use this only if their first computer stopped working. It will be recorded.')) return;
+  try { await CGstaff('exam_allow_device', { attemptId }); toast('New device allowed — ask the student to press Try again.', 'success'); renderAdminIntegrity(); }
+  catch(e){ toast(e.message || String(e), 'error'); }
+}
+async function openExamRules(){
+  let r = { ...EX_RULE_DEFAULTS };
+  try { const { data } = await ADB('config').select('value').eq('key','exam_rules').maybeSingle(); if (data && data.value) r = { ...r, ...(typeof data.value === 'string' ? JSON.parse(data.value) : data.value) }; } catch(e) {}
+  const chk = (k, label, hint) => `<label style="display:flex;gap:10px;align-items:flex-start;margin:8px 0;cursor:pointer"><input type="checkbox" id="er_${k}" ${r[k]?'checked':''} style="margin-top:3px"><span><b>${label}</b><br><span style="font-size:11px;color:var(--text3)">${hint}</span></span></label>`;
+  document.getElementById('modalGenericTitle') && (document.getElementById('modalGenericTitle').textContent = 'Exam rules');
+  const host = document.getElementById('modalGenericBody') || null;
+  const html = `<div style="font-size:13px">
+    <div class="fgroup"><label>Auto-submit after this many strikes (0 = never)</label><input type="number" id="er_maxStrikes" min="0" max="20" value="${+r.maxStrikes||0}"></div>
+    <div style="font-size:11px;color:var(--text3);margin:-4px 0 8px">Strikes: tab switch, other window, leaving fullscreen, second monitor. One action within 3 seconds = one strike.</div>
+    ${chk('blockExtended','Block a second (extended) monitor','Chrome / Edge only — other browsers are asked to switch. Re-checked every 10 s.')}
+    ${chk('askScreens','Ask permission to count screens','Chrome / Edge show a permission prompt. Refusing is recorded.')}
+    ${chk('singleDevice','Lock each attempt to one computer + browser','A second device is blocked and flagged; you can allow a new device from this page.')}
+    ${chk('watermark','Watermark the student ID on the screen','Faint, so a phone photo of the paper shows who took it.')}
+    <button class="btn btn-accent" style="width:100%;margin-top:10px" onclick="saveExamRules()">Save rules</button></div>`;
+  if (host && document.getElementById('modalGeneric')) { host.innerHTML = html; openModal('modalGeneric'); }
+  else { const d = document.createElement('div'); d.className='modal-overlay open'; d.id='modalExamRules';
+    d.innerHTML = `<div class="modal"><div class="modal-header"><h3>⚙️ Exam rules</h3><div class="modal-close" onclick="document.getElementById('modalExamRules').remove()">✕</div></div><div class="modal-body">${html}</div></div>`;
+    document.body.appendChild(d); }
+}
+async function saveExamRules(){
+  const g = k => document.getElementById('er_' + k);
+  const rules = { maxStrikes: Math.max(0, Math.min(20, parseInt(g('maxStrikes').value) || 0)),
+    blockExtended: g('blockExtended').checked, askScreens: g('askScreens').checked, singleDevice: g('singleDevice').checked, watermark: g('watermark').checked };
+  const { error } = await ADB('config').upsert({ key: 'exam_rules', value: JSON.stringify(rules) }, { onConflict: 'key' });
+  if (error) return toast('Could not save: ' + error.message, 'error');
+  toast('Exam rules saved — they apply to tests started from now on.', 'success');
+  const m = document.getElementById('modalExamRules'); if (m) m.remove(); else closeModal('modalGeneric');
+}
+
 async function renderAdminBadges() {
   const el = document.getElementById('adminContent');
   el.innerHTML = `
@@ -9444,7 +9941,8 @@ async function renderAdminLeaderboard(silent) {
     SB.from('scores').select('*').order('date', { ascending: false }),
     silent ? null : loadStudentsCache(), silent ? null : loadCoursesCache(), silent ? null : loadBatchesCache()
   ]);
-  cache.scores = data || [];
+  await _coordEnsure();
+  cache.scores = coordRows('student', data || []);
   _adminLbCoding = await lbFetchCoding();
   renderLeaderboard('adminContent', true);
   const host = document.getElementById('adminContent');
@@ -10010,6 +10508,100 @@ async function _javaRunOnceJudge0(url, code, stdin, langId, _attempt) {
     compileError,
     message: compileError || data.stderr || (data.status && data.status.description) || ''
   };
+}
+
+// ── C++ (DSA questions) — same Judge0 / Piston service as Java ──────────
+// Judge0 CE language 54 = C++ (GCC 9.2.0); override with config key cppGraderLangId.
+let _cppLangId = null;
+async function _loadCppLangId(){
+  if (_cppLangId) return _cppLangId;
+  _cppLangId = '54';
+  try { const { data } = await SB.from('config').select('value').eq('key','cppGraderLangId').maybeSingle(); if (data && data.value) _cppLangId = String(data.value).trim() || '54'; } catch(e) {}
+  return _cppLangId;
+}
+async function _cppRunOnce(cfg, code, stdin, _attempt) {
+  _attempt = _attempt || 0;
+  const input = stdin == null ? '' : String(stdin).replace(/\\n/g, '\n');
+  let resp;
+  if (cfg.protocol === 'judge0') {
+    const endpoint = cfg.url.replace(/\/+$/, '') + '/submissions?base64_encoded=false&wait=true';
+    resp = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ language_id: Number(await _loadCppLangId()) || 54, source_code: code, stdin: input }) });
+  } else {
+    resp = await fetch(cfg.url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ language:'c++', version:'*', files:[{ name:'main.cpp', content: code }], stdin: input, compile_timeout: 12000, run_timeout: 8000 }) });
+  }
+  if (!resp.ok) {
+    if ((resp.status === 429 || resp.status >= 502) && _attempt < 4) { await new Promise(r => setTimeout(r, 400 * Math.pow(2, _attempt) + Math.floor(Math.random()*200))); return _cppRunOnce(cfg, code, stdin, _attempt + 1); }
+    throw new Error('C++ runner ' + _javaRetryReason(resp.status).replace(/Java/g, 'C++'));
+  }
+  const data = await resp.json();
+  if (cfg.protocol === 'judge0') {
+    const st = (data.status && data.status.id) || 0;
+    const compileError = st === 6 ? (data.compile_output || 'Compilation failed') : '';
+    return { ok: !compileError && st === 3, stdout: data.stdout != null ? data.stdout : '', compileError,
+      stderr: data.stderr || (st !== 3 && st !== 6 ? (data.status && data.status.description) : '') || '' };
+  }
+  const comp = data.compile || {}, run = data.run || {};
+  const compileError = (comp.code && comp.code !== 0) ? (comp.stderr || comp.output || 'Compilation failed') : '';
+  return { ok: !compileError && run.code === 0, stdout: run.stdout != null ? run.stdout : (run.output || ''), stderr: run.stderr || '', compileError };
+}
+async function runCppTests(code, testCases, onProgress) {
+  const cfg = await _loadJavaCfg();
+  if (!cfg.url) throw new Error('The C++ runner is not set up — ask your admin (Settings → code execution URL).');
+  const cases = Array.isArray(testCases) && testCases.length ? testCases : [{ stdin:'', expected:'__none__', description:'run' }];
+  const results = [];
+  for (let i = 0; i < cases.length; i++) {
+    const tc = cases[i]; if (onProgress) onProgress(i + 1, cases.length);
+    const exp = String(tc.expected).replace(/\\n/g,'\n').trim();
+    try {
+      const r = await _cppRunOnce(cfg, code, tc.stdin);
+      if (r.compileError) results.push({ description: tc.description, passed:false, error:true, output: 'Compilation error:\n' + r.compileError, expected: exp });
+      else {
+        const out = String(r.stdout).replace(/\r/g,'').trim();
+        const tok = x => x.split(/[\s\n]+/).map(y=>y.trim()).filter(Boolean).join('\n');
+        results.push({ description: tc.description, passed: out === exp || tok(out) === tok(exp), output: r.stderr && !out ? r.stderr : out, expected: exp, error: !!(r.stderr && !out) });
+      }
+    } catch (e) { results.push({ description: tc.description, passed:false, error:true, output: 'Could not reach the C++ runner: ' + ((e && e.message) || e), expected: exp }); }
+    if (i < cases.length - 1) await new Promise(r => setTimeout(r, 250));
+  }
+  return results;
+}
+
+// ── DSA questions: one problem, the student picks Python, Java or C++ ──────
+// Stored as an output-checked (language 'python') question whose schema starts
+// with "#@dsa"; the rest of the schema may hold {"python":…,"java":…,"cpp":…} starters.
+const DSA_LANGS = { python:{ label:'Python 3', icon:'🐍', mode:'python' }, java:{ label:'Java', icon:'☕', mode:'text/x-java' }, cpp:{ label:'C++', icon:'➕', mode:'text/x-c++src' } };
+const DSA_DEFAULT = {
+  python: '# Read the input with input() and print the answer\n\n',
+  java: 'import java.util.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Write your solution here\n    }\n}\n',
+  cpp: '#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n'
+};
+function _isDsa(q){ return !!q && q.language === 'python' && /^#@dsa\b/.test(String(q.schema || '')); }
+function _dsaStarters(q){ try { const j = String(q.schema || '').replace(/^#@dsa[^\n]*\n?/, '').trim(); return j ? (JSON.parse(j) || {}) : {}; } catch(e){ return {}; } }
+function _dsaStarter(q, lang){ return _dsaStarters(q)[lang] || DSA_DEFAULT[lang]; }
+// A "#@dsa cpp" marker puts the problem in the C++ section and opens it in C++.
+function _isCppSec(q){ return _isDsa(q) && /^#@dsa[ \t]+cpp\b/.test(String(q.schema || '')); }
+function _dsaLang(q){
+  if (!_isDsa(q)) return null;
+  if (_isCppSec(q)) return (window._dsaLangQ === q.id && DSA_LANGS[window._dsaSel]) ? window._dsaSel : 'cpp';
+  if (window._dsaSel && DSA_LANGS[window._dsaSel]) return window._dsaSel;
+  let p = null; try { p = localStorage.getItem('saarthi_dsa_lang'); } catch(e) {}
+  return p && DSA_LANGS[p] ? p : 'python';
+}
+function _dsaPickerHTML(q){
+  const cur = _dsaLang(q);
+  return `<select id="saDsaLang" onchange="_dsaSwitchLang(this.value)" title="Choose your language" style="background:#1e1b3a;color:#e9e6ff;border:1px solid #3b3570;border-radius:8px;padding:5px 8px;font-weight:700;font-size:12px;margin-right:6px">
+    ${Object.keys(DSA_LANGS).map(k => `<option value="${k}" ${k===cur?'selected':''}>${DSA_LANGS[k].icon} ${DSA_LANGS[k].label}</option>`).join('')}</select>`;
+}
+function _dsaSwitchLang(lang){
+  const q = _activeCodeQuestion; if (!_isDsa(q) || !DSA_LANGS[lang]) return;
+  const old = _dsaLang(q);
+  window._dsaCode = window._dsaCode || {};
+  if (_cmEditor) window._dsaCode[old] = _cmEditor.getValue();
+  window._dsaSel = lang; window._dsaLangQ = q.id;
+  if (!_isCppSec(q)) { try { localStorage.setItem('saarthi_dsa_lang', lang); } catch(e) {} }
+  window._saDefaultCode = _dsaStarter(q, lang);
+  if (_cmEditor) { _cmEditor.setOption('mode', DSA_LANGS[lang].mode); _cmEditor.setValue(window._dsaCode[lang] || window._saDefaultCode); _cmEditor.focus(); }
+  toast(DSA_LANGS[lang].icon + ' ' + DSA_LANGS[lang].label + ' selected', 'success');
 }
 
 async function _javaRunOnce(cfg, code, stdin) {
@@ -12147,11 +12739,18 @@ function _spkTrackLine(schema) {
 // Section of a question: its language, or for PySpark-engine questions the track.
 function _qTrack(q) {
   if (!q) return '';
+  if (_isDsa(q)) return _isCppSec(q) ? 'cpp' : 'dsa';
   if (q.language !== 'pyspark') return q.language;
   const t = _spkTrackLine(q.schema);
   if (t === 'pandas' && _spkCaseKey(q.schema)) return 'casestudy';
   return t && _TRACK_META[t] ? t : 'pyspark';
 }
+// All coding sections in display order: the classic languages, then every PySpark-engine track.
+function _allSections() { return ['python', 'sql', 'java', 'cpp', 'dsa', 'mongodb', 'cassandra', 'linux', ..._SPK_TRACKS]; }
+// Section of a question even when only id/title/language were loaded (no schema → language).
+function _secOf(q) { return q && q.language === 'pyspark' && q.schema != null ? _qTrack(q) : (q && q.language) || 'sql'; }
+function _secIcon(q) { const m = (typeof _SA_SUBJ !== 'undefined' && _SA_SUBJ[_secOf(q)]) || null; return m ? m.icon : '💻'; }
+function _secLabel(s) { const m = (typeof _SA_SUBJ !== 'undefined' && _SA_SUBJ[s]) || null; return m ? m.icon + ' ' + m.label : s; }
 // Case-study questions carry '#@case: <key>' before the first data file.
 function _spkCaseKey(schema) {
   const lines = String(schema || '').replace(/\r/g, '').split('\n');
@@ -12589,7 +13188,8 @@ async function openCodingQuestion(qId) {
          <div class="sa-io"><span class="k">Output</span><code class="out">${escHtml(String(tc.expected).replace(/\\n/g,'\n'))}</code></div>`}
     </div>`; }).join('');
 
-  const defaultCode = q.starterCode || (q.language==='java'
+  window._dsaSel = null; window._dsaCode = {};
+  const defaultCode = _isDsa(q) ? _dsaStarter(q, _dsaLang(q)) : q.starterCode || (q.language==='java'
     ? 'public class Solution {\n    public static void main(String[] args) {\n        // Write your solution here\n    }\n}\n'
     : isSQL ? '-- Write your SELECT query here\n'
     : isMongo ? '// Write your MongoDB query here, e.g.\n// db.collection.find({ field: value })\n\n'
@@ -12656,7 +13256,7 @@ async function openCodingQuestion(qId) {
         <div class="sa-ehead">
           <span class="sa-filetab">${sm.icon} ${q.language==='python'?'solution.py':q.language==='java'?'Solution.java':isSpk?tm.file:isLnx?'script.sh':isMongo?'query.mongodb.js':isCql?'query.cql':'query.sql'}</span>
           <div class="sa-etool">
-            <button onclick="if(_cmEditor){_cmEditor.setValue(window._saDefaultCode||'');toast('Code reset','success')}">↻ Reset</button>
+            ${_isDsa(q) ? _dsaPickerHTML(q) : ''}<button onclick="if(_cmEditor){_cmEditor.setValue(window._saDefaultCode||'');toast('Code reset','success')}">↻ Reset</button>
             <span style="font-size:11.5px;color:#9089bd">${q.language==='python'?'Python 3':q.language==='java'?'Java':isSpk?tm.rt:isLnx?'bash 5.2':isMongo?'MongoDB shell':isCql?'CQL (cqlsh)':'SQL'}</span>
           </div>
         </div>
@@ -12694,7 +13294,7 @@ async function openCodingQuestion(qId) {
   _cmEditor = null;
   _cmEditor = window.CodeMirror(document.getElementById('cmContainer'), Object.assign({
     value: defaultCode,
-    mode: isSpk ? tm.mode : q.language === 'python' ? 'python' : q.language === 'java' ? 'text/x-java' : isLnx ? 'shell' : isMongo ? 'javascript' : isCql ? 'text/x-cassandra' : 'text/x-sql',
+    mode: _isDsa(q) ? DSA_LANGS[_dsaLang(q)].mode : isSpk ? tm.mode : q.language === 'python' ? 'python' : q.language === 'java' ? 'text/x-java' : isLnx ? 'shell' : isMongo ? 'javascript' : isCql ? 'text/x-cassandra' : 'text/x-sql',
     theme: 'dracula', lineNumbers: true, indentUnit: 4, tabSize: 4, indentWithTabs: false,
     lineWrapping: false, autofocus: true,
     extraKeys: {
@@ -12740,6 +13340,16 @@ async function _runCustomCore(q, code, outEl, metaEl, inEl){
   outEl.innerHTML = '<span style="color:#fbbf24">⏳ Running…</span>';
   _getPyWorker();
   try {
+    const dl = _dsaLang(q);
+    if (dl === 'java' || dl === 'cpp'){
+      const stdin = inEl ? inEl.value : '';
+      const t0 = performance.now();
+      const res = dl === 'java' ? await runJavaTests(code, [{ stdin, expected: '__none__', description: 'custom' }], null) : await runCppTests(code, [{ stdin, expected: '__none__', description: 'custom' }], null);
+      const r = res[0] || {}; const ms = Math.round(performance.now()-t0);
+      if (r.error){ outEl.innerHTML = '<span style="color:#ff6b6b;white-space:pre-wrap">'+escHtml(String(r.output))+'</span>'; if(metaEl) metaEl.innerHTML = '<span style="color:#ff6b6b">error</span>'; }
+      else { outEl.innerHTML = '<span style="color:#7ee787;white-space:pre-wrap">'+(escHtml(String(r.output))||'<span style="color:#9089bd">(no output)</span>')+'</span>'; if(metaEl) metaEl.innerHTML = '<span style="color:#22c55e">✓ '+ms+' ms</span>'; }
+      return;
+    }
     if (q.language === 'python'){
       const stdin = inEl ? inEl.value : '';
       const t0 = performance.now();
@@ -12998,7 +13608,7 @@ function _setCodingFilter(type, val) {
 }
 
 // ── Saarthi Arena helpers ──
-const _SA_SUBJ = { python:{icon:'🐍',label:'Python'}, java:{icon:'☕',label:'Java'}, sql:{icon:'🗄️',label:'SQL'}, mongodb:{icon:'🍃',label:'MongoDB'}, cassandra:{icon:'👁️',label:'Cassandra'}, linux:{icon:'🐧',label:'Linux'}, pyspark:{icon:'⚡',label:'PySpark'} };
+const _SA_SUBJ = { dsa:{icon:'🧩',label:'Data Structures'}, cpp:{icon:'➕',label:'C++'}, python:{icon:'🐍',label:'Python'}, java:{icon:'☕',label:'Java'}, sql:{icon:'🗄️',label:'SQL'}, mongodb:{icon:'🍃',label:'MongoDB'}, cassandra:{icon:'👁️',label:'Cassandra'}, linux:{icon:'🐧',label:'Linux'}, pyspark:{icon:'⚡',label:'PySpark'} };
 Object.keys(_TRACK_META).forEach(k => { _SA_SUBJ[k] = { icon: _TRACK_META[k].icon, label: _TRACK_META[k].label }; });
 function _calcStreak(subs){
   const days = new Set((subs||[]).map(s=>(s.submittedAt||'').slice(0,10)).filter(Boolean));
@@ -13282,7 +13892,8 @@ async function renderStudentCodingTests() {
 
   try {
     const { data } = await SB.from('coding_questions').select('*').order('createdAt', { ascending: true });
-    window._allCodingQuestions = (data || []).filter(x => !x.hidden);   // exam-only questions stay out of practice
+    const _cv = await codingVisibleFilter(_myCourseId());
+    window._allCodingQuestions = (data || []).filter(x => !x.hidden && _cv(x));   // exam-only questions stay out of practice; only this program's coding modules
     const { data: subs } = await SB.from('coding_submissions').select(CS_COLS).eq('studentId', currentUser.id);
     window._codingRawSubs = subs || [];
     (subs || []).forEach(s => {
@@ -13312,7 +13923,8 @@ async function renderStudentCodingTests() {
     const idx = arr.findIndex(x=>x.id===currentUser.id); if (idx>=0) rank = '#'+(idx+1);
   } catch(e){}
 
-  const subjects = ['python','java','sql','mongodb','cassandra','linux', ..._SPK_TRACKS].filter(l => _SPK_TRACKS.includes(l) || qs.some(q=>_qTrack(q)===l));   // new sections always show, even before problems are added
+  // Only sections that have problems for this student's program (no empty tabs).
+  const subjects = ['python','java','cpp','sql','dsa','mongodb','cassandra','linux', ..._SPK_TRACKS].filter(l => qs.some(q=>_qTrack(q)===l));
   if (!window._codingSubject || !subjects.includes(window._codingSubject)) window._codingSubject = subjects[0] || 'python';
 
   const unsolved = qs.filter(q=>!smap[q.id]);
@@ -13328,7 +13940,7 @@ async function renderStudentCodingTests() {
   el.innerHTML = `
   <div class="sa-arena">
     <div class="sa-head">
-      <div><h2>💻 Practice Arena</h2><p>Level up through auto-graded Python, Java, SQL, MongoDB, Cassandra, Linux, PySpark, Hive, Pandas &amp; ML challenges</p></div>
+      <div><h2>💻 Practice Arena</h2><p>Level up through auto-graded ${subjects.length ? escHtml(subjects.map(l => (_SA_SUBJ[l]||{label:l}).label).join(', ').replace(/, ([^,]*)$/, ' & $1')) : 'coding'} challenges</p></div>
       <div class="sa-hr"><span class="sa-coin">🪙 ${myScore} pts</span></div>
     </div>
     ${total === 0 ? `<div class="sa-empty"><div style="font-size:44px;margin-bottom:10px">💻</div><h3>No Problems Yet</h3><p>Your instructor will add challenges soon.</p></div>` : `
@@ -13414,8 +14026,9 @@ function _ctTier(d){ const t = (window.SA_TIER_MAP || {})[d || 'medium']; return
 function _ctLang(l){ const m = (typeof _SA_SUBJ !== 'undefined' && _SA_SUBJ[l]) || { icon:'📄', label:l }; return `${m.icon} ${m.label}`; }
 async function _ctLoadAll(){ const { data, error } = await SB.from('contests').select('*').order('start_at', { ascending:false }); if (error) throw error; return data || []; }
 async function _ctLoadQuestions(){
-  const { data, error } = await SB.from('coding_questions').select('id,title,language,difficulty,maxScore,moduleId,hidden').order('createdAt', { ascending:true }); if (error) throw error;
-  const qs = data || [];
+  const { data, error } = await SB.from('coding_questions').select('id,title,language,difficulty,maxScore,moduleId,hidden,course_id').order('createdAt', { ascending:true }); if (error) throw error;
+  await _coordEnsure();
+  const qs = coordRows('module', data || []);
   // Hive / PySpark SQL / RDD / Pandas / ML questions are stored as 'pyspark' — their section is in the schema's first line.
   try {
     const { data: sp } = await SB.from('coding_questions').select('id,schema').eq('language', 'pyspark');
@@ -13451,6 +14064,7 @@ async function _ctMcqBoard(c, codingRows){
   let sc = [];
   try { sc = await fetchAllRows(() => SB.from('scores').select('studentId,studentName,setId,correct,total,date').in('setId', setIds).gte('date', c.start_at).lte('date', c.end_at)); } catch (e) {}
   const first = {};
+  sc = coordRows('student', sc);
   sc.forEach(r => { const k = r.studentId + '|' + r.setId; if (!first[k] || new Date(r.date) < new Date(first[k].date)) first[k] = r; });
   const per = {};
   Object.values(first).forEach(r => {
@@ -13731,7 +14345,7 @@ function _ctGroups(){
   const mods = visibleModules();
   const byKey = {}; const order = [];
   mods.forEach(m => { byKey[String(m.id)] = { key:String(m.id), name:m.name, icon:m.icon || '📚', qs:[] }; order.push(String(m.id)); });
-  ['spark_sql', 'spark_rdd', 'hive', 'pandas', 'casestudy', 'ml'].forEach(t => { const M = _TRACK_META[t]; byKey['trk_' + t] = { key:'trk_' + t, name:M.label, icon:M.icon, qs:[] }; order.push('trk_' + t); });
+  _SPK_TRACKS.filter(t => t !== 'pyspark').forEach(t => { const M = _TRACK_META[t]; byKey['trk_' + t] = { key:'trk_' + t, name:M.label, icon:M.icon, qs:[] }; order.push('trk_' + t); });
   byKey._other = { key:'_other', name:'Other / no module', icon:'📋', qs:[] }; order.push('_other');
   (window._ctQs || []).forEach(q => {
     if (term && !(q.title || '').toLowerCase().includes(term)) return;
@@ -14146,9 +14760,10 @@ async function renderAdminCodingTests() {
   let questions = [];
   let submissions = [];
   try {
+    await _coordEnsure();
     const { data } = await SB.from('coding_questions').select('*').order('createdAt', { ascending: false });
-    questions = data || [];
-    submissions = await fetchAllRows(() => SB.from('coding_submissions').select(CS_COLS));
+    questions = coordRows('module', data || []);
+    submissions = coordRows('student', await fetchAllRows(() => SB.from('coding_submissions').select(CS_COLS)));
   } catch(e) {}
 
   const subCount = id => submissions.filter(s => s.questionId === id).length;
@@ -15319,13 +15934,14 @@ const _BD_SEED_PACK = [
   const firstOf = t => _BD_SEED_PACK.filter(p => p.track === t).slice(0, 1).map(p => ({ title: p.title, language: t, difficulty: p.difficulty,
     description: p.description, schema: p.files, starterCode: p.starterCode,
     testCases: p.tests.map(x => Object.assign({ description: x.description, refQuery: p.ref }, x.seed ? { seed: x.seed } : {}, x.hidden ? { hidden: true } : {})) }));
-  ['spark_sql', 'spark_rdd', 'hive', 'pandas', 'ml'].forEach(t => { _TB_CODE_TEMPLATES[t] = firstOf(t); });
+  _SPK_TRACKS.filter(t => t !== 'pyspark').forEach(t => { _TB_CODE_TEMPLATES[t] = firstOf(t); });
   const files = '<b>schema</b> = the data files in /home/student as <code>=== path</code> blocks · each test case needs <b>refQuery</b> (the correct answer — it is run here and what it prints becomes the expected output) · <b>seed</b> = files that replace / add to the data files (makes a hidden check) · <b>hidden</b>: true hides a case.';
   _TB_CODE_HELP.spark_sql = '<b>PySpark SQL</b> — answers use <code>spark.sql(…)</code> on temp views. ' + files;
   _TB_CODE_HELP.spark_rdd = '<b>PySpark RDD</b> — answers use <code>sc.textFile / map / reduceByKey …</code>. ' + files;
   _TB_CODE_HELP.hive = '<b>Hive</b> — refQuery is a HiveQL script (CREATE TABLE …; LOAD DATA LOCAL INPATH …; SELECT …;). Every run starts with an empty warehouse. ' + files;
   _TB_CODE_HELP.pandas = '<b>Pandas &amp; NumPy</b> — refQuery is a Python program (pandas, NumPy, SciPy, statsmodels available). Ask for exact print formats. ' + files;
   _TB_CODE_HELP.ml = '<b>Machine Learning</b> — refQuery is a scikit-learn program; always fix random_state. ' + files;
+  _TB_CODE_HELP.casestudy = _TB_CODE_HELP.pandas + ' · <b>Case study</b>: put <code>#@case: &lt;key&gt;</code> on the line after #@track so the task joins its case card; large files can be <code>=== file</code> + <code>@url datasets/&lt;key&gt;/file.csv</code>.';
 })();
 async function seedBigDataLab() {
   const counts = {}; _BD_SEED_PACK.forEach(p => counts[p.track] = (counts[p.track] || 0) + 1);
@@ -16095,7 +16711,8 @@ async function renderAdminAssignments() {
     const { data } = await SB.from('assignments').select('*').order('deadline', { ascending: true });
     assignments = data || [];
     const { data: subs } = await SB.from('submissions').select('*');
-    submissions = subs || [];
+    await _coordEnsure();
+    submissions = coordRows('student', subs || []);
   } catch(e) {}
   await loadAssignmentScopeCache();
   assignments = visibleAssignmentsForViewer(assignments);
